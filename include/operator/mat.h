@@ -1,0 +1,63 @@
+#pragma once
+
+#include <atomic>
+#include <magic_enum.hpp>
+
+#include "util/logger.h"
+#include "operator/type.h"
+#include "operator/config.h"
+#include "graph/graph.h"
+
+namespace spy {
+
+    template<>
+    struct OperatorDefinition<OperatorType::MatMul> final: OperatorNode {
+	public:
+		static constexpr OperatorType TYPE = OperatorType::MatMul;
+
+	public: /* Synchronization Utilities */
+		std::atomic<int> buffer_init_counter{0};
+		std::atomic<int> buffer_done_counter{0};
+
+	public:
+		OperatorDefinition() = default;
+
+		OperatorDefinition(NodeCredit credit, std::string_view name): OperatorNode(credit, name, TYPE) {}
+
+
+	public: /* Interface for graph deduction */
+		/*! 
+		 * @brief Deduce the result tensor with proper shape
+		 * @return The tensor with the expected shape
+		 */
+		Tensor deduce_result() const { 
+            SPY_ASSERT_FMT(input.size() == 2, "Expect the number of operands to be 2 (cur: {})", input.size());
+
+			const Tensor &operand_0 = get_tensor_from_node(input[0]);
+			const Tensor &operand_1 = get_tensor_from_node(input[1]);
+
+			const auto &shape_0     = operand_0.get_shape();
+			const auto &shape_1     = operand_1.get_shape();
+			
+			const auto [ne00, ne01, ne02, ne03] = shape_0.elements;
+			const auto [ne10, ne11, ne12, ne13] = shape_1.elements;
+
+			SPY_ASSERT_FMT(ne00 == ne10 && ne02 == ne12 && ne03 == ne13, 
+					"Operands should be of the same shape (operand1: {}, operand2: {})", 
+					shape_0.to_string(), shape_1.to_string());
+			SPY_ASSERT_FMT(shape_1.number_type == NumberType::FP32, 
+						"Expect the type of operand 1 to be fp32 (cur: {})", 
+						magic_enum::enum_name(shape_1.number_type));
+
+			auto num_element = shape_1.elements;
+			num_element[0] = shape_0.elements[1];
+
+            constexpr NumberType type_res = NumberType::FP32;
+			const Shape shape_res(shape_0.dim, num_element, type_res);	
+            
+			return { shape_res, nullptr };
+		}
+    };
+
+
+} // namespace spy

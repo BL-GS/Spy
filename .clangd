@@ -1,0 +1,2 @@
+Diagnostics:
+  Suppress: [ cppcoreguidelines-avoid-do-while, cppcoreguidelines-pro-type-reinterpret-cast, modernize-use-default-member-init, misc-non-private-member-variables-in-classes, cppcoreguidelines-pro-bounds-constant-array-index, readability-redundant-access-specifiers, cppcoreguidelines-non-private-member-variables-in-classes, hicpp-use-auto, modernize-use-auto, llvm-include-order, cppcoreguidelines-pro-bounds-pointer-arithmetic, readability-identifier-length ]
