@@ -79,15 +79,15 @@ namespace spy {
 			for (const auto &fragment: fragment_buffer) {
 				if (fragment.type == FragmentBufferType::RawText) {
 					// without adding this leading whitespace, we do not get the same results as the original tokenizer
-					auto raw_text = fragment.raw_text.substr(fragment.offset, fragment.length);
+					auto new_raw_text = fragment.raw_text.substr(fragment.offset, fragment.length);
 					if (&fragment == &fragment_buffer.front()) {
 						if (add_space_prefix) {
-							raw_text.insert(0, " "); // prefix with space if the first token is not special
+							new_raw_text.insert(0, " "); // prefix with space if the first token is not special
 						}
 					}
 
-					raw_text = escape_whitespace(raw_text);
-					tokenize_inner(raw_text, output);
+					new_raw_text = escape_whitespace(new_raw_text);
+					tokenize_inner(new_raw_text, output);
 				} else {
 					output.push_back(fragment.token_id);
 				}

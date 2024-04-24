@@ -11,7 +11,7 @@ namespace spy::cpu {
 		return shape_0.num_row();
 	}
 
-	size_t OperatorAddImpl::get_buffer_size([[maybe_unused]] const CPUBackend *backend_ptr, const OperatorNode *op_node) {
+	size_t OperatorAddImpl::get_buffer_size([[maybe_unused]] const CPUBackend *backend_ptr, [[maybe_unused]] const OperatorNode *op_node) {
 		return 0;
 	}
 
@@ -58,7 +58,7 @@ namespace spy::cpu {
 		return shape_0.num_row();
 	}
 
-	size_t OperatorSubImpl::get_buffer_size([[maybe_unused]] const CPUBackend *backend_ptr, const OperatorNode *op_node) {
+	size_t OperatorSubImpl::get_buffer_size([[maybe_unused]] const CPUBackend *backend_ptr, [[maybe_unused]] const OperatorNode *op_node) {
 		return 0;
 	}
 
@@ -104,7 +104,7 @@ namespace spy::cpu {
 		return shape_0.num_row();
 	}
 
-	size_t OperatorMulImpl::get_buffer_size([[maybe_unused]] const CPUBackend *backend_ptr, const OperatorNode *op_node) {
+	size_t OperatorMulImpl::get_buffer_size([[maybe_unused]] const CPUBackend *backend_ptr, [[maybe_unused]] const OperatorNode *op_node) {
 		return 0;
 	}
 
@@ -150,7 +150,7 @@ namespace spy::cpu {
 		return shape_0.num_row();
 	}
 
-	size_t OperatorDivImpl::get_buffer_size([[maybe_unused]] const CPUBackend *backend_ptr, const OperatorNode *op_node) {
+	size_t OperatorDivImpl::get_buffer_size([[maybe_unused]] const CPUBackend *backend_ptr, [[maybe_unused]] const OperatorNode *op_node) {
 		return 0;
 	}
 

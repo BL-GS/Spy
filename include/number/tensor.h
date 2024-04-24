@@ -180,7 +180,7 @@ namespace spy {
 		/*!
 		 * @brief Whether the shape denote a contiguous space
 		 */
-		bool is_continugous() const {
+		bool is_continuous() const {
 			const bool contiguous_0 = (bytes[0] == get_type_size(number_type));
 			const bool contiguous_1 = (bytes[1] == bytes[0] * elements[0] / get_block_size(number_type));
 			const bool contiguous_2 = (bytes[2] == bytes[1] * elements[1]);
@@ -263,7 +263,7 @@ namespace spy {
 		size_t          total_block()     const { return shape_.total_block(); 		}
 
 	public: /* View Information */
-		bool			is_continugous()  const { return shape_.is_continugous();   }
+		bool			is_continuous()   const { return shape_.is_continuous();   }
 		bool			is_transposed()   const { return shape_.is_transposed();	}
 		bool			is_permuted()	  const { return shape_.is_permuted();		}
 

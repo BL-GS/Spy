@@ -39,8 +39,7 @@ inline uint16_t spy_fp32_to_fp16(const float x) { return _cvtss_sh(x, 0); }
 	 * As for unquantized number, it acts like `sizeof(element)`
 	 */
 	inline constexpr size_t get_type_size(NumberType number_type) { 
-		return magic_enum::enum_switch([] (auto val) {
-			constexpr NumberType T_type = val;
+		return magic_enum::enum_switch([] (auto T_type) {
 			return NumberMetadata<T_type>::TYPE_SIZE;
 		}, number_type);
 	}
@@ -52,8 +51,7 @@ inline uint16_t spy_fp32_to_fp16(const float x) { return _cvtss_sh(x, 0); }
 	 * As for unquantized number, it returns 1.
 	 */
 	inline constexpr size_t get_block_size(NumberType number_type) {
-		return magic_enum::enum_switch([] (auto val) {
-			constexpr NumberType T_type = val;
+		return magic_enum::enum_switch([] (auto T_type) {
 			return NumberMetadata<T_type>::BLOCK_SIZE;
 		}, number_type);
 	}
@@ -73,8 +71,7 @@ inline uint16_t spy_fp32_to_fp16(const float x) { return _cvtss_sh(x, 0); }
 	 * @brief Get the name of the nubmer type
 	 */
 	inline constexpr std::string_view get_type_name(NumberType number_type) {
-		return magic_enum::enum_switch([] (auto val) {
-			constexpr NumberType T_type = val;
+		return magic_enum::enum_switch([] (auto T_type) {
 			return NumberMetadata<T_type>::NAME;
 		}, number_type);
 	}
@@ -84,8 +81,7 @@ inline uint16_t spy_fp32_to_fp16(const float x) { return _cvtss_sh(x, 0); }
 	 * @brief Whether the number type is quantized
 	 */
 	inline constexpr bool is_quantized(NumberType number_type) {
-		return magic_enum::enum_switch([] (auto val) {
-			constexpr NumberType T_type = val;
+		return magic_enum::enum_switch([] (auto T_type) {
 			return NumberMetadata<T_type>::IS_QUANTIZATION;
 		}, number_type);
 	}

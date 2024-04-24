@@ -10,7 +10,7 @@ namespace spy {
 	};
 
 	enum class ModelRopeScalingType : int {
-		Unspeicific = -1,
+		Unspecified = -1,
 		None        = 0,
 		Linear      = 1,
 		Yarn        = 2
@@ -23,8 +23,8 @@ namespace spy {
 		Cls        = 2
 	};
 
-	enum class GrammerType: int {
-		/// End of relu defintion
+	enum class GrammarType: int {
+		/// End of relu definition
 		EndOfRuleDefinition        = 0,
 		/// Start of alternate definition for rule
 		AlternateDefinitionForRule = 1,
@@ -41,14 +41,14 @@ namespace spy {
 	};
 
 	enum class ModelTensorType: size_t {
-		Tokenembedding = 0, TokenembeddingNorm, TokenTypes, Positionembedding,
+		TokenEmbedding = 0, TokenEmbeddingNorm, TokenTypes, PositionEmbedding,
 
 		Output, OutputNorm, RopeFrequency, LayerOutNorm,
 
 		AttentionQ, AttentionK, AttentionV, AttentionQKV, 
 		AttentionQNorm, AttentionKNorm,
 		AttentionOutput, AttentionNorm, AttentionNorm2,
-		AtentionOutNorm, AttentionRotationembedding,
+		AttentionOutNorm, AttentionRotationEmbedding,
 
 		FFNGateInp, FFNNorm, FFNDown, FFNGate, FFNUp, FFNActivation, 
 		FFNDownExp, FFNGateExp, FFNUpExp,

@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include "model/sample/type.h"
 #include "model/vocab/config.h"
 
 namespace spy {

@@ -24,9 +24,6 @@ namespace spy {
 	public:
 		using TaskFunc  = std::function<void()>;
 		using TaskQueue = moodycamel::ConcurrentQueue<TaskFunc>;
-		using TaskToken = int;
-
-		static constexpr TaskToken INVALID_TASK_TOKEN = -1;
 
 	private:
 		/// Worker threads
@@ -66,7 +63,7 @@ namespace spy {
 
 	public:
 		int submit(std::function<void(int)> &&task_func, int concurrency) {
-			if (concurrency == 1) { 
+			if (concurrency == 1) {
 				task_queue_.enqueue([func=std::move(task_func)](){ func(0); });
 				return 0;
 			}
@@ -84,7 +81,7 @@ namespace spy {
 		size_t max_concurrency() const { return workers_.size(); }
 	};
 
-	class DefaultCPUBackend: public CPUBackend {
+	class DefaultCPUBackend final: public CPUBackend {
 	private:
 		DefaultThreadPool thread_pool_;
 

@@ -88,7 +88,7 @@ namespace spy {
 			} else if (rope_scaling == "yarn") {
 				return ModelRopeScalingType::Yarn;
 			}
-			return ModelRopeScalingType::Unspeicific;
+			return ModelRopeScalingType::Unspecified;
 		}
 
 		static ModelPoolingType parse_pooling_type(const std::string_view pooling) {

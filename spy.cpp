@@ -75,7 +75,7 @@ int main(int argc, char **argv) {
 	const auto model_filename = cmdline_argument.get_arg<std::string>("--model");
 	auto model_ptr   = make_model_from_file(model_filename, hyper_param);
 	auto &tokenizer  = model_ptr->get_tokenizer();
-	auto sampler_ptr = SamplerFactory::build_sampler(SamplerType::Greedy);
+	auto sampler = SamplerFactory::build_sampler<SamplerType::Greedy>();
 	const auto &model_metadata = model_ptr->get_info();
 	// Load data
 	ModelMapper model_mapper(model_filename);
@@ -127,7 +127,7 @@ int main(int argc, char **argv) {
 				.logit    = logits[token_id]
 			};
 		}
-		const TokenID new_token_id = sampler_ptr->sample(candidates);			
+		const TokenID new_token_id = sampler.sample(candidates);
 
 		++perf_timer.num_sample;
 		sample_timer.end();

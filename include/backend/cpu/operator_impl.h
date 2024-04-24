@@ -30,7 +30,7 @@ namespace spy::cpu {
 		/*!
 		 * @brief Execute the operator 
 		 * @param param The parameter of environment. Specifically, it denote the concurrency and thread id of CPU backend.
-		 * @param op_node The OperatorNode deriving from OperatorDinition<T_op_type>, which store necessary operands and hyper parameters.
+		 * @param op_node The OperatorNode deriving from OperatorDefinition<T_op_type>, which store necessary operands and hyper parameters.
 		 * @return true if supported, otherwise false.
 		 */
 		static bool execute([[maybe_unused]] CPUBackend *backend_ptr, [[maybe_unused]] const OperatorEnvParam &param, [[maybe_unused]] OperatorNode *op_node) { return false; }

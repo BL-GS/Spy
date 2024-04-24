@@ -9,11 +9,12 @@
 
 namespace spy {
 
-	class GreedySampler final: public AbstractSampler {
+	template<>
+	class SamplerImpl<SamplerType::Greedy> final: public Sampler {
 	public:
-		GreedySampler() = default;
+		SamplerImpl() = default;
 
-		~GreedySampler() noexcept override = default;
+		~SamplerImpl() noexcept override = default;
 
 	public:
 		TokenID sample(TokenCandidateArray &candidate) override {
@@ -22,7 +23,8 @@ namespace spy {
 			});
 			return max_iter->token_id;
 		}
-
 	};
+
+	using GreedySampler = SamplerImpl<SamplerType::Greedy>;
 
 }  // namespace spy

@@ -8,8 +8,7 @@
 namespace spy {
 
     enum class SamplerType {
-        Greedy,
-        None
+        Greedy
     };
 
 } // namespace spy

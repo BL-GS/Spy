@@ -24,7 +24,7 @@ namespace spy {
 		 * @return The tensor with the expected shape
 		 */
 		Tensor deduce_result() const { 
-			SPY_ASSERT_FMT(input.size() == 1, "Expecct the number of operands to be 1 (cur: {})", input.size());	
+			SPY_ASSERT_FMT(input.size() == 1, "Expect the number of operands to be 1 (cur: {})", input.size());
 
 			const Tensor &operand = get_tensor_from_node(input[0]);
 			return { operand.get_shape(), nullptr };
@@ -52,7 +52,7 @@ namespace spy {
 		 * @return The tensor with the expected shape
 		 */
 		Tensor deduce_result() const { 
-			SPY_ASSERT_FMT(input.size() == 2, "Expecct the number of operands to be 2 (cur: {})", input.size());	
+			SPY_ASSERT_FMT(input.size() == 2, "Expect the number of operands to be 2 (cur: {})", input.size());
 
 			const Tensor &operand_0 = get_tensor_from_node(input[0]);
 			const Tensor &operand_1 = get_tensor_from_node(input[1]);
@@ -302,7 +302,7 @@ namespace spy {
 		 * @return The tensor with the expected shape
 		 */
 		Tensor deduce_result() const { 
-            SPY_ASSERT_FMT(input.size() == 1, "Expecct the number of operands to be 1 (cur: {})", input.size());	
+            SPY_ASSERT_FMT(input.size() == 1, "Expect the number of operands to be 1 (cur: {})", input.size());
 
 			const Tensor &operand_0 = get_tensor_from_node(input[0]);
 

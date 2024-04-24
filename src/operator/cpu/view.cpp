@@ -83,7 +83,7 @@ namespace spy::cpu {
                     quantize_inner<NumberType::Q8_0, NumberType::FP32>(src_ptr, dst_ptr + res_row_size * row_idx, ne00 / get_block_size(NumberType::Q8_0));
                 } break;
                 default:
-                    SPY_ASSERT_FMT(false, "Unimplemented get row operaotr {} -> {}",
+                    SPY_ASSERT_FMT(false, "Unimplemented get row operator {} -> {}",
                         enum_name(type_0), enum_name(type_res)
                     );
                 }
@@ -113,7 +113,7 @@ namespace spy::cpu {
 
             const void *src_ptr     = operand.get({0, i01, i02, i03});
 
-            if (operand.is_continugous()) {
+            if (operand.is_continuous()) {
                 const void *src_end_ptr = operand.get({ne00, i01, i02, i03});
 
                 if (shape_operand == shape_res) {
@@ -140,11 +140,11 @@ namespace spy::cpu {
                             );
                             break;
                         default:
-                            SPY_ASSERT_FMT(false, "Unimplement dup operator for {} -> {}", 
+                            SPY_ASSERT_FMT(false, "Unimplemented dup operator for {} -> {}",
                                 enum_name(type_operand), enum_name(type_result));
                         }
                     }                     
-                } else if (result.is_continugous()) {
+                } else if (result.is_continuous()) {
                     const size_t dst_row_size = get_row_size(type_result, ne00);
                     uint8_t *dst_ptr = result.get<uint8_t>() + dst_row_size * row_idx;
                     

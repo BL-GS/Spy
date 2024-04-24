@@ -15,8 +15,7 @@
 namespace spy {
 
     enum class CPUBackendPolicy {
-        Default,
-        Unknown
+        Default
     };
 
     class CPUBackendFactory {

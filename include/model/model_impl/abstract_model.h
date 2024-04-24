@@ -121,7 +121,7 @@ namespace spy {
 				hyper_param_.rope_freq_base = context.find_gguf_value_option<float>(LLMKey::ROPE_FREQ_BASE, 10000.0F);
 			}
 
-			if (hyper_param_.rope_scaling_type == ModelRopeScalingType::Unspeicific) {
+			if (hyper_param_.rope_scaling_type == ModelRopeScalingType::Unspecified) {
 				hyper_param_.rope_scaling_type = 
                     HyperParam::parse_rope_scaling_type(context.find_gguf_value_option<std::string>(LLMKey::ROPE_SCALING_TYPE, "linear"));
 			}

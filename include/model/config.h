@@ -25,7 +25,7 @@ namespace spy {
 					.tensor_fmt_array  = []() constexpr{
 						std::array<std::string_view, ModelArchitectureTable::NUM_TENSOR_TYPE> res;
 						res.fill("");
-						res[static_cast<size_t>(ModelTensorType::Tokenembedding)]             = "token_embd";
+						res[static_cast<size_t>(ModelTensorType::TokenEmbedding)]             = "token_embd";
 						res[static_cast<size_t>(ModelTensorType::OutputNorm)]                = "output_norm";
 						res[static_cast<size_t>(ModelTensorType::Output)]                    = "output";
 						res[static_cast<size_t>(ModelTensorType::RopeFrequency)]             = "rope_freqs";
@@ -34,7 +34,7 @@ namespace spy {
 						res[static_cast<size_t>(ModelTensorType::AttentionK)]                = "blk.{}.attn_k";
 						res[static_cast<size_t>(ModelTensorType::AttentionV)]                = "blk.{}.attn_v";
 						res[static_cast<size_t>(ModelTensorType::AttentionOutput)]           = "blk.{}.attn_output";
-						res[static_cast<size_t>(ModelTensorType::AttentionRotationembedding)] = "blk.{}.attn_rot_embd";
+						res[static_cast<size_t>(ModelTensorType::AttentionRotationEmbedding)] = "blk.{}.attn_rot_embd";
 						res[static_cast<size_t>(ModelTensorType::FFNGateInp)]                = "blk.{}.ffn_gate_inp";
 						res[static_cast<size_t>(ModelTensorType::FFNNorm)]                   = "blk.{}.ffn_norm";
 						res[static_cast<size_t>(ModelTensorType::FFNGate)]                   = "blk.{}.ffn_gate";

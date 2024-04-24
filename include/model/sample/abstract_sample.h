@@ -12,15 +12,17 @@
 
 namespace spy {
 
-	class AbstractSampler {
+	class Sampler {
 	public:
-		AbstractSampler() = default;
+		Sampler() = default;
 
-		virtual ~AbstractSampler() noexcept = default;
+		virtual ~Sampler() noexcept = default;
 
 	public:
 		virtual TokenID sample(TokenCandidateArray &candidate) = 0;
-
 	};
+
+	template<SamplerType T_sampler_type>
+	struct SamplerImpl {};
 
 }  // namespace spy

@@ -192,7 +192,7 @@ namespace spy {
 					const std::string layer_suffix = " - " + std::to_string(layer_idx);
 
 					const NodeCredit attn_out = MultiHeadAttentionBlock {
-						/* Hyperparam */
+						/* Hyper param */
 						.ffn_norm_rms_eps    = metadata_.ffn_norm_rms_eps,
 						.num_embedding_head  = num_embedding_head,
 						.num_embedding_k_gqa = num_embedding_k_gqa,
@@ -245,7 +245,7 @@ namespace spy {
 	private: /* Graph component */
 		void build_input(LLAMAGraph &graph) {
 			const GGUFContext &context = *context_ptr_;
-			graph.token_embedding = create_weight_tensor(context, graph, ModelTensorType::Tokenembedding,
+			graph.token_embedding = create_weight_tensor(context, graph, ModelTensorType::TokenEmbedding,
 					2, { metadata_.num_embedding, metadata_.num_vocab }, -1, true);
 		}
 
@@ -257,7 +257,7 @@ namespace spy {
 			graph.output = create_weight_tensor(context, graph, ModelTensorType::Output,
 					2, { metadata_.num_embedding, metadata_.num_vocab }, -1, true);
 			if (graph.output == Graph::INVALID_NODE_CREDIT) {
-				graph.output = create_weight_tensor(context, graph, ModelTensorType::Tokenembedding,
+				graph.output = create_weight_tensor(context, graph, ModelTensorType::TokenEmbedding,
 					2, { metadata_.num_embedding, metadata_.num_vocab }, -1, true);
 			}
 		}

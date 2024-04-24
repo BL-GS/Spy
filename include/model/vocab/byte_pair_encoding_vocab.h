@@ -72,8 +72,8 @@ namespace spy {
 			for (const auto &fragment: fragment_buffer) {
 				if (fragment.type == FragmentBufferType::RawText) {
 					// without adding this leading whitespace, we do not get the same results as the original tokenizer
-					auto raw_text = fragment.raw_text.substr(fragment.offset, fragment.length);
-					tokenize_inner(raw_text, output);
+					auto new_raw_text = fragment.raw_text.substr(fragment.offset, fragment.length);
+					tokenize_inner(new_raw_text, output);
 				} else {
 					output.push_back(fragment.token_id);
 				}
@@ -141,7 +141,7 @@ namespace spy {
 					add_new_bigram(bigram.left, left_symbol.next);  // right side of current symbol
 				}
 
-				// add the fnished tokens to the final list keeping correct order for next and prev
+				// add the finished tokens to the final list keeping correct order for next and prev
 				for (auto & sym : symbols) {
 					if (sym.n > 0) {
 						sym.prev = final_prev_index;
@@ -168,9 +168,8 @@ namespace spy {
 					const auto token = token_id_table.find(str);
 
 					if (token == token_id_table.end()) {
-						for (auto j = str.begin(); j != str.end(); ++j) {
-							std::string byte_str(1, *j);
-							auto token_multibyte = token_id_table.find(byte_str);
+						for (char byte_str : str) {
+							auto token_multibyte = token_id_table.find({byte_str});
 							if (token_multibyte == token_id_table.end()) {
 								throw std::runtime_error("ERROR: byte not found in vocab");
 							}
@@ -284,7 +283,7 @@ namespace spy {
 						split_condition = true;
 					}
 					if (split_condition) {
-						if (token.size() != 0) {
+						if (!token.empty()) {
 							bpe_words.emplace_back(token); // push previous content as token
 						}
 						token = utf_char + utf_char_next;
@@ -305,7 +304,7 @@ namespace spy {
 					}
 					if (split_condition) {
 						// current token + next token can be defined
-						if (token.size() != 0) {
+						if (!token.empty()) {
 							bpe_words.emplace_back(token); // push previous content as token
 						}
 						token = utf_char + utf_char_next + utf_char_next_next;
@@ -317,17 +316,17 @@ namespace spy {
 				}
 
 				if (!split_condition && !collecting) {
-					if (unicode_cpt_type(utf_char) == CodePointType::Letter || (token.size() == 0 && utf_char == " " && unicode_cpt_type(utf_char_next) == CodePointType::Letter)) {
+					if (unicode_cpt_type(utf_char) == CodePointType::Letter || (token.empty() && utf_char == " " && unicode_cpt_type(utf_char_next) == CodePointType::Letter)) {
 						collecting_letter = true;
 						collecting        = true;
 					}
-					else if (unicode_cpt_type(utf_char) == CodePointType::Digit || (token.size() == 0 && utf_char == " " && unicode_cpt_type(utf_char_next) == CodePointType::Digit)) {
+					else if (unicode_cpt_type(utf_char) == CodePointType::Digit || (token.empty() && utf_char == " " && unicode_cpt_type(utf_char_next) == CodePointType::Digit)) {
 						collecting_numeric = true;
 						collecting         = true;
 					}
 					else if (
 						((unicode_cpt_type(utf_char) != CodePointType::Letter && unicode_cpt_type(utf_char) != CodePointType::Digit) && (unicode_cpt_type(utf_char) != CodePointType::WhiteSpace)) ||
-						(token.size() == 0 && utf_char == " " && unicode_cpt_type(utf_char_next) != CodePointType::Letter && unicode_cpt_type(utf_char_next) != CodePointType::Digit && unicode_cpt_type(utf_char_next) != CodePointType::WhiteSpace)
+						(token.empty() && utf_char == " " && unicode_cpt_type(utf_char_next) != CodePointType::Letter && unicode_cpt_type(utf_char_next) != CodePointType::Digit && unicode_cpt_type(utf_char_next) != CodePointType::WhiteSpace)
 						) {
 						collecting_special = true;
 						collecting = true;
@@ -355,13 +354,13 @@ namespace spy {
 					}
 				}
 
-				if (utf_char_next == "") {
+				if (utf_char_next.empty()) {
 					split_condition = true; // final
 					token += utf_char;
 				}
 
 				if (split_condition) {
-					if (token.size() != 0) {
+					if (!token.empty()) {
 						bpe_words.emplace_back(token);
 					}
 					token                           = utf_char;
@@ -388,7 +387,7 @@ namespace spy {
 		}
 
 		int find_bpe_rank(const std::string & token_left, const std::string & token_right) const {
-        	SPY_ASSERT(token_left.find(' ') 		== std::string::npos);
+        	SPY_ASSERT(token_left.find(' ') 	== std::string::npos);
 			SPY_ASSERT(token_left.find('\n') 	== std::string::npos);
 			SPY_ASSERT(token_right.find(' ') 	== std::string::npos);
 			SPY_ASSERT(token_right.find('\n') 	== std::string::npos);
