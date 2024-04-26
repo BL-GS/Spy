@@ -1,15 +1,20 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.20)
 
+SET(SPY_DEFAULT_CUDA_ARCHITECTURES 75)
+IF (NOT DEFINED SPY_CUDA_ARCHITECTURES)
+    MESSAGE(STATUS "Not specify cuda architecture, use ${SPY_DEFAULT_CUDA_ARCHITECTURES} by default")
+    SET(CMAKE_CUDA_ARCHITECTURES ${SPY_DEFAULT_CUDA_ARCHITECTURES})
+ELSE()
+    SET(CMAKE_CUDA_ARCHITECTURES ${SPY_CUDA_ARCHITECTURES})
+ENDIF()
+
+
 PROJECT(spy_gpu CXX CUDA)
 
 SET(CMAKE_CUDA_STANDARD 20)
 SET(CMAKE_CXX_STANDARD 20)
 
-SET(CMAKE_CUDA_FLAGS ${CMAKE_CUDA_FLAGS} "-std=c++20")
-
-IF (NOT ${spy_interface})
-    MESSAGE(FATAL_ERROR "Variable spy_interface hasn't been set")
-ENDIF ()
+SET(CMAKE_CUDA_FLAGS            ${CMAKE_CUDA_FLAGS} "-std=c++20")
 
 # Libraries --------------------------------------------------------------
 FIND_PACKAGE(fmt	 	CONFIG REQUIRED)
@@ -31,6 +36,5 @@ TARGET_LINK_LIBRARIES(${PROJECT_NAME} PRIVATE
     fmt::fmt-header-only
     magic_enum::magic_enum
     # Internal library
-    ${spy_interface}
     ${cuda_target}
 )

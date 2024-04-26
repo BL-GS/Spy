@@ -2,6 +2,7 @@
 
 #include <cstddef>
 
+#include "util/enum.h"
 #include "util/logger.h"
 
 namespace spy {
@@ -38,52 +39,14 @@ namespace spy {
 		INT32 = 26,
 		INT64 = 27,
 		FP64  = 28,
-		IQ1_M   = 29,
-		End
+		IQ1_M = 29
 	};
 
-	#define NUMBER_TYPE_MAP(map)     \
-			map(NumberType::FP32)    \
-			map(NumberType::FP16)    \
-			map(NumberType::Q4_0)    \
-			map(NumberType::Q4_1)    \
-			map(NumberType::Q5_0)    \
-			map(NumberType::Q5_1)    \
-			map(NumberType::Q8_0)    \
-			map(NumberType::Q8_1)    \
-			map(NumberType::Q2_K)    \
-			map(NumberType::Q3_K)    \
-			map(NumberType::Q4_K)    \
-			map(NumberType::Q5_K)    \
-			map(NumberType::Q6_K)    \
-			map(NumberType::Q8_K)    \
-			map(NumberType::IQ2_XXS)        \
-			map(NumberType::IQ2_XS)         \
-			map(NumberType::IQ3_XXS)        \
-			map(NumberType::IQ1_S)          \
-			map(NumberType::IQ4_NL)         \
-			map(NumberType::IQ3_S)          \
-			map(NumberType::IQ2_S)          \
-			map(NumberType::IQ4_XS)         \
-			map(NumberType::IQ1_M)          \
-			map(NumberType::INT8)           \
-			map(NumberType::INT16)          \
-			map(NumberType::INT32)          \
-			map(NumberType::INT64)          \
-			map(NumberType::FP64)
+	template<class T_Enum, std::underlying_type_t<T_Enum> T_end = 256, std::underlying_type_t<T_Enum> T_begin = 0>
+		requires std::is_enum_v<T_Enum>
+	using EnumMapperAlias = EnumMapper<T_Enum, static_cast<T_Enum>(T_end), static_cast<T_Enum>(T_begin)>;
 
-	template<template<NumberType> class T_op>
-	constexpr auto number_type_switch(const NumberType number_type) {
-#define NUMBER_TYPE_CASE(type) \
-		case type: return T_op<type>()();
-
-		switch (number_type) {
-			NUMBER_TYPE_MAP(NUMBER_TYPE_CASE)
-		}
-
-		SPY_ASSERT(false, "Unknown type of number");
-#undef NUMBER_TYPE_CASE
-	}
+	using NumberTypeMapper = EnumMapperAlias<NumberType, 29, 0>;
 
 #ifdef QK_K_64
     constexpr size_t SIZE_SUPER_BLOCK = 64;

@@ -72,3 +72,4 @@ endif()
 
 add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:${ARCH_FLAGS}>")
 add_compile_options("$<$<COMPILE_LANGUAGE:C>:${ARCH_FLAGS}>")
+add_compile_options("$<$<COMPILE_LANGUAGE:CUDA>:${ARCH_FLAGS}>")

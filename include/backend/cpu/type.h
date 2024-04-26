@@ -7,7 +7,7 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <magic_enum.hpp>
+#include <magic_enum_switch.hpp>
 
 #include "backend/config.h"
 #include "backend/cpu/operator_impl.h"

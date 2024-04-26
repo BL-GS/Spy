@@ -1,7 +1,6 @@
 #pragma once
 
-#include <magic_enum_switch.hpp>
-
+#include "number/number.h"
 #include "number/quantization_impl/type.h"
 #include "number/quantization_impl/q4_0.h"
 #include "number/quantization_impl/q4_1.h"
@@ -23,13 +22,9 @@ namespace spy {
 	}
 
 	inline static void auto_quantize_inner(NumberType type_0, const void *src, NumberType type_1, void *dst, size_t num) {
-		using magic_enum::enum_switch;
-
-		const auto transform_func = enum_switch([type_1](auto T_type_0){
-			return enum_switch([T_type_0](auto T_type_1){
-				return quantize_inner<T_type_0, T_type_1>;
-			}, type_1);
-		}, type_0);
+		const auto transform_func = NumberTypeMapper::product_map([](const auto T_type_0, const auto T_type_1){
+			return quantize_inner<T_type_0, T_type_1>;
+		}, type_0, type_1);
 		transform_func(src, dst, num);
 	}
 

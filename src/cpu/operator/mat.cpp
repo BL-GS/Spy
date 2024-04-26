@@ -1,6 +1,5 @@
 #include <immintrin.h>
 #include <magic_enum.hpp>
-#include <magic_enum_switch.hpp>
 
 #include "util/logger.h"
 #include "number/tensor.h"
@@ -13,7 +12,6 @@
 namespace spy::cpu {
 
     using magic_enum::enum_name;
-    using magic_enum::enum_switch;
 
 	size_t OperatorMatMulImpl::get_task_num([[maybe_unused]] const CPUBackend *backend_ptr, const OperatorNode *op_node) {
 		const auto &operand_0	= op_node->get_input<DataNode>(0).tensor;
@@ -77,11 +75,9 @@ namespace spy::cpu {
         const auto matmul_without_buffer = [&](){
             SPY_ASSERT_FMT(type_0 == type_1, "Expect the operands to be of the same type: {}, {}", enum_name(type_0), enum_name(type_1));
 
-            const auto dot_func = enum_switch([type_1](auto T_type_0) {
-                return enum_switch([T_type_0](auto T_type_1) {
-                    return Dot<T_type_0, T_type_1>::exec_raw;
-                }, type_1);
-            }, type_0);
+            const auto dot_func = NumberTypeMapper::product_map([](const auto T_type_0, const auto T_type_1){
+                return Dot<T_type_0, T_type_1>::exec_raw;
+            }, type_0, type_1);
 
             for (size_t col_idx = param.tid; col_idx < num_dst; col_idx += param.concurrency) {
                 const size_t i03 = col_idx / (ne02 * ne11 * ne01);
@@ -97,11 +93,9 @@ namespace spy::cpu {
         };
 
         const auto matmul_with_buffer = [&](NumberType type_mid){
-            const auto dot_func = enum_switch([type_mid](auto T_type_0) {
-                return enum_switch([T_type_0](auto T_type_1) {
-                    return Dot<T_type_0, T_type_1>::exec_raw;
-                }, type_mid);
-            }, type_0);
+            const auto dot_func = NumberTypeMapper::product_map([](const auto T_type_0, const auto T_type_1){
+                return Dot<T_type_0, T_type_1>::exec_raw;
+            }, type_0, type_mid);
 
             // Init buffer
             auto *mat_node_ptr = static_cast<OperatorDefinition<OperatorType::MatMul> *>(op_node);
