@@ -48,6 +48,66 @@ namespace spy {
 		Quantize
 	};
 
+#define OPERATOR_TYPE_MAP(map)              \
+		map(OperatorType::Nop)              \
+		map(OperatorType::Dup)              \
+		map(OperatorType::Copy)             \
+		map(OperatorType::View)             \
+		map(OperatorType::Reshape)          \
+		map(OperatorType::MaskedCopy)       \
+		map(OperatorType::MaskedSelect)     \
+		map(OperatorType::GetRow)           \
+		map(OperatorType::Transpose)        \
+		map(OperatorType::Permute)          \
+		map(OperatorType::Contiguous)       \
+		map(OperatorType::Relu)             \
+		map(OperatorType::Silu)             \
+		map(OperatorType::Gelu)             \
+		map(OperatorType::Max)              \
+		map(OperatorType::Min)              \
+		map(OperatorType::Softmax)          \
+                                            \
+		map(OperatorType::Add)              \
+		map(OperatorType::Sub)              \
+		map(OperatorType::Mul)              \
+		map(OperatorType::Div)              \
+		map(OperatorType::Mod)              \
+		map(OperatorType::MatMul)           \
+                                            \
+		map(OperatorType::Sum)              \
+                                            \
+		map(OperatorType::Norm)             \
+		map(OperatorType::NormRMS)          \
+		map(OperatorType::Rope)             \
+	                                        \
+		map(OperatorType::Quantize)
+
+	template<template<OperatorType> class T_func>
+	constexpr auto operator_type_switch(const OperatorType op_type) {
+#define OPERATOR_TYPE_CASE(type) \
+		case type: return T_func<type>()();
+
+		switch (op_type) {
+			OPERATOR_TYPE_MAP(OPERATOR_TYPE_CASE)
+		}
+
+		SPY_ASSERT(false, "Unknown type of number");
+#undef OPERATOR_TYPE_CASE
+	}
+
+	template<template<OperatorType> class T_func, class ...Args>
+	constexpr auto operator_type_switch(const OperatorType op_type, Args &&...args) {
+#define OPERATOR_TYPE_CASE(type) \
+		case type: return T_func<type>()(std::forward<Args>(args)...);
+
+		switch (op_type) {
+			OPERATOR_TYPE_MAP(OPERATOR_TYPE_CASE)
+		}
+
+		SPY_ASSERT(false, "Unknown type of number");
+#undef OPERATOR_TYPE_CASE
+	}
+
 	template<OperatorType T_op_type>
 	struct OperatorNodeImpl { };
 

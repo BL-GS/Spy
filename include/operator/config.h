@@ -33,13 +33,13 @@ namespace spy {
 		/// The id of thread executing the operator
 		int tid;
 		/// The buffer
-		std::span<uint8_t> buffer_span;
+		std::span<uint8_t> buffer;
 	};
 
 	/*!
 	 * @brief Definition of operator
-	 * @note When implementing the definition, it should be drived from OperatorNode.
-	 * @note The common type defintion do not derive from OperatorNode to check the integration at compile time.
+	 * @note When implementing the definition, it should be derived from OperatorNode.
+	 * @note The common type definition do not derive from OperatorNode to check the integration at compile time.
 	 */
 	template<OperatorType T_op_type>
 	struct OperatorDefinition {

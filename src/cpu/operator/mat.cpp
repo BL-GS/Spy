@@ -72,7 +72,7 @@ namespace spy::cpu {
 		const size_t num_dst         = shape_res.total_element();
         const size_t row_size 		 = get_row_size(shape_1.number_type, ne10);
 
-        const bool has_buffer = !param.buffer_span.empty();
+        const bool has_buffer = !param.buffer.empty();
 
         const auto matmul_without_buffer = [&](){
             SPY_ASSERT_FMT(type_0 == type_1, "Expect the operands to be of the same type: {}, {}", enum_name(type_0), enum_name(type_1));
@@ -110,8 +110,8 @@ namespace spy::cpu {
             const int num_src1_row       = shape_1.num_row();
             const size_t buffer_row_size = get_row_size(type_mid, ne10);
 
-            SPY_ASSERT_FMT(num_src1_row * buffer_row_size <= param.buffer_span.size(), 
-                "The size of buffer is less than that needed (buffer: {}, need: {})", param.buffer_span.size(), num_src1_row * buffer_row_size);
+            SPY_ASSERT_FMT(num_src1_row * buffer_row_size <= param.buffer.size(),
+                "The size of buffer is less than that needed (buffer: {}, need: {})", param.buffer.size(), num_src1_row * buffer_row_size);
 
             while (true) {
                 int cur_src1_row = buffer_init_counter++;
@@ -122,7 +122,7 @@ namespace spy::cpu {
                 const size_t i11 = cur_src1_row %  ne11;
 
                 const void *src1_row = operand_1.get<const void>({0, i11, i12, i13});
-                void *buffer_row     = param.buffer_span.data() + cur_src1_row * buffer_row_size;
+                void *buffer_row     = param.buffer.data() + cur_src1_row * buffer_row_size;
                 auto_quantize_inner(type_1, src1_row, type_mid, buffer_row, ne10 / get_block_size(type_1));
 
                 ++buffer_done_counter;
@@ -136,7 +136,7 @@ namespace spy::cpu {
                 const size_t i11 = col_idx % (ne11 * ne01) / ne01;
                 const size_t i01 = col_idx % (ne11 * ne01) % ne01;
 
-                const void *src1_col = param.buffer_span.data() + (i11 + i02 * ne11 + i03 * ne11 * ne12) * buffer_row_size;
+                const void *src1_col = param.buffer.data() + (i11 + i02 * ne11 + i03 * ne11 * ne12) * buffer_row_size;
                 const void *src0_row = operand_0.get<const void>({0, i01, i02, i03});
                 float *dst_element   = result.get<float>({i01, i11, i02, i03});
                       *dst_element   = dot_func(src0_row, src1_col, ne00);

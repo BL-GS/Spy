@@ -41,8 +41,8 @@ namespace spy {
 		 * @brief By default, we generate a shape for contiguous structure
 		 */
 		constexpr Shape(size_t dim, const DimensionArray &num_element, const NumberType number_type): 
-				number_type(number_type), dim(dim), elements(num_element) {
-			SPY_ASSERT_FMT(0 <= dim && dim <= MAX_DIM, "The dimension should be within the range (0, {}] (cur: {})", MAX_DIM, dim);
+				number_type(number_type), dim(dim), elements(num_element), bytes{0} {
+			SPY_ASSERT_FMT(dim <= MAX_DIM, "The dimension should be within the range (0, {}] (cur: {})", MAX_DIM, dim);
 
 			const size_t type_size = get_type_size(number_type);
 			// Expect the high dimension to be 1
@@ -60,13 +60,10 @@ namespace spy {
 		 * @brief By default, we generate a shape for contiguous structure
 		 */
 		constexpr Shape(const std::initializer_list<size_t> &num_element, const NumberType number_type): 
-				number_type(number_type), dim(num_element.size()) {
-			SPY_ASSERT_FMT(0 <= dim && dim <= MAX_DIM, "The dimension should be within the range (0, {}] (cur: {})", MAX_DIM, dim);
+				number_type(number_type), dim(num_element.size()), elements{0}, bytes{0} {
+			SPY_ASSERT_FMT(dim <= MAX_DIM, "The dimension should be within the range (0, {}] (cur: {})", MAX_DIM, dim);
 
-			for (size_t i = 0; auto ne: num_element) {
-				elements[i] = ne;
-				++i;
-			}
+			std::copy(num_element.begin(), num_element.end(), elements.begin());
 			for (size_t i = dim; i < MAX_DIM; ++i) {
 				// Expect the high dimension to be 1
 				elements[i] = 1;
@@ -84,24 +81,18 @@ namespace spy {
 
 		constexpr Shape(size_t dim, const DimensionArray &num_element, const DimensionArray &num_byte, const NumberType number_type):
 				number_type(number_type), dim(dim), elements(num_element), bytes(num_byte) {
-			SPY_ASSERT_FMT(0 <= dim && dim <= MAX_DIM, "The dimension should be within the range (0, {}] (cur: {})", MAX_DIM, dim);
+			SPY_ASSERT_FMT(dim <= MAX_DIM, "The dimension should be within the range (0, {}] (cur: {})", MAX_DIM, dim);
 			// Expect the high dimension to be 1
 			std::fill(elements.begin() + dim, elements.end(), 1);
 			std::fill(bytes.begin() + dim, bytes.end(), elements[dim - 1] * num_byte[dim - 1]);
 		}
 
 		constexpr Shape(const std::initializer_list<size_t> &num_element, const std::initializer_list<size_t> &num_byte, const NumberType number_type):
-				number_type(number_type), dim(num_element.size()) {
-			SPY_ASSERT_FMT(0 <= dim && dim <= MAX_DIM, "The dimension should be within the range (0, {}] (cur: {})", MAX_DIM, dim);
+				number_type(number_type), dim(num_element.size()), elements{0}, bytes{0} {
+			SPY_ASSERT_FMT(dim <= MAX_DIM, "The dimension should be within the range (0, {}] (cur: {})", MAX_DIM, dim);
 
-			for (size_t i = 0; auto ne: num_element) {
-				elements[i] = ne;
-				++i;
-			}
-			for (size_t i = 0; auto nb: num_byte) {
-				bytes[i] = nb;
-				++i;
-			}
+			std::copy(num_element.begin(), num_element.end(), elements.begin());
+			std::copy(num_byte.begin(), num_byte.end(), bytes.begin());
 
 			const size_t total_size = elements[dim - 1] * bytes[dim - 1];
 			for (size_t i = dim; i < MAX_DIM; ++i) {
@@ -114,7 +105,10 @@ namespace spy {
 
 		Shape &operator =(const Shape &other) = default;
 
-		bool operator ==(const Shape &other) const = default;
+		bool operator ==(const Shape &other) const {
+			return number_type == other.number_type && dim == other.dim &&
+				elements == other.elements && bytes == other.bytes;
+		};
 
 	public:
 		void permute(const DimensionArray &axis) {
@@ -267,49 +261,6 @@ namespace spy {
 		bool			is_transposed()   const { return shape_.is_transposed();	}
 		bool			is_permuted()	  const { return shape_.is_permuted();		}
 
-	public: /* Utility */
-		template<NumberType T_type>
-		std::string to_string() {
-			using Number = NumberMetadata<T_type>::BlockType;
-
-			std::stringstream ss;
-			ss << '[';
-
-			const Shape &cur_shape = get_shape();
-			const size_t cur_dim   = get_dim();
-
-			std::array<size_t, MAX_DIM> iter_array{0};
-
-			for (size_t i = 0; i < cur_dim - 1; ++i) { ss << "["; }
-			int cur_iter_idx = 0;
-			while (true) {
-				size_t &cur_iter = iter_array[cur_iter_idx];
-				// Print row directly
-				if (cur_iter_idx == 0) {
-					cur_iter = 0;
-					const auto *cur_row_ptr = static_cast<const Number *>(get(iter_array));
-						
-					for (cur_iter = 0; cur_iter < cur_shape.elements[0]; ++cur_iter) {
-						if (cur_iter != 0) { ss << ", "; }
-						ss << cur_row_ptr[cur_iter];
-					}
-				}
-				
-				// If reach the bound
-				if (cur_iter == cur_shape.elements[cur_iter_idx]) {
-					cur_iter = 0;
-					++cur_iter_idx;
-					ss << "],\n";
-
-					if (cur_iter_idx == cur_dim) { break; }
-					++iter_array[cur_iter_idx];
-				} else {
-					--cur_iter_idx;
-					ss << "[";
-				}
-			}
-			return ss.str();
-		}
 	};
 
 }  // namespace spy

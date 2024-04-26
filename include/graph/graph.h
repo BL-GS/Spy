@@ -39,7 +39,7 @@ namespace spy {
 		std::vector<BaseNode *> output;
 
 	public:
-		BaseNode(): credit(-1), name("unnamed") {}
+		BaseNode(): credit(), name("unnamed") {}
 
 		BaseNode(NodeCredit credit, const std::string_view name): credit(credit), name(name) {}
 
@@ -54,15 +54,13 @@ namespace spy {
 		 * @brief Connect with input node
 		 * @param in_node_ptr: The pointer of the input node
 		 */
-		template<class T>
-		void input_connect(T &in_node_ptr)   { input.push_back(std::to_address(in_node_ptr));    }
+		void input_connect(BaseNode *in_node_ptr)   { input.push_back(in_node_ptr);    }
 
 		/*!
 		 * @brief Connect with output node
 		 * @param out_node_ptr: The pointer of the output node
 		 */
-		template<class T>
-		void output_connect(T &out_node_ptr) { output.push_back(std::to_address(out_node_ptr));  }
+		void output_connect(BaseNode *out_node_ptr) { output.push_back(out_node_ptr);  }
 
 		/*!
 		 * @brief Get all input nodes
@@ -186,8 +184,8 @@ namespace spy {
 			auto &from_node_ptr = node_storage_[from];
 			auto &to_node_ptr   = node_storage_[to];
 
-			from_node_ptr->output_connect(to_node_ptr);
-			to_node_ptr->input_connect(from_node_ptr);
+			from_node_ptr->output_connect(to_node_ptr.get());
+			to_node_ptr->input_connect(from_node_ptr.get());
 
 			dep_count_[to]++;
 			back_dep_count_[from]++;
@@ -225,7 +223,7 @@ namespace spy {
 
 		template<class T_Node = BaseNode>
 		T_Node *get_node_content(NodeCredit node_credit) const { 
-			return dynamic_cast<T_Node *>(std::to_address(node_storage_[node_credit]));
+			return dynamic_cast<T_Node *>(node_storage_[node_credit].get());
 		}
 	};
 

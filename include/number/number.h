@@ -31,18 +31,26 @@ inline uint16_t spy_fp32_to_fp16(const float x) { return _cvtss_sh(x, 0); }
 	 */
 
 	template<NumberType T_type>
-	using BlockType = NumberMetadata<T_type>::BlockType;
+	using BlockType = typename NumberMetadata<T_type>::BlockType;
+
+	template<NumberType T_number_type>
+	struct TypeSizeExtractor {
+		constexpr auto operator()() const { return NumberMetadata<T_number_type>::TYPE_SIZE; };
+	};
 
 	/*!
 	 * @brief Get the block size in bytes of the number.
 	 * Especially for quantized number, there are several elements clustered as a block. This function returns the size of the block in bytes.
 	 * As for unquantized number, it acts like `sizeof(element)`
 	 */
-	inline constexpr size_t get_type_size(NumberType number_type) { 
-		return magic_enum::enum_switch([] (auto T_type) {
-			return NumberMetadata<T_type>::TYPE_SIZE;
-		}, number_type);
+	inline constexpr size_t get_type_size(NumberType number_type) {
+		return number_type_switch<TypeSizeExtractor>(number_type);
 	}
+
+	template<NumberType T_number_type>
+	struct BlockSizeExtractor {
+		constexpr auto operator()() const { return NumberMetadata<T_number_type>::BLOCK_SIZE; };
+	};
 
 	/*!
 	 * @brief Get the number of elements in the number block.
@@ -51,14 +59,12 @@ inline uint16_t spy_fp32_to_fp16(const float x) { return _cvtss_sh(x, 0); }
 	 * As for unquantized number, it returns 1.
 	 */
 	inline constexpr size_t get_block_size(NumberType number_type) {
-		return magic_enum::enum_switch([] (auto T_type) {
-			return NumberMetadata<T_type>::BLOCK_SIZE;
-		}, number_type);
+		return number_type_switch<BlockSizeExtractor>(number_type);
 	}
 
 	/*!
 	 * @brief Get the size in bytes of the data row.
-	 * Especially for quantized number, there are serveral elements clustered as a block.
+	 * Especially for quantized number, there are several elements clustered as a block.
 	 * And we need to consider the number of block (num_element / get_block_size(number_type)) and the size in bytes of block.
 	 * As for unquantized number, it acts like `num_element` * `sizeof(element)`
 	 */
@@ -67,23 +73,29 @@ inline uint16_t spy_fp32_to_fp16(const float x) { return _cvtss_sh(x, 0); }
 	}
 
 
+	template<NumberType T_number_type>
+	struct TypeNameExtractor {
+		constexpr auto operator()() const { return NumberMetadata<T_number_type>::NAME; };
+	};
+
 	/*!
-	 * @brief Get the name of the nubmer type
+	 * @brief Get the name of the number type
 	 */
 	inline constexpr std::string_view get_type_name(NumberType number_type) {
-		return magic_enum::enum_switch([] (auto T_type) {
-			return NumberMetadata<T_type>::NAME;
-		}, number_type);
+		return number_type_switch<TypeNameExtractor>(number_type);
 	}
 
+
+	template<NumberType T_number_type>
+	struct IsQuantizedExtractor {
+		constexpr auto operator()() const { return NumberMetadata<T_number_type>::IS_QUANTIZATION; };
+	};
 
 	/*!
 	 * @brief Whether the number type is quantized
 	 */
 	inline constexpr bool is_quantized(NumberType number_type) {
-		return magic_enum::enum_switch([] (auto T_type) {
-			return NumberMetadata<T_type>::IS_QUANTIZATION;
-		}, number_type);
+		return number_type_switch<IsQuantizedExtractor>(number_type);
 	}
 
 	/*!

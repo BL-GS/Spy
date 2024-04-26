@@ -82,7 +82,7 @@ namespace spy {
 					const OperatorEnvParam param {
 						.concurrency = 1,
 						.tid 		 = 0,
-						.buffer_span = buffer_span
+						.buffer      = buffer_span
 					};
 					backend_ptr->execute(param, cur_node_ptr);
 					op_step(cur_node_ptr, buffer_span, backend_ptr);
@@ -95,7 +95,7 @@ namespace spy {
 						const OperatorEnvParam param {
 							.concurrency = concurrency,
 							.tid		 = tid,
-							.buffer_span = buffer_span
+							.buffer      = buffer_span
 						};
 						backend_ptr->execute(param, cur_node_ptr);
 
