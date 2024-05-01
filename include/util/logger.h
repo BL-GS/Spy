@@ -12,15 +12,6 @@
 #include <fmt/color.h>
 #include <fmt/format.h>
 
-#ifdef _WIN32
-	#define WIN32_LEAN_AND_MEAN
-	#ifndef NOMINMAX
-		#define NOMINMAX
-	#endif
-	#include <windows.h>
-	#include <io.h>
-#endif
-
 #include "util/exception.h"
 
 namespace spy {
@@ -30,26 +21,6 @@ namespace spy {
 		Execute		= true,
 		Memory		= true
 	};
-
-#ifdef _WIN32
-	inline static std::string system_error() {
-		DWORD err = GetLastError();
-		LPSTR buf;
-		size_t size = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-			nullptr, err, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), reinterpret_cast<LPSTR>(&buf), 0, nullptr);
-		if (size == 0) {
-			return "FormatMessageA failed";
-		}
-		std::string ret(buf, size);
-		LocalFree(buf);
-
-		return ret;
-	}
-#else
-	inline static std::string system_error() {
-		return fmt::format("[errno: {}]: {}", errno, strerror(errno));
-	}
-#endif
 
 	#define SPY_INFO(output_fmt) \
 		do { fmt::print("[INFO]: " output_fmt "\n"); } while (0)
@@ -76,13 +47,13 @@ namespace spy {
 		do { fmt::print(fg(fmt::color::red), 	"[FATAL]: " output_fmt "\n", __VA_ARGS__); throw SpyAssertException(output_fmt); } while (0)
 
 
-	#define SPY_ASSERT(expression, ...)     \
-		do {                            \
-			if (!(expression)) {        \
+	#define SPY_ASSERT(expression, ...)     	\
+		do {                            		\
+			if (!(expression)) {        		\
 				fmt::print(fg(fmt::color::red), "Assert fault[{}:{}]: " #expression "\n", __FILE__, __LINE__); 	\
 				fmt::print(fg(fmt::color::red), "System: {}", system_error());									\
-				SPY_FATAL(__VA_ARGS__);     \
-			}                           	\
+				SPY_FATAL(__VA_ARGS__ "");     	\
+			}                           		\
 		} while (0)
 
 	#define SPY_ASSERT_FMT(expression, output_fmt, ...)    \
@@ -93,6 +64,26 @@ namespace spy {
 				SPY_FATAL_FMT(output_fmt, __VA_ARGS__);    \
 			}                                   		   \
 		} while (0)
+
+
+	#define SPY_ASSERT_NOEXCEPTION(expression, ...)     \
+		do {                            \
+			if (!(expression)) {        \
+				fmt::print(fg(fmt::color::red), "Assert fault[{}:{}]: " #expression "\n", __FILE__, __LINE__); 	\
+				fmt::print(fg(fmt::color::red), "System: {}", system_error());									\
+				fmt::print(fg(fmt::color::red), "[FATAL]: " __VA_ARGS__ "\n");     								\
+			}                           																		\
+		} while (0)
+
+	#define SPY_ASSERT_FMT_NOEXCEPTION(expression, output_fmt, ...)    \
+		do {                                    \
+			if (!(expression)) {                \
+				fmt::print(fg(fmt::color::red), "Assert fault[{}:{}]: " #expression "\n", __FILE__, __LINE__);  \
+				fmt::print(fg(fmt::color::red), "System: {}", system_error());									\
+				fmt::print(fg(fmt::color::red), "[FATAL]: " output_fmt "\n", __VA_ARGS__);     					\
+			}                                   		   														\
+		} while (0)
+
 
 #ifdef NDEBUG
 	#define SPY_DEBUG(output_fmt)
@@ -124,7 +115,7 @@ namespace spy {
 	#define SPY_ASSERT_DEBUG(expression, ...)                                                                \
 		do {                                                                                                 \
 			if (!(expression)) {                                                                             \
-				SPY_ERROR_FMT("Assert fault[{}:{}]: " #expression "\n", __FILE__, __LINE__); 			 \
+				SPY_ERROR_FMT("Assert fault[{}:{}]: " #expression "\n", __FILE__, __LINE__); 			 	 \
 				SPY_FATAL(__VA_ARGS__);                                                                      \
 			}                                                                                                \
 		} while (0)
@@ -132,7 +123,7 @@ namespace spy {
 	#define SPY_ASSERT_FMT_DEBUG(expression, output_fmt, ...)                                                \
 		do {                                                                                                 \
 			if (!(expression)) {                                                                             \
-				SPY_ERROR_FMT("Assert fault[{}:{}]: " #expression "\n", __FILE__, __LINE__); 		     \
+				SPY_ERROR_FMT("Assert fault[{}:{}]: " #expression "\n", __FILE__, __LINE__); 		     	 \
 				SPY_FATAL_FMT(output_fmt, __VA_ARGS__);                                                      \
 			}                                                                                                \
 		} while (0)

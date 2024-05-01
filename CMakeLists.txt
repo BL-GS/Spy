@@ -30,7 +30,7 @@ SET(spy_internal_libraries ${spy_internal_libraries} spy_interface)
 
 # Backends ---------------------------------------------------------------
 OPTION(SPY_BACKEND_CPU "Enable backend: CPU"  ON)
-OPTION(SPY_BACKEND_GPU "Enable backend: GPU"  ON)
+OPTION(SPY_BACKEND_GPU "Enable backend: GPU"  OFF)
 
 IF (${SPY_BACKEND_CPU})
 	ADD_SUBDIRECTORY(src/cpu)
@@ -43,7 +43,7 @@ IF (${SPY_BACKEND_GPU})
 ENDIF ()
 
 # Main project ----------------------------------------------------------
-ADD_EXECUTABLE(spy spy.cpp)
+ADD_EXECUTABLE(spy spy.cpp "include/util/file/file_handler.h")
 TARGET_LINK_LIBRARIES(spy PRIVATE
 	# External library
 	fmt::fmt-header-only

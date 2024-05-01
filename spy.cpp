@@ -78,10 +78,16 @@ int main(int argc, char **argv) {
 	auto sampler = SamplerFactory::build_sampler<SamplerType::Greedy>();
 	const auto &model_metadata = model_ptr->get_info();
 	// Load data
-	ModelMapper model_mapper(model_filename);
-	model_mapper.mapping(model_ptr->get_context());
+	// ModelMapper model_mapper(model_filename);
+	// model_mapper.mapping(model_ptr->get_context());
 
-	perf_timer.model_bytes = model_mapper.file.size();
+	// perf_timer.model_bytes = model_mapper.file.size();
+	// perf_timer.model_load_timer.end();
+
+	ModelLoader model_loader(model_filename);
+	size_t load_size = model_loader.load(model_ptr->get_context());
+
+	perf_timer.model_bytes = load_size;
 	perf_timer.model_load_timer.end();
 
 	/* Initialize input */
