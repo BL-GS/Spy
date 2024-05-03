@@ -20,26 +20,46 @@
             io_uring_queue_init(entries, &ring, 0);
         }
 
-        ~UringLoop() noexcept {
-            io_uring_queue_exit(&ring);
-        }
+        ~UringLoop() noexcept { io_uring_queue_exit(&ring); }
 
     public:
+		/*!
+		 * @brief Submit buffered tasks to the uring execution queue
+		 */
         void submit() { io_uring_submit(&ring); }
 
+		/*!
+		 * @brief Execute single tasks
+		 */
         void run_single();
 
+		/*!
+		 * @brief Execute several tasks and synchronize with them
+		 * @param num_task The number of tasks
+		 * @param timeout The maximum time for waiting single task
+		 * @return false if timeout or interval happen, otherwise true.
+		 */
         bool run_batched_and_wait(size_t num_task, struct __kernel_timespec *timeout);
 
+		/*!
+		 * @brief Execute several tasks and return immediately
+		 * @param num_task The number of tasks
+		 */
         void run_batched_and_nowait(size_t num_task);
 
     public:
+		/*!
+		 * @brief Get the reference of uring structure
+		 */
         io_uring &  get_ring()          { return ring; }
 
+		/*!
+		 * @brief The number of events in the commited queue
+		 */
         size_t      has_event() const   { return io_uring_cq_ready(&ring); }
     };
 
-
+	/// @brief The unit operator for asynchronous uring execution
     struct UringOperator {
         friend class UringLoop;
     public:
@@ -73,7 +93,7 @@
         explicit UringOperator(UringLoop *loop_ptr, const auto &func): loop_ptr_(loop_ptr) { 
             sqe_ptr_ = io_uring_get_sqe(&loop_ptr->get_ring());
             if (sqe_ptr_ == nullptr) [[unlikely]] { throw std::bad_alloc(); }
-
+			// Set this operator as the consequent logic
             io_uring_sqe_set_data(sqe_ptr_, this);
             func(sqe_ptr_);
         }
@@ -93,7 +113,7 @@
 
     void UringLoop::run_single() {
         BasicLoop &basic_loop = get_thread_local_basic_loop();
-
+		// Wait for one IO tasks finished
         io_uring_cqe *cqe_ptr;
         io_uring_wait_cqe(&ring, &cqe_ptr);
         auto *op_ptr = reinterpret_cast<UringOperator *>(cqe_ptr->user_data);

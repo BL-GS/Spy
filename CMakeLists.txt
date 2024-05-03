@@ -25,6 +25,13 @@ FIND_PACKAGE(unofficial-concurrentqueue CONFIG REQUIRED)
 SET(spy_include_dir ${PROJECT_SOURCE_DIR}/include)
 ADD_LIBRARY(spy_interface INTERFACE)
 TARGET_INCLUDE_DIRECTORIES(spy_interface INTERFACE ${spy_include_dir})
+TARGET_LINK_LIBRARIES(spy_interface INTERFACE
+		# External library
+		fmt::fmt-header-only
+		argparse::argparse
+		magic_enum::magic_enum
+		unofficial::concurrentqueue::concurrentqueue
+)
 
 SET(spy_internal_libraries ${spy_internal_libraries} spy_interface)
 

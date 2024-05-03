@@ -8,6 +8,7 @@
 #include "util/timer.h"
 #include "async/task.h"
 #include "async/future.h"
+#include "async/async_impl/ignore_return_promise.h"
 #include "async/async_impl/basic_loop.h"
 #include "async/async_impl/uring_loop.h"
 
@@ -68,21 +69,13 @@ namespace spy {
         BasicLoop &get_worker_loop(std::size_t index) { return basic_loop_array_[index];      }
 
     public:
-        bool is_started() const noexcept {
-            return thread_array_ != nullptr;
-        }
+        bool is_started() const noexcept                    { return thread_array_ != nullptr; }
 
-        static bool is_this_thread_worker() noexcept {
-            return global_loop.has_basic_loop();
-        }
+        static bool is_this_thread_worker() noexcept        { return global_loop.has_basic_loop(); }
 
-        std::size_t this_thread_worker_id() const noexcept {
-            return &global_loop.get_basic_loop() - basic_loop_array_.get();
-        }
+        std::size_t this_thread_worker_id() const noexcept  { return &global_loop.get_basic_loop() - basic_loop_array_.get(); }
 
-        std::size_t num_worker() const noexcept {
-            return num_worker_;
-        }
+        std::size_t num_worker() const noexcept             { return num_worker_; }
 
     public:
         /*!
@@ -146,28 +139,28 @@ namespace spy {
         }
 
     public:
-        template <class T, class P>
-        inline void co_spawn(Task<T, P> &&task) {
+        template <class T, class T_Promise>
+        inline void co_spawn(Task<T, T_Promise> &&task) {
             return loop_enqueue_detach(current_worker_loop(), std::move(task));
         }
 
-        template <class T, class P>
-        inline Future<T> co_future(Task<T, P> task) {
+        template <class T, class T_Promise>
+        inline Future<T> co_future(Task<T, T_Promise> task) {
             return loop_enqueue_future(current_worker_loop(), std::move(task));
         }
 
-        template <class T, class P>
-        inline void co_spawn(std::size_t workerId, Task<T, P> task) {
-            return loop_enqueue_detach(get_worker_loop(workerId), std::move(task));
+        template <class T, class T_Promise>
+        inline void co_spawn(std::size_t worker_id, Task<T, T_Promise> task) {
+            return loop_enqueue_detach(get_worker_loop(worker_id), std::move(task));
         }
 
-        template <class T, class P>
-        inline Future<T> co_future(std::size_t workerId, Task<T, P> task) {
-            return loop_enqueue_future(get_worker_loop(workerId), std::move(task));
+        template <class T, class T_Promise>
+        inline Future<T> co_future(std::size_t worker_id, Task<T, T_Promise> task) {
+            return loop_enqueue_future(get_worker_loop(worker_id), std::move(task));
         }
 
-        template <class T, class P>
-        inline auto co_synchronize(Task<T, P> task) {
+        template <class T, class T_Promise>
+        inline auto co_synchronize(Task<T, T_Promise> task) {
             if (!is_started()) { start(); }
             return loop_enqueue_synchronized(get_any_worker_loop(), std::move(task));
         }
