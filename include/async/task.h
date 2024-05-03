@@ -38,7 +38,7 @@ namespace spy {
 		PromiseBase &operator=(PromiseBase &&) = delete;
 
 	public:
-		void setPrevious(std::coroutine_handle<> previous) noexcept {
+		void set_previous(std::coroutine_handle<> previous) noexcept {
 			previous_ptr_ = previous;
 		}
 
@@ -62,13 +62,9 @@ namespace spy {
 		Uninitialized<T> result_;
 
 	public:
-		void return_value(T &&ret) {
-			result_.put_value(std::move(ret));
-		}
+		void return_value(T &&ret) 		{ result_.put_value(std::move(ret)); }
 
-		void return_value(T const &ret) {
-			result_.put_value(ret);
-		}
+		void return_value(T const &ret) { result_.put_value(ret); }
 
 		T result() {
 			if (exception_ptr_) [[unlikely]] {
@@ -97,42 +93,32 @@ namespace spy {
 		}
 	};
 
-	template <class T, class P>
+	template <class T, class T_Promise>
 	struct TaskAwaiter {
 	public:
-		std::coroutine_handle<P> handle;
+		std::coroutine_handle<T_Promise> handle;
 
 	public:
-		bool await_ready() const noexcept {
-			return false;
-		}
+		bool await_ready() const noexcept { return false; }
 
-		std::coroutine_handle<P>
+		std::coroutine_handle<T_Promise>
 		await_suspend(std::coroutine_handle<> coroutine) const noexcept {
-			P &promise = handle.promise();
-			promise.setPrevious(coroutine);
+			T_Promise &promise = handle.promise();
+			promise.set_previous(coroutine);
 			return handle;
 		}
 
-		T await_resume() const {
-			return handle.promise().result();
-		}
+		T await_resume() const { return handle.promise().result(); }
 	};
 
-	template <class T = void, class P = Promise<T>>
+	template <class T = void, class T_Promise = Promise<T>>
 	struct [[nodiscard]] Task {
-		using promise_type = P;
+		using promise_type = T_Promise;
 
 	private:
 		std::coroutine_handle<promise_type> handle_;
 
 	public:
-		/* Task(std::coroutine_handle<promise_type> coroutine) noexcept */
-		/*     : mCoroutine(coroutine) { */
-		/* } */
-
-		/* Task(Task &&) = delete; */
-
 		Task(std::coroutine_handle<promise_type> coroutine = nullptr) noexcept : handle_(coroutine) {}
 
 		Task(Task &&that) noexcept : handle_(that.handle_) { that.handle_ = nullptr; }
@@ -144,7 +130,7 @@ namespace spy {
 		}
 
 		auto operator co_await() const noexcept {
-			return TaskAwaiter<T, P>(handle_);
+			return TaskAwaiter<T, promise_type>(handle_);
 		}
 
 	public:

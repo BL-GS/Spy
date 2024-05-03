@@ -103,6 +103,7 @@ namespace spy {
 
 		/*!
 		 * @brief Truncate or expand the file to the current file pointer.
+		 * @note The data pointer after truncate is undefined, use seek if needed.
 		 */
 		void truncate() const {
 			const auto ret = SetEndOfFile(handle);
@@ -113,12 +114,11 @@ namespace spy {
 
 		/*!
 		 * @brief Truncate or expand the file to the specific size.
+		 * @note The data pointer after truncate is undefined, use seek if needed.
 		 */
 		void truncate(const int64_t size) const {
-			const int64_t origin_offset = seek(0, FILE_CURRENT);
 			seek(size, FILE_BEGIN);
 			truncate();
-			seek(origin_offset, FILE_BEGIN);
 		}
 
 	public:
@@ -167,7 +167,131 @@ namespace spy {
 
 #else
 
-	
+	struct File {
+	public:
+		static constexpr int INVALID_FILE_DESCRIPTOR = -1;
+	public:
+		int descriptor;
+
+	public:
+		File(int descriptor = INVALID_FILE_DESCRIPTOR): descriptor(descriptor) {}
+
+		File(File &&other) noexcept {
+			if (valid()) {
+				const int ret = close(descriptor);
+				SPY_ASSERT_NOEXCEPTION(ret == 0, "failed to close the file handle");
+			}
+			descriptor 			= other.descriptor;
+			other.descriptor 	= INVALID_FILE_DESCRIPTOR;
+		}
+
+		~File() noexcept { 
+			if (valid()) { 
+				const int ret = close(descriptor);
+				SPY_ASSERT_NOEXCEPTION(ret == 0, "failed to close the file handle");
+			}
+		}
+
+		File &operator=(File &&other) noexcept { 
+			if (valid()) {
+				const int ret = close(descriptor);
+				SPY_ASSERT_NOEXCEPTION(ret == 0, "failed to close the file handle");
+			}
+			descriptor 			= other.descriptor;
+			other.descriptor 	= INVALID_FILE_DESCRIPTOR;
+			return *this;
+		}
+
+	public:
+		/*!
+		 * @brief Whether the handle of file is valid
+		 */
+		bool valid() const { return descriptor != INVALID_FILE_DESCRIPTOR;  }
+
+		/*!
+		 * @brief Reset the handle to a empty value
+		 * @return false if the handle if invalid, otherwise true.
+		 * @throw SpyOSException if failed to close a valid handle
+		 */
+		bool reset(int new_descriptor = INVALID_FILE_DESCRIPTOR) {
+			if (valid()) { // close the handle if valid
+				const int ret = close(descriptor);
+				if (ret != 0) { throw SpyOSException("failed to close the file handle"); }
+				descriptor = new_descriptor;
+				return true;
+			}
+			return false;
+		}
+
+	public:
+		/*!
+		 * @brief Move the pointer of file
+		 * @param offset the offset of pointer
+		 * @param method the method for setting pointer, default as FILE_CURRENT
+		 * @return The absolute offset of the current file pointer
+		 */
+		int64_t seek(const int64_t offset, const int whence = SEEK_CUR) const {
+			const int64_t cur_offset = lseek(descriptor, offset, whence);
+			if (cur_offset == -1) {
+				throw SpyOSFileException("failed to seek file");
+			}
+			return cur_offset;
+		}
+
+		/*!
+		 * @brief Truncate or expand the file to the current file pointer.
+		 * @note The data pointer after truncate is undefined, use seek if needed.
+		 */
+		void truncate() const {
+			const int64_t cur_offset = lseek(descriptor, 0, SEEK_CUR);
+			const int ret = ftruncate(descriptor, cur_offset);
+			if (ret != 0) {
+				throw SpyOSFileException("failed to truncate file");
+			}
+		}
+
+		/*!
+		 * @brief Truncate or expand the file to the specific size.
+		 * @note The data pointer after truncate is undefined, use seek if needed.
+		 */
+		void truncate(const int64_t size) const {
+			const int ret = ftruncate(descriptor, size);
+			if (ret != 0) {
+				throw SpyOSFileException("failed to truncate file");
+			}
+		}
+
+	public:
+		/*!
+		 * @brief Get the size of the file
+		 */
+		int64_t size() const {
+			const int64_t origin_offset = seek(0, SEEK_CUR);
+			const int64_t res = seek(0, SEEK_END);
+			seek(origin_offset, SEEK_SET);
+			return res;
+		}
+
+		std::string name() const {
+			const std::string info_file = fmt::format("/proc/self/fd/{}", descriptor);
+			char file_path[256] = {'\0'};
+			int ret = readlink(info_file.c_str(),file_path,sizeof(file_path) - 1);
+
+			if (ret == -1) {
+				throw SpyOSFileException("failed to get the name of file");
+			}
+			return { file_path, file_path + ret };
+		}
+
+	public:
+		static File make_file(std::string_view filename, int flag, int mode) {
+			int new_descriptor = open(filename.data(), flag, mode);
+			if (new_descriptor == -1) {
+				throw SpyOSFileException("failed creating file");
+			}
+			return { new_descriptor };
+		}
+	};
 
 #endif
 

@@ -101,49 +101,55 @@ namespace spy {
         }
     };
 
-
-    class FileViewFactory final: FileViewBuilder {
-    protected:
-        std::map<size_t, std::unique_ptr<FileView>> view_map_;
-
-    public:
-        /*!
-         * @details Creare a view of a portion of the file. It may use mapping or buffer for creating the view.
-         * When the OS cannot allocate the address space of mapping, it turns to the buffer method.
-         */
-        template<class T_View>
-        void create_view(size_t offset, size_t size) {
-            view_map_[offset] = std::unique_ptr<T_View>(offset, size);
-        }
-
-        void create_view(size_t offset, size_t size, bool write = false) {
-            view_map_[offset] = 
-                std::make_unique<FileMappingView>(sync_file_.handle, offset, size, write);
-        }
-
-        /*!
-         * @brief view by the offset of file. The position of view contains where the offset denotes.
-         */
-        std::unique_ptr<FileView> &get_view(size_t offset) {
-            auto iter = view_map_.lower_bound(offset);
-            if (iter == view_map_.end() || iter->first != offset) { 
-                if (iter == view_map_.begin()) {
-                    SPY_FATAL("Cannot find view");
-                }
-                --iter; 
-            }
-
-            const auto &view = iter->second;
-            if (view->offset() > offset || view->offset() + view->size() < offset) {
-                SPY_FATAL("Cannot find view");
-            }
-            return iter->second;
-        }
-    };
-    
 #else
 
-    
+    class FileViewBuilder {
+    protected:
+        /// File handle
+        File file_;
+
+    public:
+        FileViewBuilder() = default;
+
+        ~FileViewBuilder() noexcept = default;
+
+    public:
+        void init_sync_handle(const std::string_view filename, bool write = false, bool existing = true, bool share = true) {
+            if (!file_.valid()) { init_handle(filename, write, existing, share); }
+        }
+
+        void init_async_handle(const std::string_view filename, bool write = false, bool existing = true, bool share = true) {
+            if (!file_.valid()) { init_handle(filename, write, existing, share); }
+        }
+
+        void init_mapping(bool write = false) {
+            if (!file_.valid()) { throw SpyOSFileException("cannot create mapping on uninitialized file"); }
+        }
+
+    public:
+        FileMappingView create_mapping_view(size_t size, int64_t offset, bool write = false) {
+            if (!file_.valid()) { throw SpyOSFileException("cannot create view on uninitialized file"); }
+            return { file_.descriptor, offset, size, write };
+        }
+
+        SyncFileView create_sync_file_view(size_t size, int64_t offset) const {
+            if (!file_.valid()) { throw SpyOSFileException("cannot create view on uninitialized file"); }
+            return { file_.descriptor, offset, size };
+        }
+
+        ASyncFileView create_async_file_view(size_t size, int64_t offset) const {
+            if (!file_.valid()) { throw SpyOSFileException("cannot create view on uninitialized file"); }
+            return { file_.descriptor, offset, size };
+        }
+
+    private:
+        void init_handle(const std::string_view filename, bool write, bool existing, [[maybe_unused]] bool share) {
+            const int prot = write      ? O_RDWR : O_RDONLY;
+            const int flag = existing   ? 0      : O_CREAT;
+
+            file_ = File::make_file(filename, prot | flag, 0);
+        }
+    };
 
 #endif // _WIN32
 
