@@ -43,7 +43,20 @@ IF (${SPY_BACKEND_GPU})
 ENDIF ()
 
 # Main project ----------------------------------------------------------
-ADD_EXECUTABLE(spy spy.cpp "include/util/file/file_handler.h")
+ADD_EXECUTABLE(spy spy.cpp)
+TARGET_INCLUDE_DIRECTORIES(spy PRIVATE ${spy_include_dir})
+TARGET_LINK_LIBRARIES(spy PRIVATE
+	# External library
+	fmt::fmt-header-only
+	argparse::argparse
+	magic_enum::magic_enum
+	unofficial::concurrentqueue::concurrentqueue
+	# Internal library
+	${spy_internal_libraries}
+)
+
+ADD_EXECUTABLE(spytest test.cpp)
+TARGET_INCLUDE_DIRECTORIES(spytest PRIVATE ${spy_include_dir})
 TARGET_LINK_LIBRARIES(spy PRIVATE
 	# External library
 	fmt::fmt-header-only
