@@ -53,16 +53,17 @@ namespace spy {
 
     class ModelLoader {
     public:
-        FileViewBuilder     builder;
+        FileViewBuilder                 builder;
 
-        uint8_t *           data_ptr;
+		std::vector<FileMappingView>    view_buffer;
 
     public:
-        ModelLoader(const std::string_view filename): data_ptr(nullptr) {
-            builder.init_async_handle(filename);
-        }
+        ModelLoader(const std::string_view filename) {
+			builder.init_sync_handle(filename);
+			builder.init_mapping();
+		}
 
-        ~ModelLoader() noexcept { delete[] data_ptr; }
+        ~ModelLoader() noexcept = default;
 
     public:
         size_t load(GGUFContext &context) {
@@ -71,27 +72,21 @@ namespace spy {
             SPY_INFO_FMT("Loading data section (offset: 0x{:x}, size: {}MB)", data_offset, data_size / 1_MB);
 
             try {
-                ASyncFileView view = builder.create_async_file_view(data_size, data_offset);
-                data_ptr = new uint8_t[data_size];
+				FileMappingView view = builder.create_mapping_view(data_size, data_offset);
 
                 for (auto &info_pair: context.infos) {
                     auto &info = info_pair.second;
-                    const size_t cur_offset = info.offset + data_offset;
+                    // Assign data point
+                    info.data_ptr = view.deref(info.offset);
+                }
 
-                    // Assign data point 
-                    info.data_ptr = data_ptr + info.offset;
-
-                    const size_t data_elements = std::accumulate(
-                        info.num_element.begin(), info.num_element.end(), 1, std::multiplies<size_t>()
-                    );
-                    const size_t data_size = get_row_size(info.type, data_elements);
-
-                    view.read(info.data_ptr, info.offset, data_size);
-                }                
+				view_buffer.emplace_back(std::move(view));
             } catch (SpyOSFileException &err) {
                 std::cerr << err.what() << std::endl;
                 SPY_FATAL("failed loading model");
-            }
+            } catch (...) {
+	            SPY_FATAL("Unknown fatal");
+			}
 
             return data_size;
         }

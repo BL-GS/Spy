@@ -5,6 +5,7 @@
 
 #ifdef __linux__
 	#include <liburing.h>
+	#undef BLOCK_SIZE
 #endif // __linux__
 
 #include "util/logger.h"

@@ -172,10 +172,11 @@ namespace spy {
 					SPY_ASSERT(data_node_ptr->view_src == nullptr);
 					if (cur_data_back_dep_count == 0) { 
 						Tensor &tensor = data_node_ptr->tensor;
-						backend_ptr->dealloc_memory(tensor.get(), tensor.total_size());
-						tensor.set_data_ptr(nullptr);
 
 						SPY_DEBUG_FMT_OPTION(Memory, "Release node: {:32} (0x{})", data_node_ptr->get_name(), tensor.get());
+
+						backend_ptr->dealloc_memory(tensor.get(), tensor.total_size());
+						tensor.set_data_ptr(nullptr);
 					}
 				} else if (data_node_ptr->data_type == DataNodeType::View) {
 					const NodeCredit src_node_credit = data_node_ptr->view_src->get_credit();
@@ -191,10 +192,10 @@ namespace spy {
 
 					case DataNodeType::Variable:
 						if (cur_data_back_dep_count == 0) {
+							SPY_DEBUG_FMT_OPTION(Memory, "Release view node: {:27} (0x{})", src_data_node_ptr->get_name(), src_tensor.get());
+
 							backend_ptr->dealloc_memory(src_tensor.get(), src_tensor.total_size());
 							src_tensor.set_data_ptr(nullptr);
-
-							SPY_DEBUG_FMT_OPTION(Memory, "Release view node: {:27} (0x{})", src_data_node_ptr->get_name(), src_tensor.get());
 						}	break;
 
 					default:
@@ -209,7 +210,9 @@ namespace spy {
 			// no buffer
 			if (buffer_size == 0) { return {}; }
 			// allocate buffer
-			return { static_cast<uint8_t *>(backend_ptr->alloc_memory(buffer_size)), buffer_size };
+			void *buffer_ptr = backend_ptr->alloc_memory(buffer_size);
+			SPY_ASSERT(buffer_ptr != nullptr, "failed allocate memory");
+			return { static_cast<uint8_t *>(buffer_ptr), buffer_size };
 		}
 
 		static void deallocate_buffer(AbstractBackend *backend_ptr, const std::span<uint8_t> &buffer) {

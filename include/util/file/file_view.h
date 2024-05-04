@@ -29,12 +29,12 @@
 	#include <windows.h>
 	#include <io.h>
 #else
-	#include <liburing.h>
+	#include <aio.h>
+	#include "async/loop.h"
 #endif
 
 #include "util/logger.h"
 #include "util/file/type.h"
-#include "async/loop.h"
 
 namespace spy {
 
@@ -154,7 +154,7 @@ namespace spy {
 		void *deref()               const { return addr_; }
 
 		/// Get the address offsetted of the view
-		void *deref(size_t offset)  const { return static_cast<uint8_t *>(addr_) + offset; }
+		void *deref(size_t offset)  const { return static_cast<uint8_t *>(addr_) + offset_ + offset; }
 	};
 
 #ifdef _WIN32
@@ -179,7 +179,7 @@ namespace spy {
 			const int64_t aligned_offset = offset / ALIGNED_GRANULARITY * ALIGNED_GRANULARITY;
 			const size_t  aligned_size   = size + (offset - aligned_offset);
 
-			offset_ = aligned_offset;
+			offset_ = offset - aligned_offset;
 			size_   = aligned_size;
 
 			// mmap
@@ -502,7 +502,7 @@ namespace spy {
 
 	struct FileMappingView final: public FileSpanView {
 	public:
-		static constexpr int ALIGNED_GRANULARITY = 64 * 1024; // 64K
+		static constexpr int ALIGNED_GRANULARITY = 4 * 1024; // 4K
 
 	public:
 		FileMappingView() = default;
@@ -520,7 +520,7 @@ namespace spy {
 			const int64_t aligned_offset = offset / ALIGNED_GRANULARITY * ALIGNED_GRANULARITY;
 			const size_t  aligned_size   = size + (offset - aligned_offset);
 
-			offset_ = aligned_offset;
+			offset_ = offset - aligned_offset;
 			size_   = aligned_size;
 
 			// mmap
@@ -612,6 +612,8 @@ namespace spy {
 
 	struct ASyncFileView final: public FileView {
 	public:
+		using AIOPointer = std::unique_ptr<aiocb>;
+
 		static constexpr size_t IO_URING_QUEUE_LENGTH 	= 8;
 
 		static constexpr size_t BUFFER_UNIT_SIZE 		= 4096;
@@ -619,8 +621,10 @@ namespace spy {
 	private:
 		/// The handle of the file, which should not be freed by view
 		int descriptor_		= -1;
-		/// Temporal storage of event handle
-		io_uring ring_;
+
+		int event_counter_  = 0;
+
+		std::unordered_map<int, AIOPointer> event_map_;
 
 	public:
 		ASyncFileView() = default;
@@ -629,24 +633,18 @@ namespace spy {
 
 		ASyncFileView(const ASyncFileView &other) = default;
 
-		~ASyncFileView() noexcept override {
-			for (auto &iovec_unit: iovec_array_) {
-				operator delete(iovec_unit.iov_base, std::align_val_t(4096));
-			}
-			io_uring_queue_exit(&ring_);
+		~ASyncFileView() override {
+			sync_all();
 		}
 
 	public:
 		int read(void *dst, int64_t offset, size_t size) override {
-			io_uring_sqe *sqe_ptr = io_uring_get_sqe(&ring_);
-			io_uring_prep_readv(sqe_ptr, descriptor_, )
-
             AIOPointer aiocb_ptr = std::make_unique<aiocb>();
             std::memset(aiocb_ptr.get(), 0, sizeof(aiocb));
 
             offset += this->offset_;
 
-			aiocb_ptr->aio_fildes = descriptor;
+			aiocb_ptr->aio_fildes = descriptor_;
 			aiocb_ptr->aio_nbytes = size;
 			aiocb_ptr->aio_offset = offset;
 			aiocb_ptr->aio_buf	  = dst;
@@ -654,7 +652,7 @@ namespace spy {
 			int ret = aio_read(aiocb_ptr.get());
 			if (ret < 0) { throw SpyOSFileException("failed reading file asynchronously"); }
 
-            // The content has been loaded or can be read rapidlly
+            // The content has been loaded or can be read rapidly
 			const int event_idx 	= ++event_counter_;
 			event_map_[event_idx] 	= std::move(aiocb_ptr);
             return event_idx;
@@ -666,7 +664,7 @@ namespace spy {
 
             offset += this->offset_;
 
-			aiocb_ptr->aio_fildes = descriptor;
+			aiocb_ptr->aio_fildes = descriptor_;
 			aiocb_ptr->aio_nbytes = size;
 			aiocb_ptr->aio_offset = offset;
 			aiocb_ptr->aio_buf	  = const_cast<void *>(src);
@@ -674,7 +672,7 @@ namespace spy {
 			int ret = aio_write(aiocb_ptr.get());
 			if (ret < 0) { throw SpyOSFileException("failed reading file asynchronously"); }
 
-            // The content has been loaded or can be read rapidlly
+            // The content has been loaded or can be read rapidly
 			const int event_idx 	= ++event_counter_;
 			event_map_[event_idx] 	= std::move(aiocb_ptr);
             return event_idx;
@@ -688,111 +686,79 @@ namespace spy {
 				// The read/write is under progressing
 				if (ret == EINPROGRESS) { return false; }				
 			}
-			{ // Check return value
-				const int ret = aio_return(aiocb_ptr.get());				
-				
-			}
 			return true;
 		}
 
 		template<bool T_exception = true>
 		bool sync(int event_idx, int64_t wait_timeout_ms) {
-            auto& overlapped_ptr = event_map_[event_idx];
-            const HANDLE event_handle = overlapped_ptr->hEvent;
-            if (event_handle == INVALID_HANDLE_VALUE) { return true; }
+            auto &aiocb_ptr = event_map_[event_idx];
 
-            const DWORD ret = WaitForSingleObject(event_handle, wait_timeout_ms);
-            DWORD transfer_number = 0;
+			{
+				const aiocb *cb_list[1] = { aiocb_ptr.get() };
+				const timespec wait_time{
+					.tv_sec  = wait_timeout_ms / 1000,
+					.tv_nsec = wait_timeout_ms % 1000 * 1000'000
+				};
+				int ret = aio_suspend(cb_list, 1, (wait_timeout_ms == -1) ? nullptr : &wait_time);
 
-            switch (ret) {
-            // success
-            case WAIT_OBJECT_0: 
-                GetOverlappedResult(file_handle_, overlapped_ptr.get(), &transfer_number, FALSE);
-                CloseHandle(event_handle);
-                event_map_.erase(event_idx);
-                return true;
-            // fail
-            case WAIT_TIMEOUT:
-                return false;
-
-            case WAIT_ABANDONED:
-                SPY_WARN("wait for overlapped abandoned...");
-                return false;
-
-            default:
-				if constexpr (T_exception) {
-					throw SpyOSFileException("failed waiting for event");
+				if (ret == -1) {
+					if (errno == EAGAIN) {
+						return false;
+					} else {
+						throw SpyOSFileException("failed aio sync");
+					}
 				}
-                return false; 
-            }
+			}
+
+			const int ret = aio_return(aiocb_ptr.get());
+			if (ret == 0) { return true; }
+
+			throw SpyOSFileException("failed waiting aio event");
 		}
 
 		void sync_all() {
 			for (auto &pair : event_map_) {
-				auto& overlapped_ptr = pair.second;
-				const HANDLE event_handle = overlapped_ptr->hEvent;
-				if (event_handle == INVALID_HANDLE_VALUE) { continue; }
+				auto& aiocb_ptr = pair.second;
+				{
+					const aiocb *cb_list[1] = { aiocb_ptr.get() };
+					int ret = aio_suspend(cb_list, 1, nullptr);
+					if (ret == -1) { throw SpyOSFileException("failed aio sync"); }
+				}
 
-				DWORD transfer_number = 0;
-				const BOOL success = GetOverlappedResult(file_handle_, 
-					overlapped_ptr.get(), 
-					&transfer_number, 
-					TRUE
-				);
-				overlapped_ptr->hEvent = INVALID_HANDLE_VALUE;
-			
-				if (success == FALSE) { throw SpyOSFileException("failed waiting for event"); }
+				const int ret = aio_return(aiocb_ptr.get());
+				if (ret != 0) { throw SpyOSFileException("failed waiting aio event"); }
 			}
 			event_map_.clear();
 		}
 
 		int sync_one() {
-			std::vector<int> handle_event_table;
-			std::vector<HANDLE> handle_vec;
+			std::vector<int>     handle_event_table;
+			std::vector<const aiocb *> cb_vec;
 
 			handle_event_table.reserve(event_map_.size());
-			handle_vec.reserve(event_map_.size());
+			cb_vec.reserve(event_map_.size());
 
 			for (auto& pair : event_map_) {
-				auto& overlapped_ptr = pair.second;
-				const HANDLE event_handle = overlapped_ptr->hEvent;
-
-				if (event_handle == INVALID_HANDLE_VALUE) { continue; }
+				auto& aiocb_ptr = pair.second;
 				handle_event_table.push_back(pair.first);
-				handle_vec.push_back(event_handle);
+				cb_vec.push_back(aiocb_ptr.get());
 			}
 
-			const DWORD ret = WaitForMultipleObjects(
-				handle_vec.size(), 
-				handle_vec.data(), 
-				FALSE, 
-				INFINITE
-			);
-			DWORD transfer_number = 0;
-			if (ret >= WAIT_OBJECT_0 && ret < WAIT_OBJECT_0 + handle_vec.size()) {
-				// there is one finished
-				const int event_id = ret - WAIT_OBJECT_0;
-				auto& overlapped_ptr = event_map_[event_id];
+			int suspend_ret = aio_suspend(cb_vec.data(), cb_vec.size(), nullptr);
+			if (suspend_ret == -1) { throw SpyOSFileException("failed aio suspend"); }
 
-				GetOverlappedResult(file_handle_, overlapped_ptr.get(), &transfer_number, TRUE);
-				CloseHandle(overlapped_ptr->hEvent);
-				event_map_.erase(event_id);
+			for (size_t idx = 0; idx < handle_event_table.size(); ++idx) {
+				const int event_idx = handle_event_table[idx];
+				const aiocb *cb_ptr = cb_vec[idx];
 
-				return handle_event_table[event_id];
+				const int ret = aio_error(cb_ptr);
+				if (ret == EINPROGRESS) { continue; }
+
+				event_map_.erase(event_idx);
+				if (ret == -1) { throw SpyOSFileException("failed sync one event"); }
+				return event_idx;
 			}
 
-			switch (ret) {
-				// fail
-			case WAIT_TIMEOUT:
-				break;
-
-			case WAIT_ABANDONED:
-				SPY_WARN("wait for overlapped abandoned...");
-				break;
-
-			default:
-				throw SpyOSFileException("failed waiting for event");
-			}
 			return -1;
 		}
 	};

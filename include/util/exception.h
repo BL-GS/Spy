@@ -63,12 +63,6 @@ namespace spy {
 		SpyAssertException(const std::string &reason): SpyException("SpyAssertException" + reason) {}
 	};
 
-	class SpyOSException: public SpyException {
-	public:
-		SpyOSException(): SpyException("SpyOSException: Unknown exception") {}
-		SpyOSException(const std::string &reason): SpyException("SpyOSException: " + reason + ": " + system_error()) {}
-	};
-
 	class SpyNoneException: public SpyException {
 	public:
 		SpyNoneException(): SpyException("SpyNoneException: Unknown exception") {}
@@ -79,6 +73,12 @@ namespace spy {
 	public:
 		SpyUnimplementedException(): SpyException("SpyUnimplementedException: Unknown exception") {}
 		SpyUnimplementedException(const std::string &reason): SpyException("SpyUnimplementedException" + reason) {}
+	};
+
+	class SpyOSException: public std::system_error {
+	public:
+		SpyOSException(): std::system_error(errno, std::system_category()) {}
+		SpyOSException(const std::string &reason): std::system_error(errno, std::system_category(), reason) {}
 	};
 
 }

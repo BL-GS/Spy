@@ -6,15 +6,19 @@ PROJECT(spy)
 SET(CMAKE_C_STANDARD 17)
 SET(CMAKE_CXX_STANDARD 20)
 
-if (CMAKE_BUILD_TYPE STREQUAL Release)
+IF (CMAKE_BUILD_TYPE STREQUAL Release)
 	ADD_DEFINITIONS(-DNDEBUG)
-endif()
+ENDIF()
 
 # Hardware Architecture --------------------------------------------------
 
 INCLUDE(CMakeArch.cmake)
 
 # Libraries --------------------------------------------------------------
+IF (${CMAKE_HOST_UNIX})
+	SET(spy_system_libraries uring)
+ENDIF ()
+
 FIND_PACKAGE(fmt	 	CONFIG REQUIRED)
 FIND_PACKAGE(magic_enum CONFIG REQUIRED)
 FIND_PACKAGE(argparse 	CONFIG REQUIRED)
@@ -53,6 +57,8 @@ ENDIF ()
 ADD_EXECUTABLE(spy spy.cpp)
 TARGET_INCLUDE_DIRECTORIES(spy PRIVATE ${spy_include_dir})
 TARGET_LINK_LIBRARIES(spy PRIVATE
+	# System library
+	${spy_system_libraries}
 	# External library
 	fmt::fmt-header-only
 	argparse::argparse
@@ -64,7 +70,9 @@ TARGET_LINK_LIBRARIES(spy PRIVATE
 
 ADD_EXECUTABLE(spytest test.cpp)
 TARGET_INCLUDE_DIRECTORIES(spytest PRIVATE ${spy_include_dir})
-TARGET_LINK_LIBRARIES(spy PRIVATE
+TARGET_LINK_LIBRARIES(spytest PRIVATE
+	# System library
+	${spy_system_libraries}
 	# External library
 	fmt::fmt-header-only
 	argparse::argparse
