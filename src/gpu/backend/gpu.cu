@@ -6,7 +6,6 @@
 
 #include <cuda.h>
 #include <cuda_runtime.h>
-#include "number/quantization.h"
 
 #include "backend/gpu/type.h"
 #include "gpu_device.h"

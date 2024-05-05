@@ -5,7 +5,7 @@
 #include <vector>
 #include <concurrentqueue/blockingconcurrentqueue.h>
 
-#include "util/atomic.h"
+#include "util/wrapper/atomic.h"
 #include "graph/type.h"
 #include "graph/config.h"
 #include "graph/graph.h"

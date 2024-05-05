@@ -1,5 +1,6 @@
 #pragma once
 
+#include <vector>
 #include <coroutine>
 #include <condition_variable>
 #include <memory>

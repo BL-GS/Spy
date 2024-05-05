@@ -5,8 +5,8 @@
 
 #pragma once
 
+#include <type_traits>
 #include <functional>
-#include <concepts>
 
 #include "async/task.h"
 

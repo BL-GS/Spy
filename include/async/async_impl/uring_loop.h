@@ -1,7 +1,9 @@
  #pragma once
  
 #include <cstddef>
+#include <cstring>
 #include <vector>
+#include <span>
 #include <coroutine>
 #include <unistd.h>
 #include <sys/socket.h>

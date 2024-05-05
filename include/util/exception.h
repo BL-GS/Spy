@@ -5,7 +5,8 @@
 
 #pragma once
 
-#include <exception>
+#include <stdexcept>
+#include <cstring>
 #include <string>
 
 #ifdef _WIN32
@@ -17,9 +18,15 @@
 	#include <io.h>
 #endif
 
+#include <fmt/core.h>
+
 namespace spy {
 
 #ifdef _WIN32
+	inline static auto system_error_code() {
+		return GetLastError();
+	}
+
 	inline static std::string system_error() {
 		DWORD err = GetLastError();
 		LPSTR buf;
@@ -34,51 +41,83 @@ namespace spy {
 		return ret;
 	}
 #else
+	inline static auto system_error_code() {
+		return errno;
+	}
+
 	inline static std::string system_error() {
 		return fmt::format("[errno: {}]: {}", errno, strerror(errno));
 	}
 #endif
 
-	class SpyException: public std::exception {
-	protected:
-		std::string reason_;
+	class SpyException: public std::runtime_error {
+	public:
+		static constexpr std::string_view PREFIX			= "SpyException: ";
+		static constexpr std::string_view UNKNOWN_EXCEPTION = "SpyException: Unknown exception";
 
 	public:
-		SpyException(): reason_("SpyException: Unknown exception") {}
-		SpyException(const std::string &reason): reason_("SpyException: " + reason) {}
+		SpyException(): std::runtime_error(UNKNOWN_EXCEPTION.data()) {}
 
-	public:
-		const char * what() const noexcept override { return reason_.c_str(); }
-	};
+		SpyException(const std::string_view reason): std::runtime_error(PREFIX.data() + std::string(reason)) { }
 
-	class SpyNumericException: public SpyException {
-	public:
-		SpyNumericException(): SpyException("SpyNumericException: Unknown exception") {}
-		SpyNumericException(const std::string &reason): SpyException("SpyNumericException" + reason) {}
+		template<class ...Args>
+		SpyException(const std::string_view &reason, Args ...args): 
+			std::runtime_error(fmt::vformat(PREFIX.data() + std::string(reason), std::forward<Args>(args)...)) {}
 	};
 
 	class SpyAssertException: public SpyException {
 	public:
-		SpyAssertException(): SpyException("SpyAssertException: Unknown exception") {}
-		SpyAssertException(const std::string &reason): SpyException("SpyAssertException" + reason) {}
-	};
+		static constexpr std::string_view PREFIX			= "SpyAssertException: ";
+		static constexpr std::string_view UNKNOWN_EXCEPTION = "SpyAssertException: Unknown exception";
 
-	class SpyNoneException: public SpyException {
 	public:
-		SpyNoneException(): SpyException("SpyNoneException: Unknown exception") {}
-		SpyNoneException(const std::string &reason): SpyException("SpyNoneException" + reason) {}
+		SpyAssertException(): SpyException(UNKNOWN_EXCEPTION.data()) {}
+
+		SpyAssertException(const std::string_view &reason): SpyException(PREFIX.data() + std::string(reason)) {}
+
+		template<class ...Args>
+		SpyAssertException(const std::string_view &reason, Args ...args): 
+			SpyException(PREFIX.data() + std::string(reason), std::forward<Args>(args)...) {}
 	};
 
 	class SpyUnimplementedException: public SpyException {
 	public:
-		SpyUnimplementedException(): SpyException("SpyUnimplementedException: Unknown exception") {}
-		SpyUnimplementedException(const std::string &reason): SpyException("SpyUnimplementedException" + reason) {}
+		static constexpr std::string_view PREFIX			= "SpyUnimplementedException: ";
+		static constexpr std::string_view UNKNOWN_EXCEPTION = "SpyUnimplementedException: Unknown exception";
+
+	public:
+		SpyUnimplementedException(): SpyException(UNKNOWN_EXCEPTION.data()) {}
+
+		SpyUnimplementedException(const std::string_view &reason): SpyException(PREFIX.data() + std::string(reason)) {}
+
+		template<class ...Args>
+		SpyUnimplementedException(const std::string_view &reason, Args ...args): 
+			SpyException(PREFIX.data() + std::string(reason), std::forward<Args>(args)...) {}
 	};
 
 	class SpyOSException: public std::system_error {
 	public:
-		SpyOSException(): std::system_error(errno, std::system_category()) {}
-		SpyOSException(const std::string &reason): std::system_error(errno, std::system_category(), reason) {}
+		static constexpr std::string_view PREFIX			= "SpyOSException: ";
+		static constexpr std::string_view UNKNOWN_EXCEPTION = "SpyOSException: Unknown exception";
+
+	protected:
+		std::string reason_;
+
+	public:
+		SpyOSException(): std::system_error(system_error_code(), std::system_category()), 
+			reason_(std::string(UNKNOWN_EXCEPTION) + '\n' + std::system_error::what()) {}
+
+		SpyOSException(const std::string_view reason): 
+			std::system_error(system_error_code(), std::system_category()), 
+			reason_(PREFIX.data() + std::string(reason) + '\n' + std::system_error::what()) { }
+
+		template<class ...Args>
+		SpyOSException(const std::string_view &reason, Args ...args): 
+			std::system_error(system_error_code(), std::system_category()), 
+			reason_(fmt::vformat(PREFIX.data() + std::string(reason), std::forward<Args>(args)...) + '\n' + std::system_error::what()) {}
+
+	public:	
+		const char *what() const noexcept { return reason_.c_str(); }
 	};
 
 }
