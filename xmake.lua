@@ -11,6 +11,7 @@ target("spy_cpu")
     add_vectorexts("avx", "avx2")
     add_vectorexts("sse", "sse2", "sse3", "ssse3", "sse4.2")
     add_vectorexts("fma")
+    add_vectorexts("all")
     set_warnings("all")
 
     add_includedirs("include")
@@ -34,6 +35,7 @@ target("spy_gpu")
     add_vectorexts("avx", "avx2")
     add_vectorexts("sse", "sse2", "sse3", "ssse3", "sse4.2")
     add_vectorexts("fma")
+    add_vectorexts("all")
     set_warnings("all")
 
     -- generate SASS code for SM architecture of current host
@@ -60,6 +62,7 @@ target("spy")
     add_vectorexts("avx", "avx2")
     add_vectorexts("sse", "sse2", "sse3", "ssse3", "sse4.2")
     add_vectorexts("fma")
+    add_vectorexts("all")
     set_warnings("all")
 
     add_includedirs("include")

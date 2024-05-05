@@ -94,9 +94,9 @@ namespace spy {
 
 	#define SPY_DEBUG_FMT_OPTION(flag, output_fmt, ...)
 
-	#define SPY_ASSERT_DEBUG(expression, ...) (expression)
+	#define SPY_ASSERT_DEBUG(expression, ...) (void)(expression)
 
-	#define SPY_ASSERT_FMT_DEBUG(expression, output_fmt, ...) (expression)
+	#define SPY_ASSERT_FMT_DEBUG(expression, output_fmt, ...) (void)(expression)
 
 #else 
 	#define SPY_DEBUG(output_fmt) \
