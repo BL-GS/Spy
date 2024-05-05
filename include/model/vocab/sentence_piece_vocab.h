@@ -225,7 +225,7 @@ namespace spy {
 
 		uint8_t token_id_to_byte(spy::TokenID token_id) const override {
 			const auto &token_data = token_data_table[token_id];
-			uint8_t num;
+			uint8_t num = 0;
 			std::from_chars(token_data.text.data() + 3, token_data.text.data() + 5, num, 16);
 			return num;
 		}

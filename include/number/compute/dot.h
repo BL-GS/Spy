@@ -52,7 +52,7 @@ namespace spy {
 			__m256 acc = _mm256_setzero_ps();
 
 			// Main loop
-			for (int i = 0; i < num / get_block_size(NumberType::Q8_0); ++i) {
+			for (size_t i = 0; i < num / get_block_size(NumberType::Q8_0); ++i) {
 				// Compute combined scale for the block
 				const __m256 d = _mm256_set1_ps( spy_fp16_to_fp32(lhs[i].delta) * spy_fp16_to_fp32(rhs[i].delta) );
 
@@ -103,7 +103,7 @@ namespace spy {
 			__m256 acc = _mm256_setzero_ps();
 
 			// Main loop
-			for (int i = 0; i < num / get_block_size(NumberType::Q8_0); ++i) {
+			for (size_t i = 0; i < num / get_block_size(NumberType::Q8_0); ++i) {
 				// Compute combined scale for the block
 				const __m256 d = _mm256_set1_ps(spy_fp16_to_fp32(lhs[i].delta) * spy_fp16_to_fp32(rhs[i].delta));
 				__m256i qx = _mm256_loadu_si256((const __m256i *)lhs[i].quants);
@@ -155,7 +155,7 @@ namespace spy {
 			SPY_SIMD_F16_VEC_REDUCE(res, sum);
 
 			// leftovers
-			for (int i = np; i < num; ++i) {
+			for (size_t i = np; i < num; ++i) {
 				res += spy_fp16_to_fp32(lhs[i]) * spy_fp16_to_fp32(rhs[i]);
 			}
 

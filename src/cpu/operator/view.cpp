@@ -65,7 +65,6 @@ namespace spy::cpu {
         for (size_t row_idx = param.tid; row_idx < num_idx; row_idx += param.concurrency) {
             const size_t i12 = row_idx / (ne10 * ne11);
             const size_t i11 = row_idx % (ne10 * ne11) / ne10; 
-            const size_t i10 = row_idx % ne10;
 
             const size_t selected_row_idx = row_idx_ptr[row_idx];
             SPY_ASSERT_FMT(selected_row_idx < src0_num_row, "Access invalid row idx: {} (num: {})", selected_row_idx, src0_num_row);
@@ -321,7 +320,6 @@ namespace spy::cpu {
         auto  &result        = op_node->get_output<DataNode>(0).tensor;
 
         const auto &shape_operand = operand.get_shape();
-        const auto &shape_res     = result.get_shape();
 
         const auto [ne00, ne01, ne02, ne03] = shape_operand.elements;
 

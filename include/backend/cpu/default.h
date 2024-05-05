@@ -39,7 +39,7 @@ namespace spy {
 		~DefaultThreadPool() noexcept {
 			stop_flag_.test_and_set();
 			// Push nullptr to notifying all threads
-			for (auto &worker: workers_) { task_queue_.enqueue(nullptr); }
+			for (size_t i = 0; i < workers_.size(); ++i) { task_queue_.enqueue(nullptr); }
 			// Wait for all threads
 			for (auto &worker: workers_) { worker.join(); }
 		}

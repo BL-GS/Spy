@@ -62,15 +62,10 @@ namespace spy::cpu {
 		const auto type_0 = shape_0.number_type;
 		const auto type_1 = shape_1.number_type;
 
-        const auto [ne0, ne1, ne2, ne3]     = shape_res.elements;
         const auto [ne00, ne01, ne02, ne03] = shape_0.elements;
         const auto [ne10, ne11, ne12, ne13] = shape_1.elements;
 
-        const bool   is_contiguous_1 = shape_1.is_continuous();
 		const size_t num_dst         = shape_res.total_element();
-        const size_t row_size 		 = get_row_size(shape_1.number_type, ne10);
-
-        const bool has_buffer = !param.buffer.empty();
 
         const auto matmul_without_buffer = [&](){
             SPY_ASSERT_FMT(type_0 == type_1, "Expect the operands to be of the same type: {}, {}", enum_name(type_0), enum_name(type_1));

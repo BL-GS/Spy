@@ -130,7 +130,7 @@ namespace spy {
                 // Set stop flag
                 stop_source_.request_stop();
                 // Wait for all threads
-                for (int i = 0; i < num_worker_; ++i) { thread_array_[i].join(); }
+                for (size_t i = 0; i < num_worker_; ++i) { thread_array_[i].join(); }
                 // Release all resources
                 thread_array_.reset();
                 basic_loop_array_.reset();
@@ -186,7 +186,7 @@ namespace spy {
 
             // steal work from other threads
             const auto steal_work = [&] {
-                for (size_t j = 1; j < num_worker; ++j) {
+                for (int j = 1; j < num_worker; ++j) {
                     auto other_idx = (i + j) % num_worker;
                     if (basic_loop_array_[other_idx].run()) { return true; }
                 }

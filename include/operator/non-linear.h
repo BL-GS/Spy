@@ -146,10 +146,8 @@ namespace spy {
 			SPY_ASSERT_FMT(input.size() == 2, "Expect the number of operands to be 2 (cur: {})", input.size());	
 
 			const Tensor &operand_0 = get_tensor_from_node(input[0]);
-			const Tensor &operand_1 = get_tensor_from_node(input[1]);
 
 			const auto &shape_0     = operand_0.get_shape();
-			const auto  type_0   = operand_0.get_number_type();
 			SPY_ASSERT_FMT(shape_0.dim == 3, 
 						"Expect the dimension of operand 0 to be larger than 3 (operand: {})",
 						shape_0.dim);

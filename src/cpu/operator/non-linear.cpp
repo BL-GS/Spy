@@ -104,7 +104,6 @@ namespace spy::cpu {
         const auto &result  = op_node->get_output<DataNode>(0).tensor;
         const float scale  = static_cast<OperatorDefinition<OperatorType::Softmax> *>(op_node)->scale;
 
-        const auto &shape_operand = operand.get_shape();
         const auto &shape_res     = result.get_shape();
 
         const auto [ne0, ne1, ne2, ne3] = shape_res.elements;
@@ -150,7 +149,6 @@ namespace spy::cpu {
         const auto &result  = op_node->get_output<DataNode>(0).tensor;
         const float scale  = static_cast<OperatorDefinition<OperatorType::Softmax> *>(op_node)->scale;
 
-        const auto &shape_operand = operand.get_shape();
         const auto &shape_res     = result.get_shape();
 
         const auto [ne0, ne1, ne2, ne3] = shape_res.elements;
@@ -234,7 +232,7 @@ namespace spy::cpu {
             float *		 dst_ptr = result.get<float>({0, i1, i2, i3});
 
             const float sum   = std::transform_reduce(src_ptr, src_ptr + ne0, 0.0F, std::plus<float>{}, [](const float x){ return x * x; });
-            const float mean  = sum / ne0;
+            const float mean  = sum / static_cast<float>(ne0);
             const float scale = 1.0F / std::sqrt(mean + eps);
             std::transform(src_ptr, src_ptr + ne0, dst_ptr, [scale](const float x){ return x * scale; });
         }
@@ -300,7 +298,6 @@ namespace spy::cpu {
         freq_base, freq_scale, extend_factor, attention_factor,
         beta_fast, beta_slow, xpos_base, xpos_down] = rope_context;
 
-        const auto &shape_1 = operand_1.get_shape();
         const auto &shape_res= result.get_shape();
 
         float theta_scale = std::pow(freq_base, -2.0F / num_dim);
@@ -312,7 +309,6 @@ namespace spy::cpu {
                 rope_yarn_corr_dims(num_dim, num_origin_context, freq_base, beta_fast, beta_slow);
 
         const auto [ne0, ne1, ne2, ne3] = shape_res.elements;
-        const auto [nb0, nb1, nb2, nb3] = shape_res.bytes;
 
         const int32_t *src1_ptr = operand_1.get<int32_t>();
 
@@ -328,7 +324,7 @@ namespace spy::cpu {
             if (mode != ModelRopeType::GLM && mode != ModelRopeType::Neox) {
                 const int32_t *pos_ptr = operand_1.get<const int32_t>({i2, 0, 0, 0});
                 float theta = static_cast<float>(*pos_ptr);
-                for (int64_t i0 = 0; i0 < ne0; i0 += 2) {
+                for (uint64_t i0 = 0; i0 < ne0; i0 += 2) {
                     rope_yarn(theta, freq_scale, corr_dims, i0, extend_factor, attention_factor, &cache[i0 + 0], &cache[i0 + 1]);
                     cache[i0 + 1] *= sin_sign;
                     theta 		  *= theta_scale;

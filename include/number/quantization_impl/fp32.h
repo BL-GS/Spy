@@ -68,7 +68,7 @@ namespace spy {
 			const size_t num_left 		= num_from % NUM_FROM_UNIT;
 			SPY_ASSERT_FMT(num_left == 0, "Expect the quantization source ({}) to be aligned with the target block ({}).", num_from, NUM_FROM_UNIT);
 
-			for (int i = 0; i < num_from_block; ++i) {
+			for (size_t i = 0; i < num_from_block; ++i) {
 				float abs_max = 0.0F;
 				float max     = 0.0F;
 				for (int j = 0; j < NUM_FROM_UNIT; ++j) {
@@ -124,7 +124,7 @@ namespace spy {
 			const size_t num_left 		= num_from % NUM_FROM_UNIT;
 			SPY_ASSERT_FMT(num_left == 0, "Expect the quantization source ({}) to be aligned with the target block ({}).", num_from, NUM_FROM_UNIT);
 
-			for (int i = 0; i < num_from_block; ++i) {
+			for (size_t i = 0; i < num_from_block; ++i) {
 				float min = std::numeric_limits<float>::min();
 				float max = std::numeric_limits<float>::max();
 
@@ -179,7 +179,7 @@ namespace spy {
 			const size_t num_left 		= num_from % NUM_FROM_UNIT;
 			SPY_ASSERT_FMT(num_left == 0, "Expect the quantization source ({}) to be aligned with the target block ({}).", num_from, NUM_FROM_UNIT);
 
-			for (int i = 0; i < num_from_block; ++i) {
+			for (size_t i = 0; i < num_from_block; ++i) {
 				// Load elements into 4 AVX vectors
 				__m256 v0 = _mm256_loadu_ps( from_ptr );
 				__m256 v1 = _mm256_loadu_ps( from_ptr + 8 );
@@ -264,7 +264,7 @@ namespace spy {
 			const size_t num_left 		= num_from % NUM_FROM_UNIT;
 			SPY_ASSERT_FMT(num_left == 0, "Expect the quantization source ({}) to be aligned with the target block ({}).", num_from, NUM_FROM_UNIT);
 
-			for (int i = 0; i < num_from_block; ++i) {
+			for (size_t i = 0; i < num_from_block; ++i) {
 				// Load elements into 4 AVX vectors
 				__m256 v0 = _mm256_loadu_ps( from_ptr );
 				__m256 v1 = _mm256_loadu_ps( from_ptr + 8 );
