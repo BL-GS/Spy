@@ -20,7 +20,7 @@ namespace spy {
 	struct WhenAllCtlBlock {
 		/// The counter denote the number of tasks left
 		std::size_t             counter;
-		/// The
+		/// The previous handle of coroutine
 		std::coroutine_handle<> previous_handle{};
 		/// The pointer to the exception frame
 		std::exception_ptr      exception_ptr{};
@@ -104,7 +104,7 @@ namespace spy {
 		co_await WhenAllAwaiter(control, taskArray);
 		// Return all results
 		co_return std::tuple<typename AwaitableTraits<Ts>::NonVoidRetType...>(
-				std::get<Is>(result).moveValue()...);
+				std::get<Is>(result).move_value()...);
 	}
 
 	/*!

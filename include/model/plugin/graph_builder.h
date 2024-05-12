@@ -141,7 +141,6 @@ namespace spy {
                 "Trying to get result tensor with different op_type (assign: {}, template: {})", 
                 magic_enum::enum_name(op_type), magic_enum::enum_name(T_op_type));
 
-            auto inputs = op_node_ptr->get_input();
             const DataNodeType data_type = is_view(op_type) ? DataNodeType::View : DataNodeType::Variable;
             const NodeCredit node_credit = graph.alloc_node<DataNode>(
                 tensor_name, 

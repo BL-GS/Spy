@@ -60,3 +60,13 @@ target("spy")
     add_packages("fmt", "spdlog", "magic_enum", "argparse", "concurrentqueue")
 target_end()
 
+target("test")
+    set_kind("binary")
+
+    add_includedirs("include")
+    add_files("test.cpp")
+
+    add_packages("liburing")
+    add_packages("fmt", "spdlog", "magic_enum", "argparse", "concurrentqueue")
+target_end()
+

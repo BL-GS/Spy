@@ -3,8 +3,6 @@
 #include <cstddef>
 #include <thread>
 #include <functional>
-#include <concurrentqueue/concurrentqueue.h>
-#include <liburing.h>
 
 #include "util/timer.h"
 #include "async/task.h"
@@ -50,7 +48,7 @@ namespace spy {
 
         std::unique_ptr<std::thread[]>  thread_array_;
 
-        std::size_t                     num_worker_;
+        size_t                     num_worker_;
 
         std::stop_source                stop_source_;
 
@@ -66,16 +64,16 @@ namespace spy {
 
         BasicLoop &current_worker_loop()              { return global_loop.get_basic_loop();  }
 
-        BasicLoop &get_worker_loop(std::size_t index) { return basic_loop_array_[index];      }
+        BasicLoop &get_worker_loop(size_t index) { return basic_loop_array_[index];      }
 
     public:
         bool is_started() const noexcept                    { return thread_array_ != nullptr; }
 
         static bool is_this_thread_worker() noexcept        { return global_loop.has_basic_loop(); }
 
-        std::size_t this_thread_worker_id() const noexcept  { return &global_loop.get_basic_loop() - basic_loop_array_.get(); }
+        size_t this_thread_worker_id() const noexcept  { return &global_loop.get_basic_loop() - basic_loop_array_.get(); }
 
-        std::size_t num_worker() const noexcept             { return num_worker_; }
+        size_t num_worker() const noexcept             { return num_worker_; }
 
     public:
         /*!
@@ -85,7 +83,7 @@ namespace spy {
          * @param batch_time_out
          * @param batch_time_out_delta
          */
-        void start(std::size_t num_worker = 0, std::size_t num_batch_wait = 1,
+        void start(size_t num_worker = 0, size_t num_batch_wait = 1,
                 Duration batch_time_out = std::chrono::milliseconds(15),
                 Duration batch_time_out_delta = std::chrono::milliseconds(12)) {
                 
@@ -102,17 +100,17 @@ namespace spy {
             uring_loop_array_   = std::make_unique<UringLoop[]>(num_worker);
             num_worker_         = num_worker;
 
-            for (std::size_t i = 0; i < num_worker; ++i) {
+            for (size_t i = 0; i < num_worker; ++i) {
                 thread_array_[i] = std::thread(&SystemLoop::thread_entry, this, i,
                                         num_worker, num_batch_wait,
                                         batch_time_out, batch_time_out_delta);
     #if defined(__linux__) && defined(_GLIBCXX_HAS_GTHREADS)
                 if (set_affinity) {
-                    pthread_t h = thread_array_[i].native_handle();
+                    pthread_t handle = thread_array_[i].native_handle();
                     cpu_set_t cpuset;
                     CPU_ZERO(&cpuset);
                     CPU_SET(i, &cpuset);
-                    pthread_setaffinity_np(h, sizeof(cpuset), &cpuset);
+                    pthread_setaffinity_np(handle, sizeof(cpuset), &cpuset);
                 }
     #elif defined(_WIN32)
                 if (set_affinity && num_worker <= 64) {
@@ -139,38 +137,69 @@ namespace spy {
         }
 
     public:
+        /*!
+         * @brief Distribute a task to coroutine pool without trace
+         * @param task The coroutine task 
+         */
         template <class T, class T_Promise>
         inline void co_spawn(Task<T, T_Promise> &&task) {
             return loop_enqueue_detach(current_worker_loop(), std::move(task));
         }
 
+        /*!
+         * @brief Distribute a task to coroutine pool and get a future value
+         * @param task The coroutine task
+         * @return The future return value
+         */
         template <class T, class T_Promise>
         inline Future<T> co_future(Task<T, T_Promise> task) {
             return loop_enqueue_future(current_worker_loop(), std::move(task));
         }
 
+        /*!
+         * @brief Distribute a task to a specific worker in the coroutine pool without trace
+         * @param worker_id The id of coroutine worker
+         * @param task The coroutine task 
+         */
         template <class T, class T_Promise>
-        inline void co_spawn(std::size_t worker_id, Task<T, T_Promise> task) {
+        inline void co_spawn(size_t worker_id, Task<T, T_Promise> task) {
             return loop_enqueue_detach(get_worker_loop(worker_id), std::move(task));
         }
 
+        /*!
+         * @brief Distribute a task to a specific worker in the coroutine pool and get a future value
+         * @param worker_id The id of coroutine worker
+         * @param task The coroutine task
+         * @return The future return value
+         */
         template <class T, class T_Promise>
-        inline Future<T> co_future(std::size_t worker_id, Task<T, T_Promise> task) {
+        inline Future<T> co_future(size_t worker_id, Task<T, T_Promise> task) {
             return loop_enqueue_future(get_worker_loop(worker_id), std::move(task));
         }
 
+        /*!
+         * @brief Execute a coroutine synchronously
+         * @param task The coroutine task
+         * @return The return value of the coroutine task
+         */
         template <class T, class T_Promise>
         inline auto co_synchronize(Task<T, T_Promise> task) {
             if (!is_started()) { start(); }
             return loop_enqueue_synchronized(get_any_worker_loop(), std::move(task));
         }
 
+        /*!
+         * @brief Generate a coroutine task with invocable object
+         * @param func The invocable object for coroutine task
+         * @param args The arguments of the invocable object
+         * @return An coroutine task with function bound with several arguments
+         */
         template <class F, class... Args>
             requires std::is_invocable_r_v<Task<>, F, Args...>
-        inline Task<> co_bind(F &&f, Args &&...args) {
-            Task<> task = [](auto f) mutable -> Task<> {
-                co_await std::move(f)();
-            }(std::bind(std::forward<F>(f), std::forward<Args>(args)...));
+        inline Task<> co_bind(F &&func, Args &&...args) {
+            Task<> task = [](auto func) mutable -> Task<> {
+                co_await std::move(func)();
+            }(std::bind(std::forward<F>(func), std::forward<Args>(args)...));
             return task;
         }
 

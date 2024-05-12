@@ -5,7 +5,6 @@
 
 #pragma once
 
-#include <iostream>
 #include <cstring>
 #include <cerrno>
 #include <fmt/core.h>
@@ -13,6 +12,7 @@
 #include <fmt/format.h>
 #include <source_location>
 #include <spdlog/spdlog.h>
+#include <utility>
 
 #include "util/exception.h"
 
@@ -84,30 +84,70 @@ namespace spy {
 
 	inline void spy_assert(bool expression, std::source_location loc = std::source_location::current()) { 
 		if (!expression) {
-			spdlog::critical("[Assert fault] File: {} Line: {} Function: {}", loc.file_name(), loc.line(), loc.function_name());
+			spdlog::critical("[Assert fault] {}:{}:{} Function: {}", loc.file_name(), loc.line(), loc.column(), loc.function_name());
 			spdlog::critical("System Error: {}", system_error());
 			std::terminate();			
 		}
 	}
 
-	template<class T>
+	template<bool T_exception = false, class T>
 	inline void spy_assert(bool expression, const T &msg, std::source_location loc = std::source_location::current()) { 
 		if (!expression) {
-			spdlog::critical("[Assert fault] File: {} Line: {} Function: {}", loc.file_name(), loc.line(), loc.function_name());
+			spdlog::critical("[Assert fault] {}:{}:{} Function: {}", loc.file_name(), loc.line(), loc.column(), loc.function_name());
 			spdlog::critical(msg); 
 			spdlog::critical("System Error: {}", system_error());
+			if constexpr (T_exception) {
+				throw SpyAssertException{msg};
+			}
 			std::terminate();			
 		}
 	}
 
-	template<class ...Args>
+	template<bool T_exception = false, class ...Args>
 	inline void spy_assert(bool expression, spdlog::format_string_t<Args...> fmt, Args &&...args) { 
 		if (!expression) {
 			spdlog::critical("Assert fault");
 			spdlog::critical(fmt, std::forward<Args>(args)...); 
 			spdlog::critical("System Error: {}", system_error());
+			if constexpr (T_exception) {
+				throw SpyAssertException{fmt, std::forward<Args>(args)...};
+			}
 			std::terminate();			
 		}
 	}
+
+#ifdef NDEBUG
+	template<bool T_exception = false, class T>
+	inline void spy_assert_debug(bool expression, const T &msg, std::source_location loc = std::source_location::current()) { 
+		if (!expression) {
+			spdlog::critical("[Assert fault] File: {} Line: {} Function: {}", loc.file_name(), loc.line(), loc.function_name());
+			spdlog::critical(msg); 
+			spdlog::critical("System Error: {}", system_error());
+			if constexpr (T_exception) {
+				throw SpyAssertException{msg};
+			}
+			std::terminate();			
+		}
+	}
+
+	template<bool T_exception = false, class ...Args>
+	inline void spy_assert_debug(bool expression, spdlog::format_string_t<Args...> fmt, Args &&...args) { 
+		if (!expression) {
+			spdlog::critical("Assert fault");
+			spdlog::critical(fmt, std::forward<Args>(args)...); 
+			spdlog::critical("System Error: {}", system_error());
+			if constexpr (T_exception) {
+				throw SpyAssertException{fmt, std::forward<Args>(args)...};
+			}
+			std::terminate();			
+		}
+	}
+#else
+	template<bool T_exception = false, class T>
+	inline void spy_assert_debug([[maybe_unused]]bool expression, [[maybe_unused]]const T &msg, [[maybe_unused]]std::source_location loc = std::source_location::current()) { }
+
+	template<bool T_exception = false, class ...Args>
+	inline void spy_assert_debug([[maybe_unused]]bool expression, [[maybe_unused]]spdlog::format_string_t<Args...> fmt, [[maybe_unused]]Args &&...args) { }
+#endif
 
 }  // namespace spy

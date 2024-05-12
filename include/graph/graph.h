@@ -7,7 +7,6 @@
 
 #include <cstddef>
 #include <memory>
-#include <map>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -29,17 +28,23 @@ namespace spy {
 
 	struct BaseNode {
 		friend class Graph;
+	public:
+		using NodeArray = std::vector<BaseNode *>;
+
 	protected:
-		NodeCredit  credit;
+		NodeCredit  	credit;
 		/// The name of the node
-		std::string name;
+		std::string 	name;
 		/// Input nodes
-		std::vector<BaseNode *> input;
+		NodeArray   	input;
 		/// Output nodes
-		std::vector<BaseNode *> output;
+		NodeArray  		output;
 
 	public:
-		BaseNode(): credit(), name("unnamed") {}
+		BaseNode(): credit(), name("unnamed") {
+			// Most of the operators are binary operator
+			input.reserve(2); output.reserve(1);
+		}
 
 		BaseNode(NodeCredit credit, const std::string_view name): credit(credit), name(name) {}
 
@@ -65,7 +70,7 @@ namespace spy {
 		/*!
 		 * @brief Get all input nodes
 		 */
-		const std::vector<BaseNode *> &get_input() 	const { return input;  }
+		const NodeArray &get_input() 	const { return input;  }
 
 		/*!
 		 * @brief Get a input node
@@ -76,7 +81,7 @@ namespace spy {
 		/*!
 		 * @brief Get all output nodes
 		 */
-		const std::vector<BaseNode *> &get_output() const { return output; }
+		const NodeArray &get_output() const { return output; }
 
 		/*!
 		 * @brief Get a output node
@@ -143,10 +148,7 @@ namespace spy {
 
 	protected:
 		std::vector<NodeElement> node_storage_;
-		/// The number of nodes connected to this node.
-		std::vector<size_t>      dep_count_;
-		/// The number of nodes connected from this node.
-		std::vector<size_t>		 back_dep_count_;
+ 
 
 	public:
 		Graph(const std::string_view name, const NodeCredit credit = INVALID_NODE_CREDIT) : OperatorNode(credit, name, OperatorType::Nop) { 
