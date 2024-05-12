@@ -3,7 +3,7 @@
 #include <atomic>
 #include <span>
 #include <vector>
-#include <concurrentqueue/blockingconcurrentqueue.h>
+#include <blockingconcurrentqueue.h>
 
 #include "util/wrapper/atomic.h"
 #include "graph/type.h"

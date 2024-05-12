@@ -18,6 +18,22 @@
 
 namespace spy {
 
+	/*!
+	 * @brief Init the global logger
+	 * @details Log level will be cast to `spdlog::level::level_enum`
+	 * - 0: trace
+	 * - 1: debug
+	 * - 2: info
+	 * - 3: warn
+	 * - 4: error
+	 * - 5: fatal
+	 * - 6: off
+	 */
+	inline void init_logger_format(int log_level) {
+		spdlog::set_level(static_cast<spdlog::level::level_enum>(log_level));
+		spdlog::set_pattern("[%^%l%$: %t]: %v"); // level-tid-content
+	}
+
 	enum class DebugFlag: bool {
 		Graph		= false,
 		Execute		= true,
@@ -40,7 +56,7 @@ namespace spy {
 	inline void spy_info(const T &msg) { spdlog::info(msg); }
 
 	template<class ...Args>
-	inline void spy_info(spdlog::format_string_t<Args...> fmt, Args &&...args) { spdlog::warn(fmt, std::forward<Args>(args)...); }
+	inline void spy_info(spdlog::format_string_t<Args...> fmt, Args &&...args) { spdlog::info(fmt, std::forward<Args>(args)...); }
 
 	template<class T>
 	inline void spy_warn(const T &msg) { spdlog::warn(msg); }
@@ -75,9 +91,9 @@ namespace spy {
 	}
 
 	template<class T>
-	inline void spy_assert(bool expression, const T &msg) { 
+	inline void spy_assert(bool expression, const T &msg, std::source_location loc = std::source_location::current()) { 
 		if (!expression) {
-			spdlog::critical("Assert fault");
+			spdlog::critical("[Assert fault] File: {} Line: {} Function: {}", loc.file_name(), loc.line(), loc.function_name());
 			spdlog::critical(msg); 
 			spdlog::critical("System Error: {}", system_error());
 			std::terminate();			

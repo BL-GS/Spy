@@ -1,6 +1,8 @@
 #include <cstdint>
 #include <iostream>
 #include <fstream>
+#include <magic_enum.hpp>
+#include <spdlog/common.h>
 #include <string>
 #include <memory>
 #include <span>
@@ -42,6 +44,9 @@ int main(int argc, char **argv) {
 	/* Parsing arguments */
 	Argument cmdline_argument;
 	cmdline_argument.parse_argv(argc, argv);
+
+	/* Logger */
+	init_logger_format(cmdline_argument.get_arg<int>("--log-level"));
 
 	/* Timer setup */
 	PerformanceTimer perf_timer;
