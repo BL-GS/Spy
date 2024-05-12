@@ -13,7 +13,7 @@
 #include <sstream>
 #include <magic_enum.hpp>
 
-#include "util/logger.h"
+#include "util/shell/logger.h"
 #include "number/number.h"
 
 namespace spy {

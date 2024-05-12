@@ -1,7 +1,7 @@
 #pragma once
 
 #include "number/number.h"
-#include "util/logger.h"
+#include "util/shell/logger.h"
 
 namespace spy {
 

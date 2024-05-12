@@ -27,7 +27,7 @@
     #include <io.h>
 #endif
 
-#include "util/logger.h"
+#include "util/shell/logger.h"
 #include "util/file/file_handler.h"
 #include "util/file/file_view.h"
 

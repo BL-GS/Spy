@@ -7,7 +7,7 @@
 
 #include <numeric>
 
-#include "util/logger.h"
+#include "util/shell/logger.h"
 #include "util/simd.h"
 #include "number/number.h"
 #include "number/compute/util.h"

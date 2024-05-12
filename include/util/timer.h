@@ -8,7 +8,7 @@
 	#undef BLOCK_SIZE
 #endif // __linux__
 
-#include "util/logger.h"
+#include "util/shell/logger.h"
 
 namespace spy {
 

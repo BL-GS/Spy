@@ -14,7 +14,7 @@
 #include <fmt/format.h>
 #include <magic_enum.hpp>
 
-#include "util/logger.h"
+#include "util/shell/logger.h"
 #include "number/tensor.h"
 #include "operator/type.h"
 #include "graph/type.h"

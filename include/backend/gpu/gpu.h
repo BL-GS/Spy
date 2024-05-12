@@ -8,7 +8,7 @@
 #include <memory>
 #include <magic_enum.hpp>
 
-#include "util/logger.h"
+#include "util/shell/logger.h"
 #include "backend/gpu/type.h"
 #include "backend/gpu/default.h"
 

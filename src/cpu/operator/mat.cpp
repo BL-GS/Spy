@@ -1,7 +1,7 @@
 #include <immintrin.h>
 #include <magic_enum.hpp>
 
-#include "util/logger.h"
+#include "util/shell/logger.h"
 #include "number/tensor.h"
 #include "number/compute/dot.h"
 #include "number/quantization.h"

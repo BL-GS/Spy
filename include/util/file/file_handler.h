@@ -22,7 +22,7 @@
 	#include <windows.h>
 #endif
 
-#include "util/logger.h"
+#include "util/shell/logger.h"
 #include "util/exception.h"
 #include "util/file/type.h"
 

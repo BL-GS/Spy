@@ -9,7 +9,7 @@
 #include <stdexcept>
 #include <argparse/argparse.hpp>
 
-#include "util/logger.h"
+#include "util/shell/logger.h"
 
 namespace spy {
 

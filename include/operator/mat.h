@@ -3,7 +3,7 @@
 #include <atomic>
 #include <magic_enum.hpp>
 
-#include "util/logger.h"
+#include "util/shell/logger.h"
 #include "operator/type.h"
 #include "operator/config.h"
 #include "graph/graph.h"

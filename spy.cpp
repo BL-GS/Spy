@@ -5,8 +5,8 @@
 #include <memory>
 #include <span>
 
-#include "util/cmdline.h" 
-#include "util/logger.h"
+#include "util/shell/cmdline.h" 
+#include "util/shell/logger.h"
 #include "util/timer.h"
 #include "backend/cpu/cpu.h"
 #include "graph/scheduler.h"

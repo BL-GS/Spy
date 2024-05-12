@@ -6,7 +6,7 @@
 #include <string_view>
 #include <magic_enum.hpp>
 
-#include "util/logger.h"
+#include "util/shell/logger.h"
 #include "util/align.h"
 #include "model/type.h"
 #include "model/file/type.h"

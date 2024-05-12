@@ -9,7 +9,7 @@
 #include <memory>
 #include <functional>
 
-#include "util/logger.h"
+#include "util/shell/logger.h"
 #include "backend/type.h"
 
 namespace spy {

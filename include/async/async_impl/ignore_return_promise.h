@@ -12,7 +12,7 @@
 #include <coroutine>
 #include <exception>
 
-#include "util/logger.h"
+#include "util/shell/logger.h"
 
 namespace spy {
 

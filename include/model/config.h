@@ -5,7 +5,7 @@
 #include <fmt/format.h>
 #include <magic_enum.hpp>
 
-#include "util/logger.h"
+#include "util/shell/logger.h"
 #include "model/type.h"
 
 namespace spy {

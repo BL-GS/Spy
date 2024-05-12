@@ -11,7 +11,7 @@
 #include <functional>
 #include <concurrentqueue/concurrentqueue.h>
 
-#include "util/logger.h"
+#include "util/shell/logger.h"
 #include "backend/cpu/type.h"
 #include "backend/cpu/operator_impl.h"
 

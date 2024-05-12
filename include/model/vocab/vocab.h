@@ -9,7 +9,7 @@
 #include <memory>
 #include <magic_enum.hpp>
 
-#include "util/logger.h"
+#include "util/shell/logger.h"
 #include "model/vocab/type.h"
 #include "model/vocab/abstract_vocab.h"
 #include "model/vocab/sentence_piece_vocab.h"

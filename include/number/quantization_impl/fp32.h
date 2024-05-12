@@ -2,7 +2,7 @@
 
 #include <immintrin.h>
 
-#include "util/logger.h"
+#include "util/shell/logger.h"
 #include "number/number.h"
 #include "number/compute/util.h"
 #include "number/quantization_impl/type.h"

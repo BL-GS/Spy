@@ -33,7 +33,7 @@
 	#include "async/loop.h"
 #endif
 
-#include "util/logger.h"
+#include "util/shell/logger.h"
 #include "util/file/type.h"
 
 namespace spy {

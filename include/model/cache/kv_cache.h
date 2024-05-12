@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <vector>
 
-#include "util/logger.h"
+#include "util/shell/logger.h"
 #include "number/tensor.h"
 
 namespace spy {

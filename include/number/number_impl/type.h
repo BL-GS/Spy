@@ -2,8 +2,8 @@
 
 #include <cstddef>
 
-#include "util/enum.h"
-#include "util/logger.h"
+#include "util/type/enum.h"
+#include "util/shell/logger.h"
 
 namespace spy {
 
