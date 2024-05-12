@@ -37,7 +37,7 @@ namespace spy::cpu {
         const auto &shape_operand = operand.get_shape();
         const auto &shape_res     = result.get_shape();
 
-        SPY_ASSERT_FMT(shape_operand == shape_res, 
+        spy_assert(shape_operand == shape_res, 
                     "Result and operands should be of the same shape (operand: {}, result: {})", 
                     shape_operand.to_string(), shape_res.to_string());
 
@@ -119,13 +119,12 @@ namespace spy::cpu {
             float *dst_ptr 	     = result.get<float>({0, i1, i2, i3});
 
             for (size_t i0 = 0; i0 < ne0; ++i0) {
-                SPY_ASSERT_DEBUG(!std::isnan(dst_ptr[i0]));
                 dst_ptr[i0] = src_ptr[i0] * scale;
             }
 
             const auto  max_iter = std::max_element(dst_ptr, dst_ptr + ne0);
             const float max_src = *max_iter;
-            SPY_ASSERT_DEBUG(!std::isnan(max_src));
+            spy_assert(!std::isnan(max_src));
 
             for (size_t i0 = 0; i0 < ne0; ++i0) {
                 dst_ptr[i0] -= max_src;
@@ -135,7 +134,7 @@ namespace spy::cpu {
                 dst_ptr[i0] = LOOK_UP_TABLE.exp(spy_fp32_to_fp16(dst_ptr[i0]));
             }
             const float sum = std::reduce(dst_ptr, dst_ptr + ne0);
-            SPY_ASSERT_DEBUG(sum > 0.0F);
+            spy_assert(sum > 0.0F);
             const float sum_inv = 1.0F / sum;
             for (size_t i0 = 0; i0 < ne0; ++i0) { dst_ptr[i0] *= sum_inv; }
         }
@@ -169,13 +168,12 @@ namespace spy::cpu {
             }
 
             for (size_t i0 = 0; i0 < ne0; ++i0) {
-                SPY_ASSERT_DEBUG(!std::isnan(dst_ptr[i0]));
                 dst_ptr[i0] *= scale;
             }
 
             const auto  max_iter = std::max_element(dst_ptr, dst_ptr + ne0);
             const float max_src = *max_iter;
-            SPY_ASSERT_DEBUG(!std::isnan(max_src));
+            spy_assert(!std::isnan(max_src));
 
             for (size_t i0 = 0; i0 < ne0; ++i0) {
                 dst_ptr[i0] -= max_src;
@@ -189,7 +187,7 @@ namespace spy::cpu {
                 }
             }
             const float sum = std::reduce(dst_ptr, dst_ptr + ne0);
-            SPY_ASSERT_DEBUG(sum > 0.0F);
+            spy_assert(sum > 0.0F);
             const float sum_inv = 1.0F / sum;
             for (size_t i0 = 0; i0 < ne0; ++i0) { dst_ptr[i0] *= sum_inv; }
         }
@@ -364,7 +362,7 @@ namespace spy::cpu {
                         break;
                     }
                     case ModelRopeType::Neox:
-                        SPY_ASSERT(false, "To be implemented");
+                        spy_assert(false, "To be implemented");
                         break;
 
                     default: {

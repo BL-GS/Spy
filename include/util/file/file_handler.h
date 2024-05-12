@@ -39,7 +39,7 @@ namespace spy {
 		File(File &&other) noexcept {
 			if (valid()) {
 				const BOOL ret = CloseHandle(handle); 
-				SPY_ASSERT_NOEXCEPTION(ret == TRUE, "failed to close the file handle");
+				spy_assert(ret == TRUE, "failed to close the file handle");
 			}
 			handle = other.handle;
 			other.handle = INVALID_HANDLE_VALUE;
@@ -48,14 +48,14 @@ namespace spy {
 		~File() noexcept { 
 			if (valid()) { 
 				const BOOL ret = CloseHandle(handle); 
-				SPY_ASSERT_NOEXCEPTION(ret == TRUE, "failed to close the file handle");
+				spy_assert(ret == TRUE, "failed to close the file handle");
 			}
 		}
 
 		File &operator=(File &&other) noexcept { 
 			if (valid()) {
 				const BOOL ret = CloseHandle(handle); 
-				SPY_ASSERT_NOEXCEPTION(ret == TRUE, "failed to close the file handle");
+				spy_assert(ret == TRUE, "failed to close the file handle");
 			}
 			handle = other.handle;
 			other.handle = INVALID_HANDLE_VALUE;
@@ -179,7 +179,7 @@ namespace spy {
 		File(File &&other) noexcept {
 			if (valid()) {
 				const int ret = close(descriptor);
-				SPY_ASSERT_NOEXCEPTION(ret == 0, "failed to close the file handle");
+				spy_assert(ret == 0, "failed to close the file handle");
 			}
 			descriptor 			= other.descriptor;
 			other.descriptor 	= INVALID_FILE_DESCRIPTOR;
@@ -188,14 +188,14 @@ namespace spy {
 		~File() noexcept { 
 			if (valid()) { 
 				const int ret = close(descriptor);
-				SPY_ASSERT_NOEXCEPTION(ret == 0, "failed to close the file handle");
+				spy_assert(ret == 0, "failed to close the file handle");
 			}
 		}
 
 		File &operator=(File &&other) noexcept { 
 			if (valid()) {
 				const int ret = close(descriptor);
-				SPY_ASSERT_NOEXCEPTION(ret == 0, "failed to close the file handle");
+				spy_assert(ret == 0, "failed to close the file handle");
 			}
 			descriptor 			= other.descriptor;
 			other.descriptor 	= INVALID_FILE_DESCRIPTOR;

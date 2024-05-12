@@ -11,6 +11,8 @@
 #include <fmt/core.h>
 #include <fmt/color.h>
 #include <fmt/format.h>
+#include <source_location>
+#include <spdlog/spdlog.h>
 
 #include "util/exception.h"
 
@@ -22,112 +24,74 @@ namespace spy {
 		Memory		= true
 	};
 
-	#define SPY_INFO(output_fmt) \
-		do { fmt::print("[INFO]: " output_fmt "\n"); } while (0)
+	template<class T>
+	inline void spy_debug(const T &msg) { spdlog::debug(msg); }
 
-	#define SPY_INFO_FMT(output_fmt, ...) \
-		do { fmt::print("[INFO]: " output_fmt "\n", __VA_ARGS__); } while (0)
+	template<class T>
+	inline void spy_debug(DebugFlag option, const T &msg) { if (static_cast<bool>(option)) { spdlog::debug(msg); } }
 
-	#define SPY_WARN(output_fmt) \
-		do { fmt::print(fg(fmt::color::yellow), "[WARN]: " output_fmt "\n"); } while (0)
+	template<class ...Args>
+	inline void spy_debug(spdlog::format_string_t<Args...> fmt, Args &&...args) { spdlog::debug(fmt, std::forward<Args>(args)...); }
 
-	#define SPY_WARN_FMT(output_fmt, ...) \
-		do { fmt::print(fg(fmt::color::yellow), "[WARN]: " output_fmt "\n", __VA_ARGS__); } while (0)
+	template<class ...Args>
+	inline void spy_debug(DebugFlag option, spdlog::format_string_t<Args...> fmt, Args &&...args) { if (static_cast<bool>(option)) { spdlog::debug(fmt, std::forward<Args>(args)...); } }
 
-	#define SPY_ERROR(output_fmt) \
-		do { fmt::print(fg(fmt::color::red), 	"[ERROR]: " output_fmt "\n"); } while (0)
+	template<class T>
+	inline void spy_info(const T &msg) { spdlog::info(msg); }
 
-	#define SPY_ERROR_FMT(output_fmt, ...) \
-		do { fmt::print(fg(fmt::color::red), 	"[ERROR]: " output_fmt "\n", __VA_ARGS__); } while (0)
+	template<class ...Args>
+	inline void spy_info(spdlog::format_string_t<Args...> fmt, Args &&...args) { spdlog::warn(fmt, std::forward<Args>(args)...); }
 
-	#define SPY_FATAL(output_fmt) \
-		do { fmt::print(fg(fmt::color::red), 	"[FATAL]: " output_fmt "\n"); throw SpyAssertException(output_fmt); } while (0)
+	template<class T>
+	inline void spy_warn(const T &msg) { spdlog::warn(msg); }
 
-	#define SPY_FATAL_FMT(output_fmt, ...) \
-		do { fmt::print(fg(fmt::color::red), 	"[FATAL]: " output_fmt "\n", __VA_ARGS__); throw SpyAssertException(output_fmt); } while (0)
+	template<class ...Args>
+	inline void spy_warn(spdlog::format_string_t<Args...> fmt, Args &&...args) { spdlog::warn(fmt, std::forward<Args>(args)...); }
 
+	template<class T>
+	inline void spy_error(const T &msg) { spdlog::error(msg); }
 
-	#define SPY_ASSERT(expression, ...)     	\
-		do {                            		\
-			if (!(expression)) {        		\
-				fmt::print(fg(fmt::color::red), "Assert fault[{}:{}]: " #expression "\n", __FILE__, __LINE__); 	\
-				fmt::print(fg(fmt::color::red), "System: {}", system_error());									\
-				SPY_FATAL(__VA_ARGS__ "");     	\
-			}                           		\
-		} while (0)
+	template<class ...Args>
+	inline void spy_error(spdlog::format_string_t<Args...> fmt, Args &&...args) { spdlog::error(fmt, std::forward<Args>(args)...); }
 
-	#define SPY_ASSERT_FMT(expression, output_fmt, ...)    \
-		do {                                    \
-			if (!(expression)) {                \
-				fmt::print(fg(fmt::color::red), "Assert fault[{}:{}]: " #expression "\n", __FILE__, __LINE__);  \
-				fmt::print(fg(fmt::color::red), "System: {}", system_error());									\
-				SPY_FATAL_FMT(output_fmt, __VA_ARGS__);    \
-			}                                   		   \
-		} while (0)
+	template<class T>
+	inline void spy_fatal(const T &msg) { 
+		spdlog::critical(msg); 
+		std::terminate();
+	}
 
+	template<class ...Args>
+	inline void spy_fatal(spdlog::format_string_t<Args...> fmt, Args &&...args) { 
+		spdlog::critical(fmt, std::forward<Args>(args)...); 
+		std::terminate();
+	}
 
-	#define SPY_ASSERT_NOEXCEPTION(expression, ...)     \
-		do {                            \
-			if (!(expression)) {        \
-				fmt::print(fg(fmt::color::red), "Assert fault[{}:{}]: " #expression "\n", __FILE__, __LINE__); 	\
-				fmt::print(fg(fmt::color::red), "System: {}", system_error());									\
-				fmt::print(fg(fmt::color::red), "[FATAL]: " __VA_ARGS__ "\n");     								\
-			}                           																		\
-		} while (0)
+	inline void spy_assert(bool expression, std::source_location loc = std::source_location::current()) { 
+		if (!expression) {
+			spdlog::critical("[Assert fault] File: {} Line: {} Function: {}", loc.file_name(), loc.line(), loc.function_name());
+			spdlog::critical("System Error: {}", system_error());
+			std::terminate();			
+		}
+	}
 
-	#define SPY_ASSERT_FMT_NOEXCEPTION(expression, output_fmt, ...)    \
-		do {                                    \
-			if (!(expression)) {                \
-				fmt::print(fg(fmt::color::red), "Assert fault[{}:{}]: " #expression "\n", __FILE__, __LINE__);  \
-				fmt::print(fg(fmt::color::red), "System: {}", system_error());									\
-				fmt::print(fg(fmt::color::red), "[FATAL]: " output_fmt "\n", __VA_ARGS__);     					\
-			}                                   		   														\
-		} while (0)
+	template<class T>
+	inline void spy_assert(bool expression, const T &msg) { 
+		if (!expression) {
+			spdlog::critical("Assert fault");
+			spdlog::critical(msg); 
+			spdlog::critical("System Error: {}", system_error());
+			std::terminate();			
+		}
+	}
 
-
-#ifdef NDEBUG
-	#define SPY_DEBUG(output_fmt)
-
-	#define SPY_DEBUG_FMT(output_fmt, ...)
-
-	#define SPY_DEBUG_OPTION(flag, output_fmt)
-
-	#define SPY_DEBUG_FMT_OPTION(flag, output_fmt, ...)
-
-	#define SPY_ASSERT_DEBUG(expression, ...) (void)(expression)
-
-	#define SPY_ASSERT_FMT_DEBUG(expression, output_fmt, ...) (void)(expression)
-
-#else 
-	#define SPY_DEBUG(output_fmt) \
-		do { fmt::print(fg(fmt::color::light_green), 	"[DEBUG]: " output_fmt "\n"); std::fflush(stdout); } while (0)
-
-	#define SPY_DEBUG_FMT(output_fmt, ...) \
-		do { fmt::print(fg(fmt::color::light_green), 	"[DEBUG]: " output_fmt "\n", __VA_ARGS__); std::fflush(stdout); } while (0)
-
-	#define SPY_DEBUG_OPTION(flag, output_fmt) \
-		do { if (static_cast<bool>(DebugFlag:: flag)) { SPY_DEBUG(output_fmt); } } while (0)
-
-	#define SPY_DEBUG_FMT_OPTION(flag, output_fmt, ...) \
-		do { if (static_cast<bool>(DebugFlag:: flag)) { SPY_DEBUG_FMT(output_fmt, __VA_ARGS__); } } while (0)
-
-
-	#define SPY_ASSERT_DEBUG(expression, ...)                                                                \
-		do {                                                                                                 \
-			if (!(expression)) {                                                                             \
-				SPY_ERROR_FMT("Assert fault[{}:{}]: " #expression "\n", __FILE__, __LINE__); 			 	 \
-				SPY_FATAL(__VA_ARGS__);                                                                      \
-			}                                                                                                \
-		} while (0)
-
-	#define SPY_ASSERT_FMT_DEBUG(expression, output_fmt, ...)                                                \
-		do {                                                                                                 \
-			if (!(expression)) {                                                                             \
-				SPY_ERROR_FMT("Assert fault[{}:{}]: " #expression "\n", __FILE__, __LINE__); 		     	 \
-				SPY_FATAL_FMT(output_fmt, __VA_ARGS__);                                                      \
-			}                                                                                                \
-		} while (0)
-
-#endif
+	template<class ...Args>
+	inline void spy_assert(bool expression, spdlog::format_string_t<Args...> fmt, Args &&...args) { 
+		if (!expression) {
+			spdlog::critical("Assert fault");
+			spdlog::critical(fmt, std::forward<Args>(args)...); 
+			spdlog::critical("System Error: {}", system_error());
+			std::terminate();			
+		}
+	}
 
 }  // namespace spy

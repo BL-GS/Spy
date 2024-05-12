@@ -23,11 +23,11 @@ namespace spy {
 		 * @return The tensor with the expected shape
 		 */
 		Tensor deduce_result() const { 
-            SPY_ASSERT_FMT(input.size() == 1, "Expect the number of operands to be 1 (cur: {})", input.size());
+            spy_assert(input.size() == 1, "Expect the number of operands to be 1 (cur: {})", input.size());
 
 			const Tensor &operand_0 = get_tensor_from_node(input[0]);
 
-			SPY_ASSERT(operand_0.get_number_type() == NumberType::FP32);
+			spy_assert(operand_0.get_number_type() == NumberType::FP32);
 
 			const auto &shape_0   = operand_0.get_shape();
 			const Shape shape_res = shape_0;
@@ -52,11 +52,11 @@ namespace spy {
 		 * @return The tensor with the expected shape
 		 */
 		Tensor deduce_result() const { 
-            SPY_ASSERT_FMT(input.size() == 1, "Expect the number of operands to be 1 (cur: {})", input.size());
+            spy_assert(input.size() == 1, "Expect the number of operands to be 1 (cur: {})", input.size());
 
 			const Tensor &operand_0 = get_tensor_from_node(input[0]);
 
-			SPY_ASSERT(operand_0.get_number_type() == NumberType::FP32);
+			spy_assert(operand_0.get_number_type() == NumberType::FP32);
 
 			const auto &shape_0   = operand_0.get_shape();
 			const Shape shape_res = shape_0;
@@ -84,7 +84,7 @@ namespace spy {
 		 * @return The tensor with the expected shape
 		 */
 		Tensor deduce_result() const { 
-			SPY_ASSERT_FMT(input.size() == 1 || input.size() == 2, "Expect the number of operands to be 1 or 2 (cur: {})", input.size());	
+			spy_assert(input.size() == 1 || input.size() == 2, "Expect the number of operands to be 1 or 2 (cur: {})", input.size());	
 
 			const Tensor &operand_0 = get_tensor_from_node(input[0]);
 			const auto &shape_0     = operand_0.get_shape();
@@ -113,8 +113,8 @@ namespace spy {
 		 * @return The tensor with the expected shape
 		 */
 		Tensor deduce_result() const { 
-			SPY_ASSERT_FMT(input.size() == 1, "Expect the number of operands to be 1 (cur: {})", input.size());	
-			SPY_ASSERT_FMT(eps > 0.0F, "Expect the eps > 0.0 (cur: {})", eps);
+			spy_assert(input.size() == 1, "Expect the number of operands to be 1 (cur: {})", input.size());	
+			spy_assert(eps > 0.0F, "Expect the eps > 0.0 (cur: {})", eps);
 
 			const Tensor &operand_0 = get_tensor_from_node(input[0]);
 			const auto &shape_0     = operand_0.get_shape();
@@ -143,12 +143,12 @@ namespace spy {
 		 * @return The tensor with the expected shape
 		 */
 		Tensor deduce_result() const { 
-			SPY_ASSERT_FMT(input.size() == 2, "Expect the number of operands to be 2 (cur: {})", input.size());	
+			spy_assert(input.size() == 2, "Expect the number of operands to be 2 (cur: {})", input.size());	
 
 			const Tensor &operand_0 = get_tensor_from_node(input[0]);
 
 			const auto &shape_0     = operand_0.get_shape();
-			SPY_ASSERT_FMT(shape_0.dim == 3, 
+			spy_assert(shape_0.dim == 3, 
 						"Expect the dimension of operand 0 to be larger than 3 (operand: {})",
 						shape_0.dim);
 			const Shape shape_res     = shape_0;

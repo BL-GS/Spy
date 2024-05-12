@@ -23,22 +23,22 @@ namespace spy {
 		 * @return The tensor with the expected shape
 		 */
 		Tensor deduce_result() const { 
-            SPY_ASSERT_FMT(input.size() == 2, "Expect the number of operands to be 2 (cur: {})", input.size());
+            spy_assert(input.size() == 2, "Expect the number of operands to be 2 (cur: {})", input.size());
 
 			const Tensor &operand_0 = get_tensor_from_node(input[0]);
 			const Tensor &operand_1 = get_tensor_from_node(input[1]);
-			SPY_ASSERT(operand_0.get_number_type() == NumberType::FP32);
-			SPY_ASSERT(operand_1.get_number_type() == NumberType::FP32);
+			spy_assert(operand_0.get_number_type() == NumberType::FP32);
+			spy_assert(operand_1.get_number_type() == NumberType::FP32);
 
 			const auto &shape_0     = operand_0.get_shape();
 			const auto &shape_1     = operand_1.get_shape();
 			const auto  type_0   = operand_0.get_number_type();
 			const auto  type_1   = operand_1.get_number_type();
 			
-			SPY_ASSERT_FMT(shape_0 == shape_1 || Shape::can_repeat(shape_0, shape_1), 
+			spy_assert(shape_0 == shape_1 || Shape::can_repeat(shape_0, shape_1), 
 					"Operands should be of the same shape or repeatable shape (operand1: {}, operand2: {})", 
 					shape_0.to_string(), shape_1.to_string());
-			SPY_ASSERT_FMT(type_0 == type_1, 
+			spy_assert(type_0 == type_1, 
 					"Operands should be of the same type (operand1: {}, operand2: {})", 
 					magic_enum::enum_name(type_0), magic_enum::enum_name(type_1));
 
@@ -65,22 +65,22 @@ namespace spy {
 		 * @return The tensor with the expected shape
 		 */
 		Tensor deduce_result() const { 
-            SPY_ASSERT_FMT(input.size() == 2, "Expect the number of operands to be 2 (cur: {})", input.size());
+            spy_assert(input.size() == 2, "Expect the number of operands to be 2 (cur: {})", input.size());
 
 			const Tensor &operand_0 = get_tensor_from_node(input[0]);
 			const Tensor &operand_1 = get_tensor_from_node(input[1]);
-			SPY_ASSERT(operand_0.get_number_type() == NumberType::FP32);
-			SPY_ASSERT(operand_1.get_number_type() == NumberType::FP32);
+			spy_assert(operand_0.get_number_type() == NumberType::FP32);
+			spy_assert(operand_1.get_number_type() == NumberType::FP32);
 
 			const auto &shape_0     = operand_0.get_shape();
 			const auto &shape_1     = operand_1.get_shape();
 			const auto  type_0   = operand_0.get_number_type();
 			const auto  type_1   = operand_1.get_number_type();
 			
-			SPY_ASSERT_FMT(shape_0 == shape_1 || Shape::can_repeat(shape_0, shape_1), 
+			spy_assert(shape_0 == shape_1 || Shape::can_repeat(shape_0, shape_1), 
 					"Operands should be of the same shape or repeatable shape (operand1: {}, operand2: {})", 
 					shape_0.to_string(), shape_1.to_string());
-			SPY_ASSERT_FMT(type_0 == type_1, 
+			spy_assert(type_0 == type_1, 
 					"Operands should be of the same type (operand1: {}, operand2: {})", 
 					magic_enum::enum_name(type_0), magic_enum::enum_name(type_1));
 
@@ -107,22 +107,22 @@ namespace spy {
 		 * @return The tensor with the expected shape
 		 */
 		Tensor deduce_result() const { 
-            SPY_ASSERT_FMT(input.size() == 2, "Expect the number of operands to be 2 (cur: {})", input.size());
+            spy_assert(input.size() == 2, "Expect the number of operands to be 2 (cur: {})", input.size());
 
 			const Tensor &operand_0 = get_tensor_from_node(input[0]);
 			const Tensor &operand_1 = get_tensor_from_node(input[1]);
-			SPY_ASSERT(operand_0.get_number_type() == NumberType::FP32);
-			SPY_ASSERT(operand_1.get_number_type() == NumberType::FP32);
+			spy_assert(operand_0.get_number_type() == NumberType::FP32);
+			spy_assert(operand_1.get_number_type() == NumberType::FP32);
 
 			const auto &shape_0     = operand_0.get_shape();
 			const auto &shape_1     = operand_1.get_shape();
 			const auto  type_0   = operand_0.get_number_type();
 			const auto  type_1   = operand_1.get_number_type();
 			
-			SPY_ASSERT_FMT(shape_0 == shape_1 || Shape::can_repeat(shape_0, shape_1), 
+			spy_assert(shape_0 == shape_1 || Shape::can_repeat(shape_0, shape_1), 
 					"Operands should be of the same shape or repeatable shape (operand1: {}, operand2: {})", 
 					shape_0.to_string(), shape_1.to_string());
-			SPY_ASSERT_FMT(type_0 == type_1, 
+			spy_assert(type_0 == type_1, 
 					"Operands should be of the same type (operand1: {}, operand2: {})", 
 					magic_enum::enum_name(type_0), magic_enum::enum_name(type_1));
 
@@ -149,22 +149,22 @@ namespace spy {
 		 * @return The tensor with the expected shape
 		 */
 		Tensor deduce_result() const { 
-            SPY_ASSERT_FMT(input.size() == 2, "Expect the number of operands to be 2 (cur: {})", input.size());
+            spy_assert(input.size() == 2, "Expect the number of operands to be 2 (cur: {})", input.size());
 
 			const Tensor &operand_0 = get_tensor_from_node(input[0]);
 			const Tensor &operand_1 = get_tensor_from_node(input[1]);
-			SPY_ASSERT(operand_0.get_number_type() == NumberType::FP32);
-			SPY_ASSERT(operand_1.get_number_type() == NumberType::FP32);
+			spy_assert(operand_0.get_number_type() == NumberType::FP32);
+			spy_assert(operand_1.get_number_type() == NumberType::FP32);
 
 			const auto &shape_0     = operand_0.get_shape();
 			const auto &shape_1     = operand_1.get_shape();
 			const auto  type_0   = operand_0.get_number_type();
 			const auto  type_1   = operand_1.get_number_type();
 			
-			SPY_ASSERT_FMT(shape_0 == shape_1 || Shape::can_repeat(shape_0, shape_1), 
+			spy_assert(shape_0 == shape_1 || Shape::can_repeat(shape_0, shape_1), 
 					"Operands should be of the same shape or repeatable shape (operand1: {}, operand2: {})", 
 					shape_0.to_string(), shape_1.to_string());
-			SPY_ASSERT_FMT(type_0 == type_1, 
+			spy_assert(type_0 == type_1, 
 					"Operands should be of the same type (operand1: {}, operand2: {})", 
 					magic_enum::enum_name(type_0), magic_enum::enum_name(type_1));
 

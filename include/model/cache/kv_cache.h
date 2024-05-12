@@ -21,7 +21,7 @@ namespace spy {
         KVCache() = default;
 
         ~KVCache() noexcept {
-            SPY_INFO("Delete kv cache");
+            spy_info("Delete kv cache");
         }
 
     public:

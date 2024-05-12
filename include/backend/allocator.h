@@ -143,7 +143,7 @@ namespace spy {
 			}
 
 			if (total_dealloc_size != total_size_) {
-				SPY_WARN_FMT("The size of page deallocated is different from that allocated (alloc: {}, dealloc: {})", total_size_, total_dealloc_size);
+				spy_warn("The size of page deallocated is different from that allocated (alloc: {}, dealloc: {})", total_size_, total_dealloc_size);
 			}
 		}
 
@@ -176,7 +176,7 @@ namespace spy {
 			} else {
 				const size_t bucket_idx = size_to_page_idx(actual_size);
 				const size_t page_size = page_idx_to_size(bucket_idx);
-				SPY_ASSERT_FMT(page_size == actual_size, "The size of page should be equal to the actual size (expect: {}, given: {})", page_size, actual_size);
+				spy_assert(page_size == actual_size, "The size of page should be equal to the actual size (expect: {}, given: {})", page_size, actual_size);
 
 				page_ptr->next_ptr = page_bucket_[bucket_idx];
 				page_bucket_[bucket_idx] = page_ptr;

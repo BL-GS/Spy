@@ -18,7 +18,7 @@ set_warnings("all")
 
 -- Library 
 add_requires("liburing")
-add_requires("fmt", "xrepo", "argparse", "magic_enum", "concurrentqueue")
+add_requires("fmt", "spdlog", "argparse", "magic_enum", "concurrentqueue")
 add_requires("gtest")
 
 -- Interface
@@ -57,6 +57,6 @@ target("spy")
     end    
 
     add_packages("liburing")
-    add_packages("fmt", "magic_enum", "argparse", "concurrentqueue")
+    add_packages("fmt", "spdlog", "magic_enum", "argparse", "concurrentqueue")
 target_end()
 

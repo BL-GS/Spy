@@ -21,13 +21,13 @@ namespace spy {
 		Numeric		= true
 	};
 
-#define SPY_OP_ASSERT(type, expression, ...) 	SPY_ASSERT((expression) && static_cast<bool>(OpAssertOption:: type), __VA_ARGS__)
+#define SPY_OP_ASSERT(type, expression, ...) 	spy_assert((expression) && static_cast<bool>(OpAssertOption:: type), __VA_ARGS__)
 
 #define SPY_OP_SHAPE_ASSERT(expression, ...) 	SPY_OP_ASSERT(Shape, expression, __VA_ARGS__)
 
 #define SPY_OP_NUMERIC_ASSERT(expression, ...)	SPY_OP_ASSERT(Numeric, expression, __VA_ARGS__)
 
-#define SPY_OP_ASSERT_FMT(type, expression, ...) 	SPY_ASSERT_FMT((expression) && static_cast<bool>(OpAssertOption:: type), __VA_ARGS__)
+#define SPY_OP_ASSERT_FMT(type, expression, ...) 	spy_assert((expression) && static_cast<bool>(OpAssertOption:: type), __VA_ARGS__)
 
 #define SPY_OP_SHAPE_ASSERT_FMT(expression, ...) 	SPY_OP_ASSERT_FMT(Shape, expression, __VA_ARGS__)
 
@@ -91,7 +91,7 @@ namespace spy {
 			OPERATOR_TYPE_MAP(OPERATOR_TYPE_CASE)
 		}
 
-		SPY_ASSERT(false, "Unknown type of number");
+		spy_assert(false, "Unknown type of number");
 #undef OPERATOR_TYPE_CASE
 	}
 
@@ -104,7 +104,7 @@ namespace spy {
 			OPERATOR_TYPE_MAP(OPERATOR_TYPE_CASE)
 		}
 
-		SPY_ASSERT(false, "Unknown type of number");
+		spy_assert(false, "Unknown type of number");
 #undef OPERATOR_TYPE_CASE
 	}
 

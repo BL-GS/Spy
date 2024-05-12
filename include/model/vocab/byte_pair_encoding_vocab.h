@@ -53,7 +53,7 @@ namespace spy {
 	public:
 		void init_newline_token([[maybe_unused]] const GGUFContext &context) override {
 			std::vector<int> ids = tokenize("\u010A", false, false);
-			SPY_ASSERT(!ids.empty(), "Missing newline token in model vocab");
+			spy_assert(!ids.empty(), "Missing newline token in model vocab");
 			linefeed_id = ids[0];
 		}
 
@@ -188,7 +188,7 @@ namespace spy {
 		}
 
 		uint8_t token_id_to_byte([[maybe_unused]] TokenID token_id) const override {
-			SPY_ASSERT(false, "Try toe convert token id using unsupported vocab");
+			spy_assert(false, "Try toe convert token id using unsupported vocab");
 			return 0;
 		}
 
@@ -216,7 +216,7 @@ namespace spy {
 					return {};
 
 				default:
-					SPY_ASSERT_FMT(false, "Unknown model token type: {}", magic_enum::enum_name(token_type));
+					spy_assert(false, "Unknown model token type: {}", magic_enum::enum_name(token_type));
 				}
 			}
 			return {};
@@ -387,10 +387,10 @@ namespace spy {
 		}
 
 		int find_bpe_rank(const std::string & token_left, const std::string & token_right) const {
-        	SPY_ASSERT(token_left.find(' ') 	== std::string::npos);
-			SPY_ASSERT(token_left.find('\n') 	== std::string::npos);
-			SPY_ASSERT(token_right.find(' ') 	== std::string::npos);
-			SPY_ASSERT(token_right.find('\n') 	== std::string::npos);
+        	spy_assert(token_left.find(' ') 	== std::string::npos);
+			spy_assert(token_left.find('\n') 	== std::string::npos);
+			spy_assert(token_right.find(' ') 	== std::string::npos);
+			spy_assert(token_right.find('\n') 	== std::string::npos);
 
 			auto it = bpe_ranks.find(std::make_pair(token_left, token_right));
 			if (it == bpe_ranks.end()) { return -1; }

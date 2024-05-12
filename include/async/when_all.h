@@ -48,8 +48,8 @@ namespace spy {
 
 		void await_resume() const {
 			if (control_block.exception_ptr) [[unlikely]] {
-                std::rethrow_exception(control_block.exception_ptr);
-            }
+				std::rethrow_exception(control_block.exception_ptr);
+			}
 		}
 	};
 
@@ -58,9 +58,9 @@ namespace spy {
 		try {
 			result.put_value(co_await std::forward<decltype(t)>(t));
 		} catch (...) {
-	        control.exception_ptr = std::current_exception();
-	        co_return control.previous_handle;
-	    }
+			control.exception_ptr = std::current_exception();
+			co_return control.previous_handle;
+		}
 		// Decrement counter if a coroutine has been completed
 		--control.counter;
 		// Return all results if all coroutines have finished
@@ -76,9 +76,9 @@ namespace spy {
 		try {
 			co_await std::forward<decltype(t)>(t);
 		} catch (...) {
-	        control.exception_ptr = std::current_exception();
-	        co_return control.previous_handle;
-	    }
+			control.exception_ptr = std::current_exception();
+			co_return control.previous_handle;
+		}
 		// Decrement counter if a coroutine has been completed
 		--control.counter;
 		// Return all results if all coroutines have finished
@@ -140,7 +140,7 @@ namespace spy {
 		// Initialize allocator for tasks
 		Alloc alloc = tasks.get_allocator();
 		std::vector<Uninitialized<typename AwaitableTraits<T>::RetType>, Alloc>
-		                                                                 result_array(tasks.size(), alloc);
+																		 result_array(tasks.size(), alloc);
 		// Execution
 		{
 			// Generate the array of all tasks

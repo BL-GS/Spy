@@ -54,7 +54,7 @@ namespace spy {
         ~FileViewBuilder() noexcept {
             if (mapping_handle_ != nullptr) { 
 				const BOOL ret = CloseHandle(mapping_handle_); 
-				SPY_ASSERT_NOEXCEPTION(ret == TRUE, "failed to close the mapping handle");
+				spy_assert(ret == TRUE, "failed to close the mapping handle");
             }
         }
 

@@ -27,17 +27,17 @@ namespace spy {
 			ModelType model_type  = ModelType::ModelTypeEnd;
 
 			std::fstream file(filename.data(), std::ios::binary | std::ios::in);
-			SPY_ASSERT_FMT(file.is_open(), "Cannot open file: {}", filename);
+			spy_assert(file.is_open(), "Cannot open file: {}", filename);
 
 			/* Read magic */
 			try {
 				read_gguf_array(file, context.header.magic.data(), GGUF_MAGIC_SIZE);
-				SPY_ASSERT_FMT(context.header.magic == GGUF_MAGIC,
+				spy_assert(context.header.magic == GGUF_MAGIC,
 				           "Invalid magic characters (given: {}, expect: {})",
 				           std::string_view(context.header.magic.data(), GGUF_MAGIC_SIZE), 
 						   std::string_view(GGUF_MAGIC.data(), GGUF_MAGIC_SIZE));
 			} catch (const std::exception &err) {
-				SPY_FATAL_FMT("Failed reading gguf magic from file {:32}: {}", filename, err.what());
+				spy_fatal("Failed reading gguf magic from file {:32}: {}", filename, err.what());
 			}
 
 			/* Read header */
@@ -45,10 +45,10 @@ namespace spy {
 				read_gguf_value(file, context.header.version);
 				read_gguf_value(file, context.header.num_tensor);
 				read_gguf_value(file, context.header.num_kv);
-				SPY_ASSERT(context.header.num_tensor < std::numeric_limits<uint64_t>::max() / 2 / sizeof(GGUFTensorInfo));
-				SPY_ASSERT(context.header.num_kv     < std::numeric_limits<uint64_t>::max() / 2 / sizeof(GGUFValue));
+				spy_assert(context.header.num_tensor < std::numeric_limits<uint64_t>::max() / 2 / sizeof(GGUFTensorInfo));
+				spy_assert(context.header.num_kv     < std::numeric_limits<uint64_t>::max() / 2 / sizeof(GGUFValue));
 			} catch (const std::exception &err) {
-				SPY_FATAL_FMT("Failed reading gguf header from file {}: {}", filename, err.what());
+				spy_fatal("Failed reading gguf header from file {}: {}", filename, err.what());
 			}
 
 			/* Read kv pairs */
@@ -59,21 +59,21 @@ namespace spy {
 					const std::string  cur_key  = read_gguf_string(file);
 					const GGUFDataType cur_type = read_gguf_type(file);
 
-					SPY_INFO_FMT("Load kv pair: {:<48} - {:8}", cur_key, magic_enum::enum_name(cur_type));
+					spy_info("Load kv pair: {:<48} - {:8}", cur_key, magic_enum::enum_name(cur_type));
 
 					context.add_gguf_value(cur_key, read_gguf_kv(file, cur_type));
 				}
 			} catch (const std::exception &err) {
-				SPY_FATAL_FMT("Failed reading gguf kv pairs from file {}: {}", filename, err.what());
+				spy_fatal("Failed reading gguf kv pairs from file {}: {}", filename, err.what());
 			}
 
 			try {
 				// Cannot fetch architecture name by LLMKey
 				const GGUFValue &arch_kv  = context.find_gguf_value(LLMKey::GENERAL_ARCHITECTURE);
-				SPY_ASSERT(arch_kv.get_type() == GGUFDataType::String, "Expect the architecture value to be string");
+				spy_assert(arch_kv.get_type() == GGUFDataType::String, "Expect the architecture value to be string");
 				context.arch_name = arch_kv.get_value<std::string>();
 			} catch (const std::exception &err) {
-				SPY_FATAL_FMT("Failed reading gguf arch name from file {}: {}", filename, err.what());
+				spy_fatal("Failed reading gguf arch name from file {}: {}", filename, err.what());
 			}
 
 			/* Read tensor info */
@@ -92,7 +92,7 @@ namespace spy {
 					context.infos[tensor_name] = cur_info;
 				}
 			} catch (const std::exception &err) {
-				SPY_FATAL_FMT("Failed reading gguf tensor infos from file {}: {}", filename, err.what());
+				spy_fatal("Failed reading gguf tensor infos from file {}: {}", filename, err.what());
 			}
 
 			/* Read offset information */
@@ -104,7 +104,7 @@ namespace spy {
 				file.seekg(offset);
 				context.offset = offset;
 			} catch (const std::exception &err) {
-				SPY_FATAL_FMT("Failed reading gguf offset information from file {}: {}", filename, err.what());
+				spy_fatal("Failed reading gguf offset information from file {}: {}", filename, err.what());
 			}
 
 			/* Calculate the total size of the data section */
@@ -115,7 +115,7 @@ namespace spy {
 				for (auto dim : cur_info.num_element) { num_element *= dim; }
 
 				const size_t block_size = get_block_size(cur_info.type);
-				SPY_ASSERT_FMT(num_element % block_size == 0, 
+				spy_assert(num_element % block_size == 0, 
 					"tensor: number of {} elements({}) is not a multiple of block size()", 
 					magic_enum::enum_name(cur_info.type), num_element, block_size);
 
@@ -194,13 +194,13 @@ namespace spy {
 							case GGUFDataType::Float64: array.emplace_back(read_gguf_value<double>(file));	 break;
 							case GGUFDataType::String:  array.emplace_back(read_gguf_string(file));			 break;
 							default:
-								SPY_ASSERT(false, "Unknown gguf data type in array");
+								spy_assert(false, "Unknown gguf data type in array");
 						}
 					}
 					return array;
 				}
 				default:
-					SPY_ASSERT(false, "Unknown gguf data type");
+					spy_assert(false, "Unknown gguf data type");
 			}
 			return {};
 		}

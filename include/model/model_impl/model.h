@@ -19,7 +19,7 @@ namespace spy {
                 break;
 
             default:
-                SPY_ASSERT_FMT(false, "Unsupported model type: {}", magic_enum::enum_name(model_type));
+                spy_assert(false, "Unsupported model type: {}", magic_enum::enum_name(model_type));
             }
 
             model_ptr->init();

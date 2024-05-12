@@ -20,6 +20,7 @@ IF (${CMAKE_HOST_UNIX})
 ENDIF ()
 
 FIND_PACKAGE(fmt	 	CONFIG REQUIRED)
+FIND_PACKAGE(spdlog		CONFIG REQUIRED)
 FIND_PACKAGE(magic_enum CONFIG REQUIRED)
 FIND_PACKAGE(argparse 	CONFIG REQUIRED)
 FIND_PACKAGE(unofficial-concurrentqueue CONFIG REQUIRED)
@@ -32,6 +33,7 @@ TARGET_INCLUDE_DIRECTORIES(spy_interface INTERFACE ${spy_include_dir})
 TARGET_LINK_LIBRARIES(spy_interface INTERFACE
 		# External library
 		fmt::fmt-header-only
+		spdlog::spdlog_header_only
 		argparse::argparse
 		magic_enum::magic_enum
 		unofficial::concurrentqueue::concurrentqueue
@@ -61,6 +63,7 @@ TARGET_LINK_LIBRARIES(spy PRIVATE
 	${spy_system_libraries}
 	# External library
 	fmt::fmt-header-only
+	spdlog::spdlog_header_only
 	argparse::argparse
 	magic_enum::magic_enum
 	unofficial::concurrentqueue::concurrentqueue
@@ -75,6 +78,7 @@ TARGET_LINK_LIBRARIES(spytest PRIVATE
 	${spy_system_libraries}
 	# External library
 	fmt::fmt-header-only
+	spdlog::spdlog_header_only
 	argparse::argparse
 	magic_enum::magic_enum
 	unofficial::concurrentqueue::concurrentqueue

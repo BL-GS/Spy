@@ -31,7 +31,7 @@ namespace spy {
 		 * @return The tensor with the expected shape
 		 */
 		Tensor deduce_result() const { 
-            SPY_ASSERT_FMT(input.size() == 2, "Expect the number of operands to be 2 (cur: {})", input.size());
+            spy_assert(input.size() == 2, "Expect the number of operands to be 2 (cur: {})", input.size());
 
 			const Tensor &operand_0 = get_tensor_from_node(input[0]);
 			const Tensor &operand_1 = get_tensor_from_node(input[1]);
@@ -42,10 +42,10 @@ namespace spy {
 			const auto [ne00, ne01, ne02, ne03] = shape_0.elements;
 			const auto [ne10, ne11, ne12, ne13] = shape_1.elements;
 
-			SPY_ASSERT_FMT(ne00 == ne10 && ne02 == ne12 && ne03 == ne13, 
+			spy_assert(ne00 == ne10 && ne02 == ne12 && ne03 == ne13, 
 					"Operands should be of the same shape (operand1: {}, operand2: {})", 
 					shape_0.to_string(), shape_1.to_string());
-			SPY_ASSERT_FMT(shape_1.number_type == NumberType::FP32, 
+			spy_assert(shape_1.number_type == NumberType::FP32, 
 						"Expect the type of operand 1 to be fp32 (cur: {})", 
 						magic_enum::enum_name(shape_1.number_type));
 

@@ -42,7 +42,7 @@ namespace spy {
 		 */
 		constexpr Shape(size_t dim, const DimensionArray &num_element, const NumberType number_type): 
 				number_type(number_type), dim(dim), elements(num_element), bytes{0} {
-			SPY_ASSERT_FMT(dim <= MAX_DIM, "The dimension should be within the range (0, {}] (cur: {})", MAX_DIM, dim);
+			spy_assert(dim <= MAX_DIM, "The dimension should be within the range (0, {}] (cur: {})", MAX_DIM, dim);
 
 			const size_t type_size = get_type_size(number_type);
 			// Expect the high dimension to be 1
@@ -61,7 +61,7 @@ namespace spy {
 		 */
 		constexpr Shape(const std::initializer_list<size_t> &num_element, const NumberType number_type): 
 				number_type(number_type), dim(num_element.size()), elements{0}, bytes{0} {
-			SPY_ASSERT_FMT(dim <= MAX_DIM, "The dimension should be within the range (0, {}] (cur: {})", MAX_DIM, dim);
+			spy_assert(dim <= MAX_DIM, "The dimension should be within the range (0, {}] (cur: {})", MAX_DIM, dim);
 
 			std::copy(num_element.begin(), num_element.end(), elements.begin());
 			for (size_t i = dim; i < MAX_DIM; ++i) {
@@ -81,7 +81,7 @@ namespace spy {
 
 		constexpr Shape(size_t dim, const DimensionArray &num_element, const DimensionArray &num_byte, const NumberType number_type):
 				number_type(number_type), dim(dim), elements(num_element), bytes(num_byte) {
-			SPY_ASSERT_FMT(dim <= MAX_DIM, "The dimension should be within the range (0, {}] (cur: {})", MAX_DIM, dim);
+			spy_assert(dim <= MAX_DIM, "The dimension should be within the range (0, {}] (cur: {})", MAX_DIM, dim);
 			// Expect the high dimension to be 1
 			std::fill(elements.begin() + dim, elements.end(), 1);
 			std::fill(bytes.begin() + dim, bytes.end(), elements[dim - 1] * num_byte[dim - 1]);
@@ -89,7 +89,7 @@ namespace spy {
 
 		constexpr Shape(const std::initializer_list<size_t> &num_element, const std::initializer_list<size_t> &num_byte, const NumberType number_type):
 				number_type(number_type), dim(num_element.size()), elements{0}, bytes{0} {
-			SPY_ASSERT_FMT(dim <= MAX_DIM, "The dimension should be within the range (0, {}] (cur: {})", MAX_DIM, dim);
+			spy_assert(dim <= MAX_DIM, "The dimension should be within the range (0, {}] (cur: {})", MAX_DIM, dim);
 
 			std::copy(num_element.begin(), num_element.end(), elements.begin());
 			std::copy(num_byte.begin(), num_byte.end(), bytes.begin());

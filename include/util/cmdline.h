@@ -20,7 +20,7 @@ namespace spy {
 
 	public:
 		Argument(std::string_view name = "Spy") : parser_(name.data()) { 
-			SPY_INFO("Initialize command line arguments parser");
+			spy_info("Initialize command line arguments parser");
 			define_augment();
 		}
 
@@ -47,7 +47,7 @@ namespace spy {
 
 	public:
 		void parse_argv(int argc, char **argv) {
-			SPY_INFO("Parse command line arguments");
+			spy_info("Parse command line arguments");
 			try {
 				parser_.parse_args(argc, argv);
 			} catch (const std::exception &err) {

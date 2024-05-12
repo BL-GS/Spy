@@ -97,13 +97,13 @@ namespace spy {
 		template<class T>
 		void add_gguf_value(const std::string &key, T &&value) {
 			auto iter_pair = kv_pairs.insert({key, {std::forward<T>(value)}});
-			SPY_ASSERT_FMT(iter_pair.second, "Cannot insert gguf value by key: {}", key);
+			spy_assert(iter_pair.second, "Cannot insert gguf value by key: {}", key);
 		}
 
 	public:
 		GGUFValue find_gguf_value(const std::string &key) const {
 			auto iter = kv_pairs.find(key);
-			SPY_ASSERT_FMT(iter != kv_pairs.end(), "Cannot find gguf value by key: {}", key);
+			spy_assert(iter != kv_pairs.end(), "Cannot find gguf value by key: {}", key);
 			return iter->second;
 		}
 

@@ -36,7 +36,7 @@ namespace spy {
                 vocab_ = std::make_unique<WordPieceVocab>(context);
                 break;
             default:
-                SPY_ASSERT_FMT(false, "Unknown vocab type: {}", magic_enum::enum_name(vocab_type));
+                spy_assert(false, "Unknown vocab type: {}", magic_enum::enum_name(vocab_type));
             }
         }
         

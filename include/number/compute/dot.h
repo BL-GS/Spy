@@ -27,7 +27,8 @@ namespace spy {
 		float operator()(const LhsBlock *lhs, const RhsBlock *rhs, size_t num) { return exec(lhs, rhs, num); }
 
 		static float exec(const LhsBlock *lhs, const RhsBlock *rhs, size_t num) {
-			SPY_ASSERT_FMT(false, "Unimplemented dot product: {} - {}", get_type_name(T_lhs_type), get_type_name(T_rhs_type));
+			spy_assert(false, "Unimplemented dot product: {} - {}", get_type_name(T_lhs_type), get_type_name(T_rhs_type));
+			return 0.0F;
 		}
 
 		static float exec_raw(const void *lhs, const void *rhs, size_t num) {

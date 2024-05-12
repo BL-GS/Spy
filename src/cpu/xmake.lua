@@ -6,5 +6,5 @@ target("spy_cpu")
     add_files("operator/*.cpp", "backend/*.cpp")
 
     add_deps("spy_interface")
-    add_packages("fmt", "magic_enum", "argparse", "concurrentqueue")
+    add_packages("fmt", "spdlog", "magic_enum", "argparse", "concurrentqueue")
 target_end()

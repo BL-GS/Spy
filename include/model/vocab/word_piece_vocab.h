@@ -26,7 +26,7 @@ namespace spy {
 
 	public:
 		std::vector<TokenID> tokenize(const std::string &raw_text, bool bos, bool special) override {
-			SPY_ASSERT(false, "Unimplemented");
+			spy_assert(false, "Unimplemented");
 			return {};
 		}
 
@@ -36,7 +36,8 @@ namespace spy {
 		}
 
 		uint8_t token_id_to_byte([[maybe_unused]] TokenID token_id) const override {
-			SPY_ASSERT(false, "Try toe convert token id using unsupported vocab");
+			spy_assert(false, "Try toe convert token id using unsupported vocab");
+			return 0;
 		}
 
 		std::string token_to_piece(TokenID token_id) const override {
@@ -66,7 +67,7 @@ namespace spy {
 				case ModelTokenType::Undefined:
 				case ModelTokenType::Unused:
 				default:
-					SPY_ASSERT_FMT(false, "Unknown model token type: {}", magic_enum::enum_name(token_type));
+					spy_assert(false, "Unknown model token type: {}", magic_enum::enum_name(token_type));
 				}
 			}
 			return {};

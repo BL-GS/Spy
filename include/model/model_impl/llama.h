@@ -65,7 +65,7 @@ namespace spy {
 			metadata_.model_type 		= ModelType::LLaMa;
 			metadata_.ffn_norm_rms_eps  = context.find_gguf_value(LLMKey::ATTENTION_LAYERNORM_RMS_EPS).get_value<float>();
 
-			SPY_ASSERT_FMT(metadata_.num_rot == metadata_.num_embedding / metadata_.num_head, 
+			spy_assert(metadata_.num_rot == metadata_.num_embedding / metadata_.num_head, 
 					"Invalid num_rot: {}, expect: {}", metadata_.num_rot, metadata_.num_embedding / metadata_.num_head);
 		}
 
@@ -91,8 +91,8 @@ namespace spy {
 			const size_t num_embedding_head  = metadata_.num_embedding_head_v;
 			const size_t num_embedding_k_gqa = metadata_.num_embedding_k_gqa;
 			const size_t num_embedding_v_gqa = metadata_.num_embedding_v_gqa;
-			SPY_ASSERT(num_embedding_head == metadata_.num_embedding_head_k);
-			SPY_ASSERT(num_embedding_head == metadata_.num_rot);
+			spy_assert(num_embedding_head == metadata_.num_embedding_head_k);
+			spy_assert(num_embedding_head == metadata_.num_rot);
 			const size_t num_context		 = (USE_KV_CACHE) ? hyper_param_.num_context: num_token;
 
 			const RopeContext rope_context = {

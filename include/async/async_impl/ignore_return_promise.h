@@ -31,9 +31,9 @@ namespace spy {
 				throw;
 			} catch (std::exception const &e) {
 				auto name = typeid(e).name();
-				SPY_ERROR_FMT("co_spawn coroutine terminated after thrown exception '{}': {}", name, e.what());
+				spy_error("co_spawn coroutine terminated after thrown exception '{}': {}", name, e.what());
 			} catch (...) {
-				SPY_ERROR("co_spawn coroutine terminated after thrown exception\n");
+				spy_error("co_spawn coroutine terminated after thrown exception\n");
 			}
 		}
 

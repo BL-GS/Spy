@@ -67,7 +67,7 @@ namespace spy::cpu {
             const size_t i11 = row_idx % (ne10 * ne11) / ne10; 
 
             const size_t selected_row_idx = row_idx_ptr[row_idx];
-            SPY_ASSERT_FMT(selected_row_idx < src0_num_row, "Access invalid row idx: {} (num: {})", selected_row_idx, src0_num_row);
+            spy_assert(selected_row_idx < src0_num_row, "Access invalid row idx: {} (num: {})", selected_row_idx, src0_num_row);
 
             const void *src_ptr = operand_0.get({0, selected_row_idx, i11, i12});
 
@@ -82,7 +82,7 @@ namespace spy::cpu {
                     quantize_inner<NumberType::Q8_0, NumberType::FP32>(src_ptr, dst_ptr + res_row_size * row_idx, ne00 / get_block_size(NumberType::Q8_0));
                 } break;
                 default:
-                    SPY_ASSERT_FMT(false, "Unimplemented get row operator {} -> {}",
+                    spy_assert(false, "Unimplemented get row operator {} -> {}",
                         enum_name(type_0), enum_name(type_res)
                     );
                 }
@@ -139,7 +139,7 @@ namespace spy::cpu {
                             );
                             break;
                         default:
-                            SPY_ASSERT_FMT(false, "Unimplemented dup operator for {} -> {}",
+                            spy_assert(false, "Unimplemented dup operator for {} -> {}",
                                 enum_name(type_operand), enum_name(type_result));
                         }
                     }                     
@@ -169,12 +169,12 @@ namespace spy::cpu {
                             );
                             break;
                         default:
-                            SPY_ASSERT_FMT(false, "Unimplemented dup operator for {} -> {}",
+                            spy_assert(false, "Unimplemented dup operator for {} -> {}",
                                 enum_name(type_operand), enum_name(type_result));
                         }
                     }      
                 } else {
-                    SPY_ASSERT(false);
+                    spy_assert(false);
                 }
             } else {
                 for (size_t i00 = 0; i00 < ne00; ++i00) {
@@ -195,7 +195,7 @@ namespace spy::cpu {
                         break;                        
                     }
                     default:
-                        SPY_ASSERT(false);
+                        spy_assert(false);
                     }
                     
                 }

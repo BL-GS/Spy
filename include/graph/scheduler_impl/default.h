@@ -3,8 +3,7 @@
 #include <atomic>
 #include <span>
 #include <vector>
-#include <concurrentqueue.h>
-#include <concurrentqueue/moodycamel/blockingconcurrentqueue.h>
+#include <concurrentqueue/blockingconcurrentqueue.h>
 
 #include "util/wrapper/atomic.h"
 #include "graph/type.h"
@@ -76,7 +75,7 @@ namespace spy {
 				// Allocate buffer
 				std::span<uint8_t> buffer_span = allocate_buffer(backend_ptr, cur_node_ptr);
 
-				SPY_DEBUG_FMT_OPTION(Execute, "Execute {:32} -> {}", cur_node_ptr->get_name(), magic_enum::enum_name(cur_node_ptr->op_type));
+				spy_debug(DebugFlag::Execute, "Execute {:32} -> {}", cur_node_ptr->get_name(), magic_enum::enum_name(cur_node_ptr->op_type));
 
 				const size_t task_num = backend_ptr->get_task_num(cur_node_ptr);
 				if (is_view(op_type) && task_num == 1) { // For view operator, which contains little operation, we do not need to bother thread pool.
@@ -170,11 +169,11 @@ namespace spy {
 
 				if (data_node_ptr->data_type == DataNodeType::Variable) {
 					const size_t cur_data_back_dep_count = --back_dep_count[node_credit];
-					SPY_ASSERT(data_node_ptr->view_src == nullptr);
+					spy_assert(data_node_ptr->view_src == nullptr);
 					if (cur_data_back_dep_count == 0) { 
 						Tensor &tensor = data_node_ptr->tensor;
 
-						SPY_DEBUG_FMT_OPTION(Memory, "Release node: {:32} (0x{})", data_node_ptr->get_name(), tensor.get());
+						spy_debug(DebugFlag::Memory, "Release node: {:32} (0x{})", data_node_ptr->get_name(), tensor.get());
 
 						backend_ptr->dealloc_memory(tensor.get(), tensor.total_size());
 						tensor.set_data_ptr(nullptr);
@@ -193,14 +192,14 @@ namespace spy {
 
 					case DataNodeType::Variable:
 						if (cur_data_back_dep_count == 0) {
-							SPY_DEBUG_FMT_OPTION(Memory, "Release view node: {:27} (0x{})", src_data_node_ptr->get_name(), src_tensor.get());
+							spy_debug(DebugFlag::Memory, "Release view node: {:27} (0x{})", src_data_node_ptr->get_name(), src_tensor.get());
 
 							backend_ptr->dealloc_memory(src_tensor.get(), src_tensor.total_size());
 							src_tensor.set_data_ptr(nullptr);
 						}	break;
 
 					default:
-						SPY_ASSERT(false);
+						spy_assert(false);
 					}					
 				}
 			}
@@ -212,7 +211,7 @@ namespace spy {
 			if (buffer_size == 0) { return {}; }
 			// allocate buffer
 			void *buffer_ptr = backend_ptr->alloc_memory(buffer_size);
-			SPY_ASSERT(buffer_ptr != nullptr, "failed allocate memory");
+			spy_assert(buffer_ptr != nullptr, "failed allocate memory");
 			return { static_cast<uint8_t *>(buffer_ptr), buffer_size };
 		}
 

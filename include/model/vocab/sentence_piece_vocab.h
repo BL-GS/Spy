@@ -60,7 +60,7 @@ namespace spy {
 			try {
 				linefeed_id = byte_to_token_id('\n');
 			} catch (const std::exception &err) {
-				SPY_WARN_FMT("Special Piece Vocabulary: cannot find newline token: {}. Using `special_pad_id` instead.", err.what());
+				spy_warn("Special Piece Vocabulary: cannot find newline token: {}. Using `special_pad_id` instead.", err.what());
 			}
 		}
 
@@ -135,7 +135,7 @@ namespace spy {
 				left_sym.n += right_sym.n;
 				right_sym.n = 0;
 
-				//LLAMA_LOG_SPY_INFO("left = '%*s' size = %zu\n", (int) left_sym.n, left_sym.text, bigram.size);
+				//LLAMA_LOG_spy_info("left = '%*s' size = %zu\n", (int) left_sym.n, left_sym.text, bigram.size);
 
 				// remove the right sym from the chain
 				left_sym.next = right_sym.next;
@@ -255,7 +255,7 @@ namespace spy {
 				case ModelTokenType::Undefined:
 				case ModelTokenType::Unused:
 				default:
-					SPY_ASSERT_FMT(false, "Unknown model token type: {}", magic_enum::enum_name(token_type));
+					spy_assert(false, "Unknown model token type: {}", magic_enum::enum_name(token_type));
 				}
 			}
 			return {};

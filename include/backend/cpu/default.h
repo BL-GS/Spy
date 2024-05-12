@@ -90,7 +90,7 @@ namespace spy {
 			const size_t max_num_thread  = CPUBackend::get_max_concurrency();
 			const size_t real_num_thread = (num_thread < 0) ? max_num_thread : num_thread;
 			if (real_num_thread > max_num_thread) {
-				SPY_WARN_FMT("The number of threads in pool ({}) is larger than the maximum concurrency ({})",
+				spy_warn("The number of threads in pool ({}) is larger than the maximum concurrency ({})",
 					real_num_thread, max_num_thread);
 			}
 			thread_pool_.reserve(num_thread);
@@ -98,7 +98,7 @@ namespace spy {
 			const size_t max_mem_size  =  CPUBackend::get_max_memory_capacity();
 			const size_t real_mem_size = (max_mem < 0) ? max_mem_size : max_mem;
 			if (real_mem_size > max_mem_size) {
-				SPY_WARN_FMT("The size of memory in pool ({}) is larger than the maximum memory capacity ({})",
+				spy_warn("The size of memory in pool ({}) is larger than the maximum memory capacity ({})",
 					real_mem_size, max_mem_size);
 			}
 		}

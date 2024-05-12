@@ -66,7 +66,7 @@ namespace spy {
 		static void transform(const FromBlock * __restrict from_ptr, ToBlock * __restrict to_ptr, size_t num_from) {
 			const size_t num_from_block = num_from / NUM_FROM_UNIT;
 			const size_t num_left 		= num_from % NUM_FROM_UNIT;
-			SPY_ASSERT_FMT(num_left == 0, "Expect the quantization source ({}) to be aligned with the target block ({}).", num_from, NUM_FROM_UNIT);
+			spy_assert(num_left == 0, "Expect the quantization source ({}) to be aligned with the target block ({}).", num_from, NUM_FROM_UNIT);
 
 			for (size_t i = 0; i < num_from_block; ++i) {
 				float abs_max = 0.0F;
@@ -122,7 +122,7 @@ namespace spy {
 		static void transform(const FromBlock * __restrict from_ptr, ToBlock * __restrict to_ptr, size_t num_from) {
 			const size_t num_from_block = num_from / NUM_FROM_UNIT;
 			const size_t num_left 		= num_from % NUM_FROM_UNIT;
-			SPY_ASSERT_FMT(num_left == 0, "Expect the quantization source ({}) to be aligned with the target block ({}).", num_from, NUM_FROM_UNIT);
+			spy_assert(num_left == 0, "Expect the quantization source ({}) to be aligned with the target block ({}).", num_from, NUM_FROM_UNIT);
 
 			for (size_t i = 0; i < num_from_block; ++i) {
 				float min = std::numeric_limits<float>::min();
@@ -177,7 +177,7 @@ namespace spy {
 		static void transform(const FromBlock * __restrict from_ptr, ToBlock * __restrict to_ptr, size_t num_from) {
 			const size_t num_from_block = num_from / NUM_FROM_UNIT;
 			const size_t num_left 		= num_from % NUM_FROM_UNIT;
-			SPY_ASSERT_FMT(num_left == 0, "Expect the quantization source ({}) to be aligned with the target block ({}).", num_from, NUM_FROM_UNIT);
+			spy_assert(num_left == 0, "Expect the quantization source ({}) to be aligned with the target block ({}).", num_from, NUM_FROM_UNIT);
 
 			for (size_t i = 0; i < num_from_block; ++i) {
 				// Load elements into 4 AVX vectors
@@ -262,7 +262,7 @@ namespace spy {
 		static void transform(const FromBlock * __restrict from_ptr, ToBlock * __restrict to_ptr, size_t num_from) {
 			const size_t num_from_block = num_from / NUM_FROM_UNIT;
 			const size_t num_left 		= num_from % NUM_FROM_UNIT;
-			SPY_ASSERT_FMT(num_left == 0, "Expect the quantization source ({}) to be aligned with the target block ({}).", num_from, NUM_FROM_UNIT);
+			spy_assert(num_left == 0, "Expect the quantization source ({}) to be aligned with the target block ({}).", num_from, NUM_FROM_UNIT);
 
 			for (size_t i = 0; i < num_from_block; ++i) {
 				// Load elements into 4 AVX vectors

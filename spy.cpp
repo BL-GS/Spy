@@ -138,7 +138,7 @@ int main(int argc, char **argv) {
 		++perf_timer.num_sample;
 		sample_timer.end();
 
-		SPY_DEBUG_FMT_OPTION(Execute, "Sample out: token_id {}, logit {}, token {}", new_token_id, candidates[new_token_id].logit, tokenizer.token_to_piece(new_token_id));
+		spy_debug(DebugFlag::Execute, "Sample out: token_id {}, logit {}, token {}", new_token_id, candidates[new_token_id].logit, tokenizer.token_to_piece(new_token_id));
 
 		/* Output predicted token */
 		if (new_token_id == tokenizer.get_special_eos_id()) { std::cout << std::endl; break; }
@@ -154,8 +154,8 @@ int main(int argc, char **argv) {
 	std::cout << std::endl;
 
 	perf_timer.print_timing();
-	SPY_INFO("Finished prediction");
-	SPY_INFO("Exit...");
+	spy_info("Finished prediction");
+	spy_info("Exit...");
 
 	return 0;
 }

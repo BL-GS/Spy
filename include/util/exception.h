@@ -101,14 +101,21 @@ namespace spy {
 		static constexpr std::string_view UNKNOWN_EXCEPTION = "SpyOSException: Unknown exception";
 
 	protected:
-		std::string reason_;
+		std::string 	reason_;
 
 	public:
 		SpyOSException(): std::system_error(system_error_code(), std::system_category()), 
 			reason_(std::string(UNKNOWN_EXCEPTION) + '\n' + std::system_error::what()) {}
 
+		SpyOSException(int error_code): std::system_error(error_code, std::system_category()), 
+			reason_(std::string(UNKNOWN_EXCEPTION) + '\n' + std::system_error::what()) {}
+
 		SpyOSException(const std::string_view reason): 
 			std::system_error(system_error_code(), std::system_category()), 
+			reason_(PREFIX.data() + std::string(reason) + '\n' + std::system_error::what()) { }
+
+		SpyOSException(int error_code, const std::string_view reason): 
+			std::system_error(error_code, std::system_category()), 
 			reason_(PREFIX.data() + std::string(reason) + '\n' + std::system_error::what()) { }
 
 		template<class ...Args>
@@ -116,8 +123,13 @@ namespace spy {
 			std::system_error(system_error_code(), std::system_category()), 
 			reason_(fmt::vformat(PREFIX.data() + std::string(reason), std::forward<Args>(args)...) + '\n' + std::system_error::what()) {}
 
+		template<class ...Args>
+		SpyOSException(int error_code, const std::string_view &reason, Args ...args): 
+			std::system_error(error_code, std::system_category()), 
+			reason_(fmt::vformat(PREFIX.data() + std::string(reason), std::forward<Args>(args)...) + '\n' + std::system_error::what()) {}
+
 	public:	
-		const char *what() const noexcept { return reason_.c_str(); }
+		const char *what() const noexcept override { return reason_.c_str(); }
 	};
 
 }

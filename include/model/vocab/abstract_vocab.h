@@ -106,7 +106,7 @@ namespace spy {
 				if (!new_id_option.has_value()) { return; }
 				const uint32_t new_id = new_id_option.value().get_value<uint32_t>();
 				if (new_id >= token_id_table.size()) {
-					SPY_WARN_FMT("Bad special token for {}: {}, using default id {}", magic_enum::enum_name(key), new_id, token_id);
+					spy_warn("Bad special token for {}: {}, using default id {}", magic_enum::enum_name(key), new_id, token_id);
 				} else {
 					token_id = new_id;
 				}
@@ -187,12 +187,12 @@ namespace spy {
 			}
 
 			if (special_tokens_definition_mismatch || special_tokens_count_from_verification != special_tokens_count_by_type) {
-				SPY_WARN_FMT("mismatch in special tokens definition ( {}/{} vs {}/{} ).\n",
+				spy_warn("mismatch in special tokens definition ( {}/{} vs {}/{} ).\n",
 				               special_tokens_count_from_verification, token_data_table.size(),
 				               special_tokens_count_by_type, token_data_table.size()
 				);
 			} else {
-				SPY_INFO_FMT("special tokens definition check successful ( {}/{} ).\n",
+				spy_info("special tokens definition check successful ( {}/{} ).\n",
 				               special_tokens_count_from_verification, token_data_table.size()
 				);
 			}

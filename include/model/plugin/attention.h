@@ -175,7 +175,7 @@ namespace spy {
 			const size_t num_kv = num_past_token + num_token;
 
 			// Update key cache
-			SPY_ASSERT(k_cache != Graph::INVALID_NODE_CREDIT, "Expect the k cache not to be invalid node");
+			spy_assert(k_cache != Graph::INVALID_NODE_CREDIT, "Expect the k cache not to be invalid node");
 
 			const Tensor &k_cache_tensor = graph.get_node_content<DataNode>(k_cache)->tensor;
 			const NumberType k_type = k_cache_tensor.get_number_type();
@@ -199,7 +199,7 @@ namespace spy {
 			);
 
 			// Update value cache
-			SPY_ASSERT(v_cache != Graph::INVALID_NODE_CREDIT, "Expect the v cache not to be invalid node");
+			spy_assert(v_cache != Graph::INVALID_NODE_CREDIT, "Expect the v cache not to be invalid node");
 
 			const Tensor &v_cache_tensor = graph.get_node_content<DataNode>(v_cache)->tensor;
 			const NumberType v_type = v_cache_tensor.get_number_type();

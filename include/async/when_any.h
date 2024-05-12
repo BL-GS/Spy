@@ -52,20 +52,20 @@ namespace spy {
 
 		void await_resume() const {
 			if (control_block.exception_ptr) [[unlikely]] {
-	            std::rethrow_exception(control_block.exception_ptr);
-	        }
+				std::rethrow_exception(control_block.exception_ptr);
+			}
 		}
 	};
 
 	template <class T>
 	ReturnPreviousTask whenAnyHelper(auto &&t, WhenAnyCtlBlock &control,
-	                                 Uninitialized<T> &result, std::size_t index) {
+									 Uninitialized<T> &result, std::size_t index) {
 		try {
 			result.put_value((co_await std::forward<decltype(t)>(t), NonVoidHelper<>()));
 		} catch (...) {
-            control.exception_ptr = std::current_exception();
-            co_return control.previous_handle;
-        }
+			control.exception_ptr = std::current_exception();
+			co_return control.previous_handle;
+		}
 		// Record the index of the completed task
 		control.idx = index;
 		co_return control.previous_handle;

@@ -177,9 +177,9 @@ namespace spy {
 		 * @brief Connect two nodes
 		 */
 		void connect(NodeCredit from, NodeCredit to) {
-			SPY_ASSERT(from != INVALID_NODE_CREDIT, "connect from invalid node");
-			SPY_ASSERT(to   != INVALID_NODE_CREDIT, "connect to invalid node");
-			SPY_ASSERT(from != to, "Do not build ring");
+			spy_assert(from != INVALID_NODE_CREDIT, "connect from invalid node");
+			spy_assert(to   != INVALID_NODE_CREDIT, "connect to invalid node");
+			spy_assert(from != to, "Do not build ring");
 
 			auto &from_node_ptr = node_storage_[from];
 			auto &to_node_ptr   = node_storage_[to];
@@ -195,7 +195,7 @@ namespace spy {
 		 * @brief Note the tensor as prepared at start
 		 */
 		void set_start(NodeCredit node_credit) {
-			SPY_ASSERT(dep_count_[node_credit] == 0, "Expect the start tensor not to be dependent on others");
+			spy_assert(dep_count_[node_credit] == 0, "Expect the start tensor not to be dependent on others");
 			connect(INPUT_NODE_CREDIT, node_credit);
 		}
 

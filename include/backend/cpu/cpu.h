@@ -27,7 +27,7 @@ namespace spy {
                 return std::make_unique<DefaultCPUBackend>(num_thread, mem_size);
 
             default:
-                SPY_ASSERT_FMT(false, "Unknown policy for CPU Backend: {}", magic_enum::enum_name(policy));
+                spy_assert(false, "Unknown policy for CPU Backend: {}", magic_enum::enum_name(policy));
             }
         }
 

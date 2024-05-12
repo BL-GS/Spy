@@ -47,7 +47,7 @@ namespace spy {
 					}()
 				};
 			default:
-				SPY_ASSERT_FMT(false, "Unsupported model architecture: {}", magic_enum::enum_name(model_type));
+				spy_assert(false, "Unsupported model architecture: {}", magic_enum::enum_name(model_type));
 		}
 		return {};
 	}

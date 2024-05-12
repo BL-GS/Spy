@@ -117,7 +117,7 @@ namespace spy {
 
 			if (!no_dequantize) {
 				if (number_type != NumberType::FP32) {
-					SPY_ASSERT(number_type == NumberType::Q8_0);
+					spy_assert(number_type == NumberType::Q8_0);
 					return make_stream<OperatorType::Quantize>(graph, tensor_name + ".fp32", { node_credit }, NumberType::FP32);
 				}
 			}
@@ -137,7 +137,7 @@ namespace spy {
             
             OperatorDefNode *   op_node_ptr  = graph.get_node_content<OperatorDefNode>(op_node_credit);
             const OperatorType  op_type      = op_node_ptr->op_type;
-            SPY_ASSERT_FMT(op_type == T_op_type, 
+            spy_assert(op_type == T_op_type, 
                 "Trying to get result tensor with different op_type (assign: {}, template: {})", 
                 magic_enum::enum_name(op_type), magic_enum::enum_name(T_op_type));
 
@@ -180,12 +180,12 @@ namespace spy {
             graph.set_start(node_credit);
 	        // Dequantize weight tensor
 	        // TODO: hacking and inefficient
-	        SPY_ASSERT_FMT(info.data_ptr != nullptr, "The pointer to the weight is nullptr: {}", concat_name);
+	        spy_assert(info.data_ptr != nullptr, "The pointer to the weight is nullptr: {}", concat_name);
 	        graph.get_node_content<DataNode>(node_credit)->tensor.set_data_ptr(const_cast<void *>(info.data_ptr));
 
 			if (!no_dequantize) {
 				if (number_type != NumberType::FP32) {
-					SPY_ASSERT(number_type == NumberType::Q8_0);
+					spy_assert(number_type == NumberType::Q8_0);
 					return make_stream<OperatorType::Quantize>(graph, concat_name + ".fp32", { node_credit }, NumberType::FP32);
 				}
 			}

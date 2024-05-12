@@ -44,7 +44,7 @@ namespace spy::cpu {
         case NumberType::Q8_0:
             return get_row_size(NumberType::Q8_0, shape_1.total_element());
         default:
-	        SPY_ASSERT_FMT(false, "Unimplemented operator of type: {}", enum_name(type_0));
+	        spy_assert(false, "Unimplemented operator of type: {}", enum_name(type_0));
 			return 0;
         }
         return 0;
@@ -68,7 +68,7 @@ namespace spy::cpu {
 		const size_t num_dst         = shape_res.total_element();
 
         const auto matmul_without_buffer = [&](){
-            SPY_ASSERT_FMT(type_0 == type_1, "Expect the operands to be of the same type: {}, {}", enum_name(type_0), enum_name(type_1));
+            spy_assert(type_0 == type_1, "Expect the operands to be of the same type: {}, {}", enum_name(type_0), enum_name(type_1));
 
             const auto dot_func = NumberTypeMapper::product_map([](const auto T_type_0, const auto T_type_1){
                 return Dot<T_type_0, T_type_1>::exec_raw;
@@ -99,7 +99,7 @@ namespace spy::cpu {
             const int num_src1_row       = shape_1.num_row();
             const size_t buffer_row_size = get_row_size(type_mid, ne10);
 
-            SPY_ASSERT_FMT(num_src1_row * buffer_row_size <= param.buffer.size(),
+            spy_assert(num_src1_row * buffer_row_size <= param.buffer.size(),
                 "The size of buffer is less than that needed (buffer: {}, need: {})", param.buffer.size(), num_src1_row * buffer_row_size);
 
             while (true) {

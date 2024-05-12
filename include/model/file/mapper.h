@@ -29,7 +29,7 @@ namespace spy {
         size_t load(GGUFContext &context) {
             const size_t data_offset = context.offset;
             const size_t data_size   = context.size;
-            SPY_INFO_FMT("Loading data section (offset: 0x{:x}, size: {}MB)", data_offset, data_size / 1_MB);
+            spy_info("Loading data section (offset: 0x{:x}, size: {}MB)", data_offset, data_size / 1_MB);
 
             try {
 				FileMappingView view = builder.create_mapping_view(data_size, data_offset);
@@ -42,7 +42,7 @@ namespace spy {
 
 				view_buffer.emplace_back(std::move(view));
             } catch (...) {
-                SPY_ERROR("Failed loading model");
+                spy_error("Failed loading model");
                 throw;
             }
 

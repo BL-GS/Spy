@@ -196,7 +196,7 @@ namespace spy {
 		~FileMappingView() noexcept override {
 			if (addr_ != nullptr) {
 				const auto ret = UnmapViewOfFile(addr_);
-				SPY_ASSERT_NOEXCEPTION(ret != 0, "failed unmapping file");
+				spy_assert(ret != 0, "failed unmapping file");
 			}
 		}
 
@@ -234,7 +234,7 @@ namespace spy {
 				};
 
 				if (pPrefetchVirtualMemory(GetCurrentProcess(), 1, &range, 0) == 0) {
-					SPY_WARN("failed prefetching virtual memory");
+					spy_warn("failed prefetching virtual memory");
 				}
 			}
 		}
@@ -309,7 +309,7 @@ namespace spy {
 			for (int i = 1; i <= event_counter_; ++i) {
 				constexpr auto timeout_ms = 5000;
 				bool success = sync<false>(i, timeout_ms);
-				SPY_ASSERT_NOEXCEPTION(success, "Failed sync with event");
+				spy_assert(success, "Failed sync with event");
 			}
 		}
 
@@ -417,7 +417,7 @@ namespace spy {
                 return false;
 
             case WAIT_ABANDONED:
-                SPY_WARN("wait for overlapped abandoned...");
+                spy_warn("wait for overlapped abandoned...");
                 return false;
 
             default:
@@ -488,7 +488,7 @@ namespace spy {
 				break;
 
 			case WAIT_ABANDONED:
-				SPY_WARN("wait for overlapped abandoned...");
+				spy_warn("wait for overlapped abandoned...");
 				break;
 
 			default:
@@ -538,7 +538,7 @@ namespace spy {
 		~FileMappingView() noexcept override {
 			if (addr_ != nullptr) {
 				const auto ret = munmap(addr_, size_);
-				SPY_ASSERT_NOEXCEPTION(ret == 0, "failed unmapping file");
+				spy_assert(ret == 0, "failed unmapping file");
 			}
 		}
 
