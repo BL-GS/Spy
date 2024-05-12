@@ -17,8 +17,8 @@ set_warnings("all")
 
 
 -- Library 
-add_requires("uring", {system = true})
-add_requires("fmt", "argparse", "magic-enum", "concurrentqueue")
+add_requires("liburing")
+add_requires("fmt", "xrepo", "argparse", "magic_enum", "concurrentqueue")
 add_requires("gtest")
 
 -- Interface
@@ -56,7 +56,7 @@ target("spy")
         add_deps("spy_gpu")
     end    
 
-    add_packages("uring")
-    add_packages("fmt", "magic-enum", "argparse", "concurrentqueue")
+    add_packages("liburing")
+    add_packages("fmt", "magic_enum", "argparse", "concurrentqueue")
 target_end()
 

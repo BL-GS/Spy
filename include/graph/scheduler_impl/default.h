@@ -3,7 +3,8 @@
 #include <atomic>
 #include <span>
 #include <vector>
-#include <concurrentqueue/blockingconcurrentqueue.h>
+#include <concurrentqueue.h>
+#include <concurrentqueue/moodycamel/blockingconcurrentqueue.h>
 
 #include "util/wrapper/atomic.h"
 #include "graph/type.h"

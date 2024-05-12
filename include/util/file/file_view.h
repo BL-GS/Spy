@@ -726,7 +726,7 @@ namespace spy {
 				}
 
 				const int ret = aio_return(aiocb_ptr.get());
-				if (ret != 0) { throw SpyOSFileException("failed waiting aio event"); }
+				if (ret == -1) { throw SpyOSFileException("failed waiting aio event"); }
 			}
 			event_map_.clear();
 		}

@@ -13,5 +13,5 @@ target("spy_gpu")
     add_files("backend/*.cu") 
 
     add_deps("spy_interface")
-    add_packages("fmt", "magic-enum", "argparse")
+    add_packages("fmt", "magic_enum", "argparse")
 target_end()
