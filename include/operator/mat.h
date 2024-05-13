@@ -33,8 +33,8 @@ namespace spy {
 		Tensor deduce_result() const { 
             spy_assert(input.size() == 2, "Expect the number of operands to be 2 (cur: {})", input.size());
 
-			const Tensor &operand_0 = get_tensor_from_node(input[0]);
-			const Tensor &operand_1 = get_tensor_from_node(input[1]);
+			const Tensor &operand_0 = input[0]->tensor;
+			const Tensor &operand_1 = input[1]->tensor;
 
 			const auto &shape_0     = operand_0.get_shape();
 			const auto &shape_1     = operand_1.get_shape();

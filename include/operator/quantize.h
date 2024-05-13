@@ -29,7 +29,7 @@ namespace spy {
 		Tensor deduce_result() const { 
 			spy_assert(input.size() == 1, "Expect the number of operands to be 1 (cur: {})", input.size());
 
-			const Tensor &operand        = get_tensor_from_node(input[0]);
+			const Tensor &operand        = input[0]->tensor;
 			const size_t target_dim      = operand.get_dim();
 			const auto   target_elements = operand.element_array();
 			const Shape  target_shape(target_dim, target_elements, target_type);

@@ -9,7 +9,7 @@
 #include <thread>
 #include <atomic>
 #include <functional>
-#include <concurrentqueue/concurrentqueue.h>
+#include <concurrentqueue.h>
 
 #include "util/shell/logger.h"
 #include "backend/cpu/type.h"
@@ -48,7 +48,7 @@ namespace spy {
 		void reserve(uint32_t num_thread) {
 			workers_.reserve(num_thread);
 			for (size_t i = 0; i < num_thread; ++i) {
-				workers_.emplace_back([this, i](){
+				workers_.emplace_back([this](){
 					while (!stop_flag_.test()) {
 						// Sleep if no task
 						TaskFunc task;

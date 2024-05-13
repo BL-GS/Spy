@@ -25,8 +25,8 @@ namespace spy {
 		Tensor deduce_result() const { 
             spy_assert(input.size() == 2, "Expect the number of operands to be 2 (cur: {})", input.size());
 
-			const Tensor &operand_0 = get_tensor_from_node(input[0]);
-			const Tensor &operand_1 = get_tensor_from_node(input[1]);
+			const Tensor &operand_0 = input[0]->tensor;
+			const Tensor &operand_1 = input[1]->tensor;
 			spy_assert(operand_0.get_number_type() == NumberType::FP32);
 			spy_assert(operand_1.get_number_type() == NumberType::FP32);
 
@@ -67,8 +67,8 @@ namespace spy {
 		Tensor deduce_result() const { 
             spy_assert(input.size() == 2, "Expect the number of operands to be 2 (cur: {})", input.size());
 
-			const Tensor &operand_0 = get_tensor_from_node(input[0]);
-			const Tensor &operand_1 = get_tensor_from_node(input[1]);
+			const Tensor &operand_0 = input[0]->tensor;
+			const Tensor &operand_1 = input[1]->tensor;
 			spy_assert(operand_0.get_number_type() == NumberType::FP32);
 			spy_assert(operand_1.get_number_type() == NumberType::FP32);
 
@@ -109,8 +109,8 @@ namespace spy {
 		Tensor deduce_result() const { 
             spy_assert(input.size() == 2, "Expect the number of operands to be 2 (cur: {})", input.size());
 
-			const Tensor &operand_0 = get_tensor_from_node(input[0]);
-			const Tensor &operand_1 = get_tensor_from_node(input[1]);
+			const Tensor &operand_0 = input[0]->tensor;
+			const Tensor &operand_1 = input[1]->tensor;
 			spy_assert(operand_0.get_number_type() == NumberType::FP32);
 			spy_assert(operand_1.get_number_type() == NumberType::FP32);
 
@@ -151,8 +151,8 @@ namespace spy {
 		Tensor deduce_result() const { 
             spy_assert(input.size() == 2, "Expect the number of operands to be 2 (cur: {})", input.size());
 
-			const Tensor &operand_0 = get_tensor_from_node(input[0]);
-			const Tensor &operand_1 = get_tensor_from_node(input[1]);
+			const Tensor &operand_0 = input[0]->tensor;
+			const Tensor &operand_1 = input[1]->tensor;
 			spy_assert(operand_0.get_number_type() == NumberType::FP32);
 			spy_assert(operand_1.get_number_type() == NumberType::FP32);
 

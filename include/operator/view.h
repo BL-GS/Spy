@@ -26,7 +26,7 @@ namespace spy {
 		Tensor deduce_result() const { 
 			spy_assert(input.size() == 1, "Expect the number of operands to be 1 (cur: {})", input.size());
 
-			const Tensor &operand = get_tensor_from_node(input[0]);
+			const Tensor &operand = input[0]->tensor;
 			return { operand.get_shape(), nullptr };
 		}
     };
@@ -54,8 +54,8 @@ namespace spy {
 		Tensor deduce_result() const { 
 			spy_assert(input.size() == 2, "Expect the number of operands to be 2 (cur: {})", input.size());
 
-			const Tensor &operand_0 = get_tensor_from_node(input[0]);
-			const Tensor &operand_1 = get_tensor_from_node(input[1]);
+			const Tensor &operand_0 = input[0]->tensor;
+			const Tensor &operand_1 = input[1]->tensor;
 
 			const auto &shape_0 = operand_0.get_shape();
 			const auto &shape_1 = operand_1.get_shape();
@@ -92,7 +92,7 @@ namespace spy {
 		 */
 		Tensor deduce_result() const { 
 			spy_assert(input.size() == 1, "Expect the number of operands to be 1 (cur: {})", input.size());	
-			const Tensor &operand_0 = get_tensor_from_node(input[0]);
+			const Tensor &operand_0 = input[0]->tensor;
 			const auto &shape_0     = operand_0.get_shape();
 
 			const Shape shape_res     = shape_0;
@@ -118,8 +118,8 @@ namespace spy {
 		Tensor deduce_result() const { 
 			spy_assert(input.size() == 2, "Expect the number of operands to be 2 (cur: {})", input.size());	
 
-			const Tensor &operand_0 = get_tensor_from_node(input[0]);
-			const Tensor &operand_1 = get_tensor_from_node(input[1]);
+			const Tensor &operand_0 = input[0]->tensor;
+			const Tensor &operand_1 = input[1]->tensor;
 
 			const Shape &shape_0 = operand_0.get_shape();
 			const Shape &shape_1 = operand_1.get_shape();
@@ -157,7 +157,7 @@ namespace spy {
 		Tensor deduce_result() const { 
             spy_assert(input.size() == 1, "Expect the number of operands to be 1 (cur: {})", input.size());
 
-			const Tensor &operand_0 = get_tensor_from_node(input[0]);
+			const Tensor &operand_0 = input[0]->tensor;
 
             const Shape &shape_0  = operand_0.get_shape();
             const Shape shape_res = new_shape;
@@ -196,7 +196,7 @@ namespace spy {
 		Tensor deduce_result() const { 
             spy_assert(input.size() == 1, "Expect the number of operands to be 1 (cur: {})", input.size());
 
-            const Tensor &operand_0 = get_tensor_from_node(input[0]);
+            const Tensor &operand_0 = input[0]->tensor;
             const Shape &shape_0    = operand_0.get_shape();
             const Shape shape_res   = new_shape;
 
@@ -226,7 +226,7 @@ namespace spy {
 		 */
 		Tensor deduce_result() const { 
 			spy_assert(input.size() == 1, "Expect the number of operands to be 1 (cur: {})", input.size());	
-			const Tensor &operand_0 = get_tensor_from_node(input[0]);
+			const Tensor &operand_0 = input[0]->tensor;
 			const auto &shape_0     = operand_0.get_shape();
 
 			Shape shape_res = shape_0;
@@ -268,7 +268,7 @@ namespace spy {
 		 */
 		Tensor deduce_result() const { 
 			spy_assert(input.size() == 1, "Expect the number of operands to be 1 (cur: {})", input.size());	
-			const Tensor &operand_0 = get_tensor_from_node(input[0]);
+			const Tensor &operand_0 = input[0]->tensor;
 			const auto &shape_0     = operand_0.get_shape();
 
 			Shape shape_res = shape_0;
@@ -304,7 +304,7 @@ namespace spy {
 		Tensor deduce_result() const { 
             spy_assert(input.size() == 1, "Expect the number of operands to be 1 (cur: {})", input.size());
 
-			const Tensor &operand_0 = get_tensor_from_node(input[0]);
+			const Tensor &operand_0 = input[0]->tensor;
 
             const Shape &shape_0  = operand_0.get_shape();
             const Shape shape_res = new_shape;

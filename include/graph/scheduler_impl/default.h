@@ -1,6 +1,10 @@
 #pragma once
 
+#include <algorithm>
 #include <atomic>
+#include <cstddef>
+#include <mutex>
+#include <ranges>
 #include <span>
 #include <vector>
 #include <blockingconcurrentqueue.h>
@@ -40,21 +44,37 @@ namespace spy {
 		}
 
 		void execute(Graph *graph_ptr) override {
-			const auto &origin_back_dep_count = graph_ptr->get_back_dep_count();
-			const auto &origin_dep_count = graph_ptr->get_dep_count();	
-			std::vector<RelaxedAtomWrapper<size_t>> back_dep_count(origin_back_dep_count.begin(), origin_back_dep_count.end());
-			std::vector<RelaxedAtomWrapper<size_t>> dep_count(origin_dep_count.begin(), origin_dep_count.end());
+			auto data_recv_counts   = graph_ptr->get_data_recv_count();
+			auto op_recv_counts 	 = graph_ptr->get_op_recv_count();
 
 			TopoNodeQueue node_queue;
-			step_op_node(graph_ptr, node_queue, dep_count, Graph::INPUT_NODE_CREDIT);
 
-			const auto op_step = [graph_ptr, &node_queue, &dep_count, &back_dep_count] (OperatorNode *cur_node_ptr, const std::span<uint8_t> &buffer, AbstractBackend *backend_ptr) {
+			for (size_t i = 0; i < data_recv_counts.size(); ++i) {
+				if (data_recv_counts[i] == 0) {
+					const auto &data_node = graph_ptr->get_data_node(i);
+					const auto &op_nodes  = data_node->get_output();
+
+					for (const auto &op_node: op_nodes) {
+						const auto op_credit  = op_node->get_credit();
+						const auto op_node_id = op_credit.node_id;
+						const auto res_count  = --op_recv_counts[op_node_id];
+
+						if (res_count == 0) { node_queue.enqueue(op_credit); }
+					}
+				}
+			}
+
+			std::mutex step_lock;
+			const auto op_step = [&] (OperatorNode *cur_node_ptr, const std::span<uint8_t> &buffer, AbstractBackend *backend_ptr) {
+
 				deallocate_buffer(backend_ptr, buffer);
 				// Deallocate outdated input
-				try_deallocate_inputs(backend_ptr, cur_node_ptr, back_dep_count);
+				try_deallocate_inputs(backend_ptr, cur_node_ptr, data_recv_counts);
 				// Step forward
 				const NodeCredit cur_credit = cur_node_ptr->get_credit();
-				step_op_node(graph_ptr, node_queue, dep_count, cur_credit);
+
+				std::lock_guard<std::mutex> lock(step_lock);
+				step_op_node(graph_ptr, node_queue, op_recv_counts, cur_credit);
 			};
 
 			while (true) {
@@ -70,7 +90,7 @@ namespace spy {
 				OperatorType op_type = cur_node_ptr->op_type;
 
 				// Allocate to-be-use output
-				try_allocate_outputs(backend_ptr, cur_node_ptr, back_dep_count);
+				try_allocate_outputs(backend_ptr, cur_node_ptr, op_recv_counts);
 
 				// Allocate buffer
 				std::span<uint8_t> buffer_span = allocate_buffer(backend_ptr, cur_node_ptr);
@@ -114,17 +134,17 @@ namespace spy {
 								 auto &dep_count, NodeCredit cur_node_credit) {
 			const OperatorNode *input_node_ptr = graph_ptr->get_node_content<OperatorNode>(cur_node_credit);
 			const auto &data_nodes = input_node_ptr->get_output();
-			for (const BaseNode *data_node_ptr: data_nodes) {
+			for (const DataNode *data_node_ptr: data_nodes) {
 				const NodeCredit data_credit = data_node_ptr->get_credit();
 
-				const size_t cur_data_dep_count = --dep_count[data_credit];
+				const size_t cur_data_dep_count = --dep_count[data_credit.node_id];
 
 				if (cur_data_dep_count == 0) {
 					const auto &start_op_nodes = data_node_ptr->get_output();
-					for (const BaseNode *start_op_node_ptr: start_op_nodes) {
+					for (const OperatorNode *start_op_node_ptr: start_op_nodes) {
 						const NodeCredit start_node_credit = start_op_node_ptr->get_credit();
 
-						const size_t cur_dep_count = --dep_count[start_node_credit];
+						const size_t cur_dep_count = --dep_count[start_node_credit.node_id];
 						if (cur_dep_count == 0) { node_queue.enqueue(start_node_credit); }
 					}
 				}
@@ -137,8 +157,7 @@ namespace spy {
 			const auto &outputs = cur_node_ptr->get_output();
 
 			if (!is_view(cur_node_ptr->op_type)) {
-				for (BaseNode *node_ptr: outputs) {
-					DataNode *data_node_ptr = static_cast<DataNode *>(node_ptr);
+				for (DataNode *data_node_ptr: outputs) {
 					Tensor &tensor = data_node_ptr->tensor;
 					if (tensor.get() == nullptr) {
 						void *data_ptr = backend_ptr->alloc_memory(tensor.total_size());
@@ -146,16 +165,16 @@ namespace spy {
 					}
 				}
 			} else {
-				DataNode *input_node_ptr  = static_cast<DataNode *>(inputs[0]);
-				DataNode *output_node_ptr = static_cast<DataNode *>(outputs[0]);
+				DataNode *input_node_ptr  = inputs[0];
+				DataNode *output_node_ptr = outputs[0];
 				if (input_node_ptr->view_src == nullptr) {
 					output_node_ptr->view_src = input_node_ptr;
 				} else {
 					output_node_ptr->view_src = input_node_ptr->view_src;
 				}
 				// Count up the dependency of the source because we fork a new view
-				NodeCredit src_credit = output_node_ptr->view_src->get_credit();
-				++back_dep_count[src_credit];
+				const NodeCredit src_credit = output_node_ptr->view_src->get_credit();
+				++back_dep_count[src_credit.node_id];
 			}
 		}
 
@@ -163,12 +182,11 @@ namespace spy {
 		static void try_deallocate_inputs(AbstractBackend *backend_ptr, const OperatorNode *cur_node_ptr, auto &back_dep_count) {
 			const auto &inputs = cur_node_ptr->get_input();
 
-			for (BaseNode *node_ptr: inputs) {
-				const NodeCredit node_credit = node_ptr->get_credit();
-				DataNode *data_node_ptr 	 = static_cast<DataNode *>(node_ptr);
+			for (DataNode *data_node_ptr: inputs) {
+				const NodeCredit node_credit = data_node_ptr->get_credit();
 
 				if (data_node_ptr->data_type == DataNodeType::Variable) {
-					const size_t cur_data_back_dep_count = --back_dep_count[node_credit];
+					const size_t cur_data_back_dep_count = --back_dep_count[node_credit.node_id];
 					spy_assert(data_node_ptr->view_src == nullptr);
 					if (cur_data_back_dep_count == 0) { 
 						Tensor &tensor = data_node_ptr->tensor;
@@ -180,10 +198,10 @@ namespace spy {
 					}
 				} else if (data_node_ptr->data_type == DataNodeType::View) {
 					const NodeCredit src_node_credit = data_node_ptr->view_src->get_credit();
-					DataNode *src_data_node_ptr 	 = static_cast<DataNode *>(data_node_ptr->view_src);
+					DataNode *src_data_node_ptr 	 = data_node_ptr->view_src;
 					Tensor &src_tensor = src_data_node_ptr->tensor;
 					// We need to count down the dependency of the source, and release it if needed.
-					const size_t cur_data_back_dep_count = --back_dep_count[src_node_credit];
+					const size_t cur_data_back_dep_count = --back_dep_count[src_node_credit.node_id];
 					switch (src_data_node_ptr->data_type) {
 
 					case DataNodeType::Constant:

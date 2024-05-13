@@ -6,9 +6,11 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <string_view>
+#include <type_traits>
 #include <vector>
 #include <fmt/format.h>
 #include <magic_enum.hpp>
@@ -20,52 +22,114 @@
 
 namespace spy {
 
-	using NodeCredit = uint32_t;
+	struct NodeCredit {
+		bool 		is_data;
+		uint32_t	node_id;
+
+		bool operator==(const NodeCredit &other) const { return is_data == other.is_data && node_id == other.node_id; }
+	};
 
 	struct DataNode;
 	struct OperatorNode;
 	class Graph;
 
-	struct BaseNode {
+	struct DataNode {
 		friend class Graph;
 	public:
-		using NodeArray = std::vector<BaseNode *>;
+		using NodeArray = std::vector<OperatorNode *>;
 
-	protected:
+	public: /* Content */
 		NodeCredit  	credit;
 		/// The name of the node
 		std::string 	name;
+		/// The metadata of tensor
+		Tensor 			tensor;
+		/// The source of view
+		DataNode *		view_src 		= nullptr;
+		/// The type of data
+		DataNodeType 	data_type	= DataNodeType::Variable;
+
+	protected:
+		NodeArray		output;
+
+	public:
+		DataNode() = default;
+
+		template<class ...Args>
+		DataNode(NodeCredit credit, std::string_view name, DataNodeType data_type, Args &&...args) : 
+			credit(credit), name(name), tensor(std::forward<Args>(args)...), data_type(data_type) {}
+
+		DataNode(const DataNode &other) = default;
+
+		~DataNode() noexcept = default;
+
+	public:
+		/*!
+		 * @brief Connect with output node
+		 * @param out_node_ptr: The pointer of the output node
+		 */
+		void output_connect(OperatorNode *out_node_ptr) { output.push_back(out_node_ptr);  }
+
+		/*!
+		 * @brief Get all output nodes
+		 */
+		const NodeArray &get_output() const { return output; }
+
+		/*!
+		 * @brief Get a output node
+		 */
+		template<class T>
+		T &get_output(size_t idx) 					const { return *static_cast<T *>(output[idx]);  }
+
+	public: /* Utilities */
+		/*!
+		 * @brief Get the credit of this node, which denote the position of the node in the graph
+		 */
+		NodeCredit  get_credit() const { return credit;  }
+
+		/*!
+		 * @brief Get the name of this node.
+		 */
+		std::string get_name()   const { return name; }
+	};
+
+	struct OperatorNode {
+		friend class Graph;
+	public:
+		using NodeArray = std::vector<DataNode *>;
+
+	public: /* Content */
+		NodeCredit  	credit;
+		/// The name of the node
+		std::string 	name;
+		/// The type of operation
+		OperatorType 	op_type;
 		/// Input nodes
 		NodeArray   	input;
 		/// Output nodes
 		NodeArray  		output;
 
 	public:
-		BaseNode(): credit(), name("unnamed") {
-			// Most of the operators are binary operator
-			input.reserve(2); output.reserve(1);
-		}
+		OperatorNode() : op_type(OperatorType::Nop) {}
 
-		BaseNode(NodeCredit credit, const std::string_view name): credit(credit), name(name) {}
+		OperatorNode(NodeCredit credit, std::string_view name, OperatorType op_type): credit(credit), name(name), op_type(op_type) {}
 
-		BaseNode(const BaseNode &other) = default;
+		OperatorNode(const OperatorNode &other) = default;
 
-		virtual ~BaseNode() noexcept 	= default;
-
-		BaseNode &operator=(const BaseNode &other) = default;
+		~OperatorNode() noexcept = default;
 
 	public:
 		/*!
 		 * @brief Connect with input node
 		 * @param in_node_ptr: The pointer of the input node
 		 */
-		void input_connect(BaseNode *in_node_ptr)   { input.push_back(in_node_ptr);    }
+		void input_connect(DataNode *in_node_ptr)   { input.push_back(in_node_ptr);    }
 
 		/*!
 		 * @brief Connect with output node
 		 * @param out_node_ptr: The pointer of the output node
 		 */
-		void output_connect(BaseNode *out_node_ptr) { output.push_back(out_node_ptr);  }
+		void output_connect(DataNode *out_node_ptr) { output.push_back(out_node_ptr);  }
 
 		/*!
 		 * @brief Get all input nodes
@@ -99,80 +163,51 @@ namespace spy {
 		 * @brief Get the name of this node.
 		 */
 		std::string get_name()   const { return name; }
-
 	};
 
-	struct DataNode final: BaseNode {
-	public: /* Content */
-		/// The metadata of tensor
-		Tensor tensor;
-		/// The source of view
-		DataNode *view_src 		= nullptr;
-		/// The type of data
-		DataNodeType data_type	= DataNodeType::Variable;
-
+	class Graph {
 	public:
-		DataNode() = default;
+		static constexpr NodeCredit INVALID_NODE_CREDIT { true, std::numeric_limits<uint32_t>::max() };
+		static constexpr NodeCredit OUTPUT_NODE_CREDIT { false, std::numeric_limits<uint32_t>::max() };
 
-		template<class ...Args>
-		DataNode(NodeCredit credit, std::string_view name, DataNodeType data_type, Args &&...args) : 
-			BaseNode(credit, name), tensor(std::forward<Args>(args)...), data_type(data_type) {}
+		static inline OperatorNode END_OPERATOR_NODE{OUTPUT_NODE_CREDIT, "end", OperatorType::Nop};
 
-		DataNode(const DataNode &other) = default;
-
-		~DataNode() noexcept override = default;
-	};
-
-	struct OperatorNode: BaseNode {
-	public: /* Content */
-		/// The type of operation
-		OperatorType op_type;
-
-	public:
-		OperatorNode() : op_type(OperatorType::Nop) {}
-
-		OperatorNode(NodeCredit credit, std::string_view name, OperatorType op_type) : BaseNode(credit, name), op_type(op_type) {}
-
-		OperatorNode(const OperatorNode &other) = default;
-
-		~OperatorNode() noexcept override = default;
-	};
-
-	class Graph: public OperatorNode {
-	public:
-		static constexpr NodeCredit INVALID_NODE_CREDIT = std::numeric_limits<NodeCredit>::max();
-		static constexpr NodeCredit INPUT_NODE_CREDIT	= 0;
-		static constexpr NodeCredit OUTPUT_NODE_CREDIT  = 1;
-
-		using NodeElement     = std::unique_ptr<BaseNode>;
+		using DataNodeElement     = std::unique_ptr<DataNode>;
+		using OperatorNodeElement = std::unique_ptr<OperatorNode>;
 
 	protected:
-		std::vector<NodeElement> node_storage_;
- 
+		std::vector<DataNodeElement> 		data_nodes_;
+
+		std::vector<OperatorNodeElement>	op_nodes_;
+
+		std::string 						name_;
 
 	public:
-		Graph(const std::string_view name, const NodeCredit credit = INVALID_NODE_CREDIT) : OperatorNode(credit, name, OperatorType::Nop) { 
-			node_storage_.emplace_back(std::make_unique<OperatorNode>(INPUT_NODE_CREDIT, "input", OperatorType::Nop));
-			node_storage_.emplace_back(std::make_unique<OperatorNode>(OUTPUT_NODE_CREDIT, "output", OperatorType::Nop));
-			dep_count_ = { 0, 0 };
-			back_dep_count_ = { 0, 0 };
-		}
+		Graph(const std::string_view name): name_(name) { }
 
-		~Graph() noexcept override = default;
+		Graph(Graph &&other) = delete;
+
+		~Graph() noexcept = default;
 
 	public:
 		/*!
 		 * @brief Allocate a new node in graph
 		 */
 		template<class T_Node, class ...Args>
-		NodeCredit alloc_node(const std::string_view name, Args &&...args) {
-			const NodeCredit new_node_credit = node_storage_.size();
+		NodeCredit alloc_node(const std::string_view name, Args &&...args) { 
+			if constexpr (std::is_same_v<T_Node, DataNode>) {
+				const uint32_t new_node_id = data_nodes_.size();
+				const NodeCredit new_node_credit{ true, new_node_id };
 
-			node_storage_.emplace_back(std::make_unique<T_Node>(new_node_credit, name, std::forward<Args>(args)...));
-			dep_count_.emplace_back(0);
-			back_dep_count_.emplace_back(0);
+				data_nodes_.emplace_back(std::make_unique<T_Node>(new_node_credit, name, std::forward<Args>(args)...));
+				return new_node_credit;				
+			} else {
+				const uint32_t new_node_id = op_nodes_.size();
+				const NodeCredit new_node_credit{ false, new_node_id };
 
-			return new_node_credit;
+				op_nodes_.emplace_back(std::make_unique<T_Node>(new_node_credit, name, std::forward<Args>(args)...));
+				return new_node_credit;				
+			}
 		}
 
 		/*!
@@ -183,57 +218,83 @@ namespace spy {
 			spy_assert(to   != INVALID_NODE_CREDIT, "connect to invalid node");
 			spy_assert(from != to, "Do not build ring");
 
-			auto &from_node_ptr = node_storage_[from];
-			auto &to_node_ptr   = node_storage_[to];
+			if (from.is_data) {
+				spy_assert(!to.is_data, "connect two data nodes");
 
-			from_node_ptr->output_connect(to_node_ptr.get());
-			to_node_ptr->input_connect(from_node_ptr.get());
+				auto &from_node_ptr = data_nodes_[from.node_id];
+				auto &to_node_ptr   = op_nodes_[to.node_id];
 
-			dep_count_[to]++;
-			back_dep_count_[from]++;
+				from_node_ptr->output_connect(to_node_ptr.get());
+				to_node_ptr->input_connect(from_node_ptr.get());
+			} else {
+				spy_assert(to.is_data, "connect two operator nodes");
+
+				auto &from_node_ptr = op_nodes_[from.node_id];
+				auto &to_node_ptr   = data_nodes_[to.node_id];
+
+				from_node_ptr->output_connect(to_node_ptr.get());
+			}
 		}
 
-		/*!
-		 * @brief Note the tensor as prepared at start
-		 */
-		void set_start(NodeCredit node_credit) {
-			spy_assert(dep_count_[node_credit] == 0, "Expect the start tensor not to be dependent on others");
-			connect(INPUT_NODE_CREDIT, node_credit);
-		}
-
-		/*!
-		 * @brief Note the tensor as prepared at start
-		 */
-		void set_end(NodeCredit node_credit) {
-			connect(node_credit, OUTPUT_NODE_CREDIT);
+		void set_end(NodeCredit credit) {
+			spy_assert(credit.is_data, "an operator node cannot be the end of graph");
+			data_nodes_[credit.node_id]->output_connect(&END_OPERATOR_NODE);
 		}
 
 	public: /* Basic information */
-		size_t 	num_node() 								const { return node_storage_.size(); }
+		size_t 	num_data_node() 						const { return data_nodes_.size(); }
 
-		size_t 	dep_count(NodeCredit node_credit) 		const { return dep_count_[node_credit]; }
+		size_t  num_op_node()							const { return op_nodes_.size(); }
 
-		size_t 	back_dep_count(NodeCredit node_credit) 	const { return back_dep_count_[node_credit]; }
+		const DataNodeElement &get_data_node(NodeCredit node_credit) const { return data_nodes_[node_credit.node_id]; }
 
-		const std::vector<size_t> &get_dep_count() 		const { return dep_count_; }
+		const DataNodeElement &get_data_node(size_t idx) 			 const { return data_nodes_[idx]; }
 
-		const std::vector<size_t> &get_back_dep_count() const { return back_dep_count_; }
+		const DataNodeElement &get_op_node(NodeCredit node_credit) 	 const { return data_nodes_[node_credit.node_id]; }
 
-		const NodeElement &get_node(NodeCredit node_credit) const {
-			return node_storage_[node_credit];
+		const DataNodeElement &get_op_node(size_t idx) 				 const { return data_nodes_[idx]; }
+
+		std::vector<size_t> get_data_send_count()	const { 
+			std::vector<size_t> dep_count;
+			dep_count.reserve(data_nodes_.size());
+
+			for (const auto &data_node: data_nodes_) { dep_count.emplace_back(data_node->output.size()); }
+			return dep_count;
 		}
 
-		template<class T_Node = BaseNode>
-		T_Node *get_node_content(NodeCredit node_credit) const { 
-			return dynamic_cast<T_Node *>(node_storage_[node_credit].get());
+		std::vector<size_t> get_data_recv_count()	const { 
+			std::vector<size_t> dep_count(data_nodes_.size(), 0);
+
+			for (const auto &op_node: op_nodes_) { dep_count[op_node->credit.node_id]++; }
+			return dep_count;
+		}
+
+		std::vector<size_t> get_op_send_count()	const { 
+			std::vector<size_t> dep_count;
+			dep_count.reserve(op_nodes_.size());
+
+			for (const auto &op_node: op_nodes_) { dep_count.emplace_back(op_node->output.size()); }
+			return dep_count;
+		}
+
+		std::vector<size_t> get_op_recv_count()	const { 
+			std::vector<size_t> dep_count;
+			dep_count.reserve(op_nodes_.size());
+
+			for (const auto &op_node: op_nodes_) { dep_count.emplace_back(op_node->input.size()); }
+			return dep_count;
+		}
+
+		template<class T_Node>
+		auto *get_node_content(NodeCredit node_credit) const { 
+			if constexpr (std::is_same_v<T_Node, DataNode>) {
+				spy_assert_debug(node_credit.is_data, "Visit data node with credit `is_data` field as false.");
+				return data_nodes_[node_credit.node_id].get();
+			} else {
+				spy_assert_debug(!node_credit.is_data, "Visit operator node with credit `is_data` field as true.");
+				return static_cast<T_Node *>(op_nodes_[node_credit.node_id].get());
+			}
 		}
 	};
-
-
-	/* -------------- Utilities --------------- */
-
-	inline Tensor &get_tensor_from_node(BaseNode *node_ptr) {
-		return static_cast<DataNode *>(node_ptr)->tensor;
-	}
 
 }  // namespace spy

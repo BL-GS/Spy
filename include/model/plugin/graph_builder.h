@@ -84,7 +84,6 @@ namespace spy {
             const Shape shape(dim, num_element, number_type);
             const NodeCredit node_credit = graph.alloc_node<DataNode>(tensor_name, DataNodeType::Constant, shape, data_ptr);
 
-            graph.set_start(node_credit);
             return node_credit;
         }
 
@@ -122,7 +121,6 @@ namespace spy {
 				}
 			}
 
-            graph.set_start(node_credit);
             return node_credit;
         }
 
@@ -176,7 +174,6 @@ namespace spy {
 
             const NodeCredit node_credit = graph.alloc_node<DataNode>(concat_name, DataNodeType::Constant, shape, nullptr);
 
-            graph.set_start(node_credit);
 	        // Dequantize weight tensor
 	        // TODO: hacking and inefficient
 	        spy_assert(info.data_ptr != nullptr, "The pointer to the weight is nullptr: {}", concat_name);
@@ -202,7 +199,6 @@ namespace spy {
             const Shape shape(dim, num_element, number_type);
             const NodeCredit node_credit = graph.alloc_node<DataNode>(tensor_name, DataNodeType::Buffered, shape, data_ptr);
 
-            graph.set_start(node_credit);
             return node_credit;
         }
 
