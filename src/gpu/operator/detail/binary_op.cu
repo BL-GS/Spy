@@ -242,13 +242,13 @@ namespace spy::gpu {
             break;
         case enum_fuse(NumberType::FP16, NumberType::FP16).value():
             T_Operator::execute(operand_0, operand_1, result, 
-                static_cast<uint16_t *>(data_res), static_cast<const uint16_t *>(data_0), static_cast<const uint16_t *>(data_1),
+                static_cast<half *>(data_res), static_cast<const half *>(data_0), static_cast<const float *>(data_1),
                 stream
             );
             break;
         case enum_fuse(NumberType::FP16, NumberType::FP32).value():
             T_Operator::execute(operand_0, operand_1, result, 
-                static_cast<float *>(data_res), static_cast<const uint16_t *>(data_0), static_cast<const float *>(data_1),
+                static_cast<float *>(data_res), static_cast<const half *>(data_0), static_cast<const float *>(data_1),
                 stream
             );
             break;
