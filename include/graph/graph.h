@@ -12,7 +12,6 @@
 #include <string_view>
 #include <type_traits>
 #include <vector>
-#include <fmt/format.h>
 #include <magic_enum.hpp>
 
 #include "util/shell/logger.h"
