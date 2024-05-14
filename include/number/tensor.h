@@ -10,7 +10,6 @@
 #include <array>
 #include <numeric>
 #include <string>
-#include <sstream>
 #include <magic_enum.hpp>
 
 #include "util/shell/logger.h"

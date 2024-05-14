@@ -12,7 +12,7 @@
 
 namespace spy {
 
-	using GPUBackendMetadata = gpu::Device;
+	using GPUBackendMetadata = gpu::DeviceContext;
 
 	inline GPUBackendMetadata &get_gpu_metadata(void *metadata_ptr) {
 		return *static_cast<GPUBackendMetadata *>(metadata_ptr);

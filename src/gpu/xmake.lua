@@ -11,6 +11,7 @@ target("spy_gpu")
 
     add_includedirs("include")
     add_files("backend/*.cu") 
+    add_files("operator/**.cu")
 
     add_deps("spy_interface")
     add_packages("fmt", "spdlog", "magic_enum", "argparse")
