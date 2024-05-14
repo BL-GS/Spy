@@ -168,9 +168,7 @@ namespace spy {
 	class Graph {
 	public:
 		static constexpr NodeCredit INVALID_NODE_CREDIT { true, std::numeric_limits<uint32_t>::max() };
-		static constexpr NodeCredit OUTPUT_NODE_CREDIT { false, std::numeric_limits<uint32_t>::max() };
-
-		static inline OperatorNode END_OPERATOR_NODE{OUTPUT_NODE_CREDIT, "end", OperatorType::Nop};
+		static constexpr NodeCredit OUTPUT_NODE_CREDIT { false, 0 };
 
 		using DataNodeElement     = std::unique_ptr<DataNode>;
 		using OperatorNodeElement = std::unique_ptr<OperatorNode>;
@@ -183,7 +181,10 @@ namespace spy {
 		std::string 						name_;
 
 	public:
-		Graph(const std::string_view name): name_(name) { }
+		Graph(const std::string_view name): name_(name) {
+			const NodeCredit credit = alloc_node<OperatorNode>("output", OperatorType::Nop);
+			spy_assert(credit == OUTPUT_NODE_CREDIT, "The first operator node should be output node");
+		}
 
 		Graph(Graph &&other) = delete;
 
@@ -237,8 +238,7 @@ namespace spy {
 		}
 
 		void set_end(NodeCredit credit) {
-			spy_assert(credit.is_data, "an operator node cannot be the end of graph");
-			data_nodes_[credit.node_id]->output_connect(&END_OPERATOR_NODE);
+			connect(credit, OUTPUT_NODE_CREDIT);
 		}
 
 	public: /* Basic information */
@@ -254,31 +254,40 @@ namespace spy {
 
 		const DataNodeElement &get_op_node(size_t idx) 				 const { return data_nodes_[idx]; }
 
-		std::vector<size_t> get_data_send_count()	const { 
-			std::vector<size_t> dep_count;
+		template<class T_Container = std::vector<size_t>>
+		T_Container get_data_send_count()	const {
+			T_Container dep_count;
 			dep_count.reserve(data_nodes_.size());
 
 			for (const auto &data_node: data_nodes_) { dep_count.emplace_back(data_node->output.size()); }
 			return dep_count;
 		}
 
-		std::vector<size_t> get_data_recv_count()	const { 
-			std::vector<size_t> dep_count(data_nodes_.size(), 0);
+		template<class T_Container = std::vector<size_t>>
+		T_Container get_data_recv_count()	const {
+			T_Container dep_count(data_nodes_.size(), 0);
 
-			for (const auto &op_node: op_nodes_) { dep_count[op_node->credit.node_id]++; }
+			for (const auto &op_node: op_nodes_) {
+				for (const auto &data_node: op_node->output) {
+					const auto data_node_id = data_node->credit.node_id;
+					dep_count[data_node_id]++;
+				}
+			}
 			return dep_count;
 		}
 
-		std::vector<size_t> get_op_send_count()	const { 
-			std::vector<size_t> dep_count;
+		template<class T_Container = std::vector<size_t>>
+		T_Container get_op_send_count()	const {
+			T_Container dep_count;
 			dep_count.reserve(op_nodes_.size());
 
 			for (const auto &op_node: op_nodes_) { dep_count.emplace_back(op_node->output.size()); }
 			return dep_count;
 		}
 
-		std::vector<size_t> get_op_recv_count()	const { 
-			std::vector<size_t> dep_count;
+		template<class T_Container = std::vector<size_t>>
+		T_Container get_op_recv_count()	const {
+			T_Container dep_count;
 			dep_count.reserve(op_nodes_.size());
 
 			for (const auto &op_node: op_nodes_) { dep_count.emplace_back(op_node->input.size()); }

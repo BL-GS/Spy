@@ -40,7 +40,7 @@ namespace spy {
 		/*!
 		 * @brief By default, we generate a shape for contiguous structure
 		 */
-		constexpr Shape(size_t dim, const DimensionArray &num_element, const NumberType number_type): 
+		Shape(size_t dim, const DimensionArray &num_element, const NumberType number_type):
 				number_type(number_type), dim(dim), elements(num_element), bytes{0} {
 			spy_assert(dim <= MAX_DIM, "The dimension should be within the range (0, {}] (cur: {})", MAX_DIM, dim);
 
@@ -59,7 +59,7 @@ namespace spy {
 		/*!
 		 * @brief By default, we generate a shape for contiguous structure
 		 */
-		constexpr Shape(const std::initializer_list<size_t> &num_element, const NumberType number_type): 
+		Shape(const std::initializer_list<size_t> &num_element, const NumberType number_type):
 				number_type(number_type), dim(num_element.size()), elements{0}, bytes{0} {
 			spy_assert(dim <= MAX_DIM, "The dimension should be within the range (0, {}] (cur: {})", MAX_DIM, dim);
 
@@ -79,7 +79,7 @@ namespace spy {
 			}
 		}
 
-		constexpr Shape(size_t dim, const DimensionArray &num_element, const DimensionArray &num_byte, const NumberType number_type):
+		Shape(size_t dim, const DimensionArray &num_element, const DimensionArray &num_byte, const NumberType number_type):
 				number_type(number_type), dim(dim), elements(num_element), bytes(num_byte) {
 			spy_assert(dim <= MAX_DIM, "The dimension should be within the range (0, {}] (cur: {})", MAX_DIM, dim);
 			// Expect the high dimension to be 1
@@ -87,7 +87,7 @@ namespace spy {
 			std::fill(bytes.begin() + dim, bytes.end(), elements[dim - 1] * num_byte[dim - 1]);
 		}
 
-		constexpr Shape(const std::initializer_list<size_t> &num_element, const std::initializer_list<size_t> &num_byte, const NumberType number_type):
+		Shape(const std::initializer_list<size_t> &num_element, const std::initializer_list<size_t> &num_byte, const NumberType number_type):
 				number_type(number_type), dim(num_element.size()), elements{0}, bytes{0} {
 			spy_assert(dim <= MAX_DIM, "The dimension should be within the range (0, {}] (cur: {})", MAX_DIM, dim);
 

@@ -7,9 +7,6 @@
 
 #include <cstring>
 #include <cerrno>
-#include <fmt/core.h>
-#include <fmt/color.h>
-#include <fmt/format.h>
 #include <source_location>
 #include <spdlog/spdlog.h>
 #include <utility>
