@@ -5,6 +5,6 @@
 
 namespace spy::gpu {
 
-    void cuda_op_matmul(DeviceContext & ctx,      Tensor &result, Tensor &operand_0, Tensor &operand_1);
+    void cuda_op_matmul(DeviceContext & ctx,      const Tensor &result, const Tensor &operand_0, const Tensor &operand_1);
 
 } // namespace spy::gpu

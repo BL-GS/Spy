@@ -21,13 +21,13 @@ namespace spy {
 	class GPUBackendFactory {
 
 	public:
-		static std::unique_ptr<GPUBackend> make_cpu_backend(GPUBackendPolicy policy, int num_thread, int64_t mem_size) {
+		static std::unique_ptr<GPUBackend> make_gpu_backend(GPUBackendPolicy policy, int device_id) {
 			switch (policy) {
 				case GPUBackendPolicy::Default:
-					return std::make_unique<DefaultGPUBackend>(num_thread, mem_size);
+					return std::make_unique<DefaultGPUBackend>(device_id);
 
 				default:
-					spy_assert(false, "Unknown policy for CPU Backend: {}", magic_enum::enum_name(policy));
+					spy_assert(false, "Unknown policy for GPU Backend: {}", magic_enum::enum_name(policy));
 			}
 		}
 

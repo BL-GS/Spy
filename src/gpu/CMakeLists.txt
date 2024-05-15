@@ -21,6 +21,9 @@ FIND_PACKAGE(fmt	 	CONFIG REQUIRED)
 FIND_PACKAGE(spdlog		CONFIG REQUIRED)
 FIND_PACKAGE(magic_enum CONFIG REQUIRED)
 
+FIND_PACKAGE(CUDAToolkit CONFIG REQUIRED)
+FIND_PACKAGE(BLAS        CONFIG REQUIRED)
+
 # Project ----------------------------------------------------------------
 FILE(GLOB_RECURSE backend_files ${PROJECT_SOURCE_DIR}/backend/*.cu)
 FILE(GLOB_RECURSE operator_files ${PROJECT_SOURCE_DIR}/operator/*.cu)
@@ -37,6 +40,10 @@ TARGET_LINK_LIBRARIES(${PROJECT_NAME} PRIVATE
     fmt::fmt-header-only
     spdlog::spdlog_header_only
     magic_enum::magic_enum
+
+    CUDA::cudart_static 
+    CUDA::cublas 
+    CUDA::cublasLt
     # Internal library
     ${cuda_target}
 )

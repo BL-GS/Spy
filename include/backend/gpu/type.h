@@ -6,15 +6,16 @@
 #pragma once
 
 #include <cstddef>
-#include <cstdint>
 
 #include "backend/config.h"
 #include "backend/gpu/operator_impl.h"
 
 namespace spy {
 
+	void print_cuda_devices();
+
 	class GPUBackend: public AbstractBackend {
-	protected:
+	public:
 		/// Pointer to the metadata of the GPU device
 		/// which is allocated and deallocated in CUDA file
 		void *metadata_ptr_;
@@ -29,8 +30,11 @@ namespace spy {
 		size_t get_avail_memory_capacity() 	const override;
 
 	public: /* Data Management */
-		void *alloc_memory(size_t size) override;
-		void  dealloc_memory(void *ptr, [[maybe_unused]]size_t size) 	override;
+		void *alloc_memory(size_t size) 				override = 0;
+		void  dealloc_memory(void *ptr, size_t size) 	override = 0;
+
+	public:
+		void sync(int task_token) override;
 
 	public: /* Processor Operation */
 		/*!

@@ -65,23 +65,18 @@ namespace spy::gpu {
 
     OperatorDefinition(MatMul)
 
-    OperatorDefinition(Relu)
-    OperatorDefinition(Silu)
-    OperatorDefinition(Softmax)
-    OperatorDefinition(NormRMS)
-    OperatorDefinition(Rope)
+    // OperatorDefinition(Relu)
+    // OperatorDefinition(Silu)
+    // OperatorDefinition(Softmax)
+    // OperatorDefinition(NormRMS)
+    // OperatorDefinition(Rope)
 
-    OperatorDefinition(Nop)
-    OperatorDefinition(GetRow)
-    OperatorDefinition(Dup)
-    OperatorDefinition(Copy)
-    OperatorDefinition(View)
-    OperatorDefinition(Reshape)
-    OperatorDefinition(Transpose)
-    OperatorDefinition(Permute)
-    OperatorDefinition(Contiguous)
+    // OperatorDefinition(GetRow)
+    // OperatorDefinition(Dup)
+    // OperatorDefinition(Copy)
+    // OperatorDefinition(Contiguous)
 
-    OperatorDefinition(Quantize)
+    // OperatorDefinition(Quantize)
 
 #undef OperatorDefinition
 

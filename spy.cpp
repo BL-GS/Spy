@@ -1,6 +1,5 @@
 #include <cstdint>
 #include <iostream>
-#include <fstream>
 #include <magic_enum.hpp>
 #include <spdlog/common.h>
 #include <string>
@@ -11,6 +10,7 @@
 #include "util/shell/logger.h"
 #include "util/timer.h"
 #include "backend/cpu/cpu.h"
+#include "backend/gpu/gpu.h"
 #include "graph/scheduler.h"
 #include "model/file/loader.h"
 #include "model/file/mapper.h"
@@ -58,6 +58,8 @@ int main(int argc, char **argv) {
 	/* Initialize backend */
 	const uint32_t num_thread = cmdline_argument.get_arg<uint32_t>("--num-thread");
 	std::unique_ptr<CPUBackend> cpu_backend_ptr = std::make_unique<DefaultCPUBackend>(num_thread, 0);
+
+	std::unique_ptr<GPUBackend> gpu_backend_ptr{new DefaultGPUBackend(0)};
 
 	// The hyper parameters defined by user will overwrite that read from model file.
 	HyperParam hyper_param {

@@ -5,7 +5,6 @@
 #include <magic_enum_fuse.hpp>
 
 #include "util/shell/logger.h"
-#include "number/number_impl/type.h"
 #include "operator/detail/convert.h"
 
 namespace spy::gpu {
@@ -86,7 +85,7 @@ namespace spy::gpu {
         }
     }
 
-    void cuda_op_convert(DeviceContext &ctx, Tensor &result, Tensor &operand) {
+    void cuda_op_convert(DeviceContext &ctx, const Tensor &result, const Tensor &operand) {
         const size_t num = operand.total_element();
         cuda_op_convert_raw(ctx, 
             result.get_number_type(), result.get(), 

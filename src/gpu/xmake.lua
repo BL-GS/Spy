@@ -1,13 +1,13 @@
-
 target("spy_gpu")
     set_kind("static")
     set_default(false)
-    set_toolchains("cuda")
+    add_toolchains("cuda")
 
+    add_values("cuda.build.devlink", true)
     -- generate SASS code for SM architecture of current host
     add_cugencodes("native")
     -- generate PTX code for the virtual architecture to guarantee compatibility
-    add_cugencodes("compute_75")    
+    add_cugencodes("compute_75")
 
     add_includedirs("include")
     add_files("backend/*.cu") 
@@ -15,4 +15,7 @@ target("spy_gpu")
 
     add_deps("spy_interface")
     add_packages("fmt", "spdlog", "magic_enum", "argparse")
+    add_links("cublas", "cudart", "cublasLt", "culibos", "cuda")
+    add_linkdirs("/usr/local/cuda/lib64/stubs")
+    -- add_syslinks()
 target_end()

@@ -14,6 +14,8 @@ namespace spy::gpu {
 
     static __device__ __forceinline__ float op_add(const float a, const float b) { return a + b; }
 
+    static __device__ __forceinline__ float op_sub(const float a, const float b) { return a - b; }
+
     static __device__ __forceinline__ float op_mul(const float a, const float b) { return a * b; }
 
     static __device__ __forceinline__ float op_div(const float a, const float b) { return a / b; }
@@ -91,7 +93,7 @@ namespace spy::gpu {
     struct bin_bcast_cuda {
 
         template<typename T_Result, typename T_Operand_0, typename T_Operand_1>
-        static void execute(Tensor &result, const Tensor &operand_0, const Tensor &operand_1, 
+        static void execute(const Tensor &result, const Tensor &operand_0, const Tensor &operand_1, 
             T_Result *data_res, T_Operand_0 *data_0, T_Operand_1 *data_1,
             cudaStream_t stream) {
 
@@ -219,7 +221,7 @@ namespace spy::gpu {
 
     template<class T_Operator>
     static void cuda_op_bin_bcast(
-        Tensor &result, Tensor &operand_0, Tensor &operand_1, cudaStream_t stream) {
+        const Tensor &result, const Tensor &operand_0, const Tensor &operand_1, cudaStream_t stream) {
 
         const NumberType type_res = result.get_number_type();
         const NumberType type_0   = operand_0.get_number_type();
@@ -259,19 +261,23 @@ namespace spy::gpu {
         }
     }
 
-    void cuda_op_repeat(DeviceContext &ctx, Tensor &result, Tensor &operand_0, Tensor &operand_1) {
+    void cuda_op_repeat(DeviceContext &ctx, const Tensor &result, const Tensor &operand_0, const Tensor &operand_1) {
         cuda_op_bin_bcast<bin_bcast_cuda<op_repeat>>(result, operand_0, operand_1, ctx.get_stream());
     }
 
-    void cuda_op_add(DeviceContext &ctx, Tensor &result, Tensor &operand_0, Tensor &operand_1) {
+    void cuda_op_add(DeviceContext &ctx, const Tensor &result, const Tensor &operand_0, const Tensor &operand_1) {
         cuda_op_bin_bcast<bin_bcast_cuda<op_add>>(result, operand_0, operand_1, ctx.get_stream());
     }
 
-    void cuda_op_mul(DeviceContext &ctx, Tensor &result, Tensor &operand_0, Tensor &operand_1) {
+    void cuda_op_sub(DeviceContext &ctx, const Tensor &result, const Tensor &operand_0, const Tensor &operand_1) {
+        cuda_op_bin_bcast<bin_bcast_cuda<op_sub>>(result, operand_0, operand_1, ctx.get_stream());
+    }
+
+    void cuda_op_mul(DeviceContext &ctx, const Tensor &result, const Tensor &operand_0, const Tensor &operand_1) {
         cuda_op_bin_bcast<bin_bcast_cuda<op_mul>>(result, operand_0, operand_1, ctx.get_stream());
     }
 
-    void cuda_op_div(DeviceContext &ctx, Tensor &result, Tensor &operand_0, Tensor &operand_1) {
+    void cuda_op_div(DeviceContext &ctx, const Tensor &result, const Tensor &operand_0, const Tensor &operand_1) {
         cuda_op_bin_bcast<bin_bcast_cuda<op_div>>(result, operand_0, operand_1, ctx.get_stream());
     }
 

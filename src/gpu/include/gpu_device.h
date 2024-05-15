@@ -31,6 +31,7 @@ namespace spy::gpu {
 
 	public:
 		Device(int device_id) {
+			gpu_check(cuInit(device_id));
 			CUdevice device;
 			gpu_check(cuDeviceGet(&device, device_id));
 
@@ -106,5 +107,7 @@ namespace spy::gpu {
 		cudaStream_t get_stream(size_t idx = 0) { return stream_array[idx]; }
 
 		cublasHandle_t get_cublas_handle() const { return cublas_handle; }
+
+		DeviceMemoryPool *get_memory_pool() const { return pool_ptr.get(); }
 	};
 }

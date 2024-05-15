@@ -12,6 +12,7 @@
 #include <cassert>
 #include <cstdio>
 #include <cuda.h>
+#include <cuda_runtime.h>
 #include <cublas.h>
 #include <exception>
 #include <source_location>
@@ -35,25 +36,31 @@ namespace spy::gpu {
 	}
 
 	inline void gpu_check(cudaError_t err, std::source_location loc = std::source_location::current()) {
-		spdlog::error("Failed cuda check: {}:{}:{} - {}", loc.file_name(), loc.line(), loc.column(), loc.function_name());
-		spdlog::error("Error {}: {}", cudaGetErrorName(err), cudaGetErrorString(err));
-		std::terminate();
+		if (err != cudaSuccess) [[unlikely]] {
+			spdlog::error("Failed cuda check: {}:{}:{} - {}", loc.file_name(), loc.line(), loc.column(), loc.function_name());
+			spdlog::error("Error {}: {}", cudaGetErrorName(err), cudaGetErrorString(err));
+			std::terminate();			
+		}
 	}
 
 	inline void gpu_check(CUresult err, std::source_location loc = std::source_location::current()) {
-		const char *err_name   = nullptr;
-		const char *err_string = nullptr;
-		cuGetErrorName(err, &err_name);
-		cuGetErrorString(err, &err_string);
+		if (err != CUDA_SUCCESS) [[unlikely]] {
+			const char *err_name   = "unknown";
+			const char *err_string = "unknown";
+			cuGetErrorName(err, &err_name);
+			cuGetErrorString(err, &err_string);
 
-		spdlog::error("Failed cu check: {}:{}:{} - {}", loc.file_name(), loc.line(), loc.column(), loc.function_name());
-		spdlog::error("Error {}: {}", err_name, err_string);
-		std::terminate();
+			spdlog::error("Failed cu check: {}:{}:{} - {}", loc.file_name(), loc.line(), loc.column(), loc.function_name());
+			spdlog::error("Error {}: {}", err_name, err_string);
+			std::terminate();			
+		}
 	}
 
 	inline void gpu_check(cublasStatus_t err, std::source_location loc = std::source_location::current()) {
-		spdlog::error("Failed cublas check: {}:{}:{} - {}", loc.file_name(), loc.line(), loc.column(), loc.function_name());
-		spdlog::error("Error: {}", cublas_get_error_str(err));
-		std::terminate();
+		if (err != CUBLAS_STATUS_SUCCESS)[[unlikely]] {
+			spdlog::error("Failed cublas check: {}:{}:{} - {}", loc.file_name(), loc.line(), loc.column(), loc.function_name());
+			spdlog::error("Error: {}", cublas_get_error_str(err));
+			std::terminate();			
+		}
 	}
 }
