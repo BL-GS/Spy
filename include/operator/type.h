@@ -83,29 +83,27 @@ namespace spy {
 		map(OperatorType::Quantize)
 
 	template<template<OperatorType> class T_func>
-	constexpr auto operator_type_switch(const OperatorType op_type) {
+	inline constexpr auto operator_type_switch(const OperatorType op_type) {
 #define OPERATOR_TYPE_CASE(type) \
 		case type: return T_func<type>()();
 
 		switch (op_type) {
 			OPERATOR_TYPE_MAP(OPERATOR_TYPE_CASE)
 		}
-
-		spy_assert(false, "Unknown type of number");
 #undef OPERATOR_TYPE_CASE
+		spy_assert(false, "Unknown type of number");
 	}
 
 	template<template<OperatorType> class T_func, class ...Args>
-	constexpr auto operator_type_switch(const OperatorType op_type, Args &&...args) {
+	inline constexpr auto operator_type_switch(const OperatorType op_type, Args &&...args) {
 #define OPERATOR_TYPE_CASE(type) \
 		case type: return T_func<type>()(std::forward<Args>(args)...);
 
 		switch (op_type) {
 			OPERATOR_TYPE_MAP(OPERATOR_TYPE_CASE)
 		}
-
-		spy_assert(false, "Unknown type of number");
 #undef OPERATOR_TYPE_CASE
+		spy_assert(false, "Unknown type of number");
 	}
 
 	template<OperatorType T_op_type>

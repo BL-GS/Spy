@@ -9,7 +9,11 @@
 #include <thread>
 #include <atomic>
 #include <functional>
-#include <concurrentqueue.h>
+#ifdef UNOFFICIAL_CONCURRENTQUEUE
+    #include <concurrentqueue/concurrentqueue.h>
+#else 
+    #include <concurrentqueue.h>
+#endif
 
 #include "util/shell/logger.h"
 #include "backend/cpu/type.h"

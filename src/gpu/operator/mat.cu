@@ -16,6 +16,7 @@ namespace spy::gpu {
 		const auto &operand_1 = op_node->get_input<DataNode>(1).tensor;
 
         cuda_op_matmul(context, result, operand_0, operand_1);
+        return true;
     }
 
 } // namespace spy::gpu

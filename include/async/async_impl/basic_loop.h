@@ -1,7 +1,12 @@
 #pragma once
 
 #include <coroutine>
-#include <concurrentqueue.h>
+
+#ifdef UNOFFICIAL_CONCURRENTQUEUE
+    #include <concurrentqueue/concurrentqueue.h>
+#else 
+    #include <concurrentqueue.h>
+#endif
 
 namespace spy {
 

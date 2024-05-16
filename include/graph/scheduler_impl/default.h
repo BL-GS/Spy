@@ -5,7 +5,11 @@
 #include <cstddef>
 #include <span>
 #include <vector>
-#include <blockingconcurrentqueue.h>
+#ifdef UNOFFICIAL_CONCURRENTQUEUE
+    #include <concurrentqueue/blockingconcurrentqueue.h>
+#else 
+    #include <blockingconcurrentqueue.h>
+#endif
 
 #include "util/wrapper/atomic.h"
 #include "graph/type.h"

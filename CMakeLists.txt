@@ -25,6 +25,8 @@ FIND_PACKAGE(magic_enum CONFIG REQUIRED)
 FIND_PACKAGE(argparse 	CONFIG REQUIRED)
 FIND_PACKAGE(unofficial-concurrentqueue CONFIG REQUIRED)
 
+ADD_DEFINITIONS(-DUNOFFICIAL_CONCURRENTQUEUE)
+
 # Internal libraries -----------------------------------------------------
 
 SET(spy_include_dir ${PROJECT_SOURCE_DIR}/include)

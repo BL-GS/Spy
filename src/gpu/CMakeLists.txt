@@ -12,7 +12,7 @@ ENDIF()
 PROJECT(spy_gpu CXX CUDA)
 
 SET(CMAKE_CUDA_STANDARD 20)
-SET(CMAKE_CXX_STANDARD 20)
+SET(CMAKE_CXX_STANDARD  20)
 
 SET(CMAKE_CUDA_FLAGS            ${CMAKE_CUDA_FLAGS} "-std=c++20")
 
@@ -21,9 +21,7 @@ FIND_PACKAGE(fmt	 	CONFIG REQUIRED)
 FIND_PACKAGE(spdlog		CONFIG REQUIRED)
 FIND_PACKAGE(magic_enum CONFIG REQUIRED)
 
-FIND_PACKAGE(CUDAToolkit CONFIG REQUIRED)
-FIND_PACKAGE(BLAS        CONFIG REQUIRED)
-
+FIND_PACKAGE(CUDAToolkit)
 # Project ----------------------------------------------------------------
 FILE(GLOB_RECURSE backend_files ${PROJECT_SOURCE_DIR}/backend/*.cu)
 FILE(GLOB_RECURSE operator_files ${PROJECT_SOURCE_DIR}/operator/*.cu)
@@ -44,6 +42,7 @@ TARGET_LINK_LIBRARIES(${PROJECT_NAME} PRIVATE
     CUDA::cudart_static 
     CUDA::cublas 
     CUDA::cublasLt
+    CUDA::cuda_driver
     # Internal library
     ${cuda_target}
 )

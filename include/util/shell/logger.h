@@ -79,7 +79,7 @@ namespace spy {
 		std::terminate();
 	}
 
-	inline void spy_assert(bool expression, std::source_location loc = std::source_location::current()) { 
+	inline constexpr void spy_assert(bool expression, std::source_location loc = std::source_location::current()) { 
 		if (!expression) {
 			spdlog::critical("[Assert fault] {}:{}:{} Function: {}", loc.file_name(), loc.line(), loc.column(), loc.function_name());
 			spdlog::critical("System Error: {}", system_error());
@@ -88,7 +88,7 @@ namespace spy {
 	}
 
 	template<bool T_exception = false, class T>
-	inline void spy_assert(bool expression, const T &msg, std::source_location loc = std::source_location::current()) { 
+	inline constexpr void spy_assert(bool expression, const T &msg, std::source_location loc = std::source_location::current()) { 
 		if (!expression) {
 			spdlog::critical("[Assert fault] {}:{}:{} Function: {}", loc.file_name(), loc.line(), loc.column(), loc.function_name());
 			spdlog::critical(msg); 
@@ -101,7 +101,7 @@ namespace spy {
 	}
 
 	template<bool T_exception = false, class ...Args>
-	inline void spy_assert(bool expression, spdlog::format_string_t<Args...> fmt, Args &&...args) { 
+	inline constexpr void spy_assert(bool expression, spdlog::format_string_t<Args...> fmt, Args &&...args) { 
 		if (!expression) {
 			spdlog::critical("Assert fault");
 			spdlog::critical(fmt, std::forward<Args>(args)...); 
