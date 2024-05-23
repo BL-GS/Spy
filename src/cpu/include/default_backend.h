@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <charconv>
 #include <vector>
 #include <thread>
 #include <atomic>
@@ -16,10 +17,10 @@
 #endif
 
 #include "util/shell/logger.h"
-#include "backend/cpu/type.h"
-#include "backend/cpu/operator_impl.h"
+#include "abstract_backend.h"
+#include "operator_impl.h"
 
-namespace spy {
+namespace spy::cpu {
 
 	class DefaultCPUBackend;
 
@@ -86,11 +87,40 @@ namespace spy {
 	};
 
 	class DefaultCPUBackend final: public CPUBackend {
+	public:
+		static constexpr int DEFAULT_NUM_THREAD = -1;
+		static constexpr int DEFAULT_MAX_MEM    = -1;
 	private:
 		DefaultThreadPool thread_pool_;
 
 	public:
-		DefaultCPUBackend(int num_thread, int64_t max_mem) {
+		DefaultCPUBackend(const BackendFactory::BackendConfiguration &config) {
+
+			size_t num_thread = DEFAULT_NUM_THREAD;
+			size_t max_mem	  = DEFAULT_MAX_MEM;
+			{
+				const auto iter = config.find("num_thread");
+				if (iter != config.cend()) { 
+					const std::string &value = iter->second;
+					std::from_chars(value.data(), value.data() + value.size(), num_thread); 
+				}
+			}
+			{
+				const auto iter = config.find("max_mem");
+				if (iter != config.cend()) { 
+					const std::string &value = iter->second;
+					std::from_chars(value.data(), value.data() + value.size(), max_mem); 
+				}
+			}
+			init(num_thread, max_mem);
+		}
+
+		DefaultCPUBackend(int num_thread, int64_t max_mem) { init(num_thread, max_mem); }
+
+		~DefaultCPUBackend() noexcept override = default;
+
+	private:
+		void init(int num_thread, int64_t max_mem) {
 			const size_t max_num_thread  = CPUBackend::get_max_concurrency();
 			const size_t real_num_thread = (num_thread < 0) ? max_num_thread : num_thread;
 			if (real_num_thread > max_num_thread) {
@@ -106,8 +136,6 @@ namespace spy {
 					real_mem_size, max_mem_size);
 			}
 		}
-
-		~DefaultCPUBackend() noexcept override = default;
 
 	public:
 		void * alloc_memory(size_t size) override {

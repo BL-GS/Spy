@@ -1,3 +1,7 @@
+/*
+ * @author: BL-GS 
+ * @date:   24-4-13
+ */
 
 #include <memory>
 
@@ -5,19 +9,19 @@
 #include "backend/config.h"
 #include "default_backend.h"
 
-namespace spy::gpu {
+namespace spy::cpu {
 
     void init_backend(BackendFactory &factory) {
         using BackendConfiguration = BackendFactory::BackendConfiguration;
 
         spy_info("Register CPU backend");
 
-        const std::string default_backend_name = BackendFactory::make_backend_name("gpu", "default");
+        const std::string default_backend_name = BackendFactory::make_backend_name("cpu", "default");
         factory.add_backend_map(default_backend_name, 
             +[](const BackendConfiguration &config) -> std::unique_ptr<AbstractBackend> {
-                return std::make_unique<DefaultGPUBackend>(config);
+                return std::make_unique<DefaultCPUBackend>(config);
             }
         );        
     }
 
-} // namespace spy::gpu
+} // namespace spy::cpu

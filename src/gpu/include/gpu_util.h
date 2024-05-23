@@ -18,6 +18,8 @@
 #include <source_location>
 #include <spdlog/spdlog.h>
 
+#include "util/shell/logger.h"
+
 namespace spy::gpu {
 
 	static const char * cublas_get_error_str(const cublasStatus_t err) {
@@ -61,6 +63,22 @@ namespace spy::gpu {
 			spdlog::error("Failed cublas check: {}:{}:{} - {}", loc.file_name(), loc.line(), loc.column(), loc.function_name());
 			spdlog::error("Error: {}", cublas_get_error_str(err));
 			std::terminate();			
+		}
+	}
+
+	inline void print_cuda_devices() {
+		int num_device = 0;
+		cudaGetDeviceCount(&num_device);
+
+		spy_info("Total Device Number: {}", num_device);
+		for (int i = 0; i < num_device; i++) {
+			cudaDeviceProp prop;
+			cudaGetDeviceProperties(&prop, i);
+			spy_info("-- Device Number:                {}", i);
+			spy_info("-- Device Name:                  {}", prop.name);
+			spy_info("-- Memory Clock Rate (KHz):      {}", prop.memoryClockRate);
+			spy_info("-- Memory Bus Width (bits):      {}", prop.memoryBusWidth);
+			spy_info("-- Peak Memory Bandwidth (GB/s): {}", 2.0 * prop.memoryClockRate * (prop.memoryBusWidth / 8) / 1.0e6);
 		}
 	}
 }

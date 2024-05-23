@@ -48,11 +48,13 @@ OPTION(SPY_BACKEND_CPU "Enable backend: CPU"  ON)
 OPTION(SPY_BACKEND_GPU "Enable backend: GPU"  OFF)
 
 IF (${SPY_BACKEND_CPU})
+	ADD_DEFINITIONS(-DSPY_BACKEND_CPU)
 	ADD_SUBDIRECTORY(src/cpu)
 	SET(spy_internal_libraries ${spy_internal_libraries} spy_cpu)
 ENDIF ()
 
 IF (${SPY_BACKEND_GPU})
+	ADD_DEFINITIONS(-DSPY_BACKEND_GPU)
 	ADD_SUBDIRECTORY(src/gpu)
 	SET(spy_internal_libraries ${spy_internal_libraries} spy_gpu)
 ENDIF ()

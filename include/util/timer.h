@@ -75,13 +75,13 @@ namespace spy {
 			const size_t prefill_ms    = prefill_timer.get_time_num<std::chrono::milliseconds>();
 			const size_t decode_ms     = decode_timer.get_time_num<std::chrono::milliseconds>();
 
-			spy_info("[Performance Timer] model loading:\t {} ms, {} MB/s",
+			spy_info("[Performance Timer] model loading: {:>16} ms, {} MB/s",
 				         model_load_ms, static_cast<float>(model_bytes) / static_cast<float>(model_load_ms) / 1e3);
-			spy_info("[Performance Timer] sample stage:\t {} ms, {} token/s",
+			spy_info("[Performance Timer] sample stage:  {:>16} ms, {} token/s",
 				         sample_ms, static_cast<float>(num_sample * 1000) / static_cast<float>(sample_ms));
-			spy_info("[Performance Timer] prefill stage:\t {} ms, {} token/s",
+			spy_info("[Performance Timer] prefill stage: {:>16} ms, {} token/s",
 				         prefill_ms, static_cast<float>(num_prefill * 1000) / static_cast<float>(prefill_ms));
-			spy_info("[Performance Timer] decode stage:\t {} ms, {} token/s",
+			spy_info("[Performance Timer] decode stage:  {:>16} ms, {} token/s",
 				         decode_ms, static_cast<float>(num_decode * 1000) / static_cast<float>(decode_ms));			
 		}
 	};

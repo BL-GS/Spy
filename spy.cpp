@@ -9,8 +9,7 @@
 #include "util/shell/cmdline.h" 
 #include "util/shell/logger.h"
 #include "util/timer.h"
-#include "backend/cpu/cpu.h"
-#include "backend/gpu/gpu.h"
+#include "backend/config.h"
 #include "graph/scheduler.h"
 #include "model/file/loader.h"
 #include "model/file/mapper.h"
@@ -30,7 +29,7 @@ auto make_model_from_file(const std::string &model_filename, const HyperParam &h
 	return model_ptr;
 }
 
-void decode(std::unique_ptr<AbstractModel> &model_ptr, ModelIO &model_io, CPUBackend *cpu_backend_ptr) {
+void decode(std::unique_ptr<AbstractModel> &model_ptr, ModelIO &model_io, AbstractBackend *cpu_backend_ptr) {
 	auto graph_ptr = model_ptr->build_graph(model_io);
 	/* Build up a scheduler for graph execution */
 	DefaultGraphScheduler schedule({cpu_backend_ptr});
@@ -56,10 +55,18 @@ int main(int argc, char **argv) {
 	perf_timer.num_decode  = 0;
 
 	/* Initialize backend */
+	BackendFactory backend_factory;
+#ifdef SPY_BACKEND_CPU
 	const uint32_t num_thread = cmdline_argument.get_arg<uint32_t>("--num-thread");
-	std::unique_ptr<CPUBackend> cpu_backend_ptr = std::make_unique<DefaultCPUBackend>(num_thread, 0);
-
-	std::unique_ptr<GPUBackend> gpu_backend_ptr{new DefaultGPUBackend(0)};
+	auto cpu_backend_ptr = backend_factory.init_backend("cpu:default", {
+		{ "num_thread", std::to_string(num_thread) }
+	});
+#endif
+#ifdef SPY_BACKEND_GPU
+	auto gpu_backend_ptr = backend_factory.init_backend("gpu:default", {
+		{ "num_thread", std::to_string(num_thread) }
+	});
+#endif
 
 	// The hyper parameters defined by user will overwrite that read from model file.
 	HyperParam hyper_param {

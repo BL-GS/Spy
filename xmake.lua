@@ -50,9 +50,11 @@ target("spy")
     add_files("spy.cpp")
 
     if has_config("enable-cpu") then 
+        add_defines("SPY_BACKEND_CPU")
         add_deps("spy_cpu")
     end
     if has_config("enable-gpu") then
+        add_defines("SPY_BACKEND_CPU")
         add_deps("spy_gpu")
     end    
 

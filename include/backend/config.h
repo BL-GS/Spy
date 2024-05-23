@@ -8,6 +8,7 @@
 #include <cstddef>
 #include <memory>
 #include <functional>
+#include <unordered_map>
 
 #include "util/shell/logger.h"
 #include "backend/type.h"
@@ -17,7 +18,20 @@ namespace spy {
 	struct OperatorNode;
 	struct OperatorEnvParam;
 
+	enum class OperatorStatus {
+		/// This operator is finished successfully
+		Success,
+		/// This operator failed to be finished
+		Fail,
+		/// This operator is unsupported on this backend
+		Unsupport
+	};
+
+	using BackendTaskCredit = int;
+
 	class AbstractBackend {
+	public:
+
 	public:
 		AbstractBackend() = default;
 
@@ -72,40 +86,22 @@ namespace spy {
 		 * @note The task function SHOULD NOT use blocking algorithm if the backend support concurrency overcommitment..
 		 * @return The credit of the task, which can be used to execute `poll` and `sync`
 		 */
-		virtual int    submit(std::function<void(int)> &&task, int concurrency)	= 0;
-
-		/*!
-		 * @brief Query whether the backend supports `poll` call
-		 */
-		virtual bool   support_poll() const { return false; }
-
-		/*!
-		 * @brief Query whether the backend supports `sync` call
-		 */
-		virtual bool   support_sync() const { return false; }
+		virtual BackendTaskCredit submit(std::function<void(int)> &&task, int concurrency)	= 0;
 
 		/*!
 		 * @brief Query whether the task is finished if supported
 		 * @param task_credit The credit of the specific task
 		 */
-		virtual bool   poll(int task_credit)	{
-			if (support_poll()) {
-				throw SpyUnimplementedException("Unimplemented `poll` call");
-			} else {
-				throw SpyUnimplementedException("This backend do not support `poll` function");
-			}
+		virtual bool poll(BackendTaskCredit task_credit)	{
+			throw SpyUnimplementedException("This backend do not support `poll` function");
 		}
 
 		/*!
 		 * @brief Synchronize with a specific task
 		 * @param task_credit The credit of the specific task
 		 */
-		virtual void   sync(int task_credit) {
-			if (support_sync()) {
-				throw SpyUnimplementedException("Unimplemented `sync` call");
-			} else {
-				throw SpyUnimplementedException("This backend do not support explicit synchronization");
-			}
+		virtual void sync(BackendTaskCredit task_credit) {
+			throw SpyUnimplementedException("This backend do not support explicit synchronization");
 		}
 
 	public:
@@ -127,11 +123,60 @@ namespace spy {
 		 * @param op_node The OperatorNode deriving from OperatorDefinition<T_op_type>, which store necessary operands and hyper parameters.
 		 * @return true if supported, otherwise false.
 		 */
-		virtual bool execute(const OperatorEnvParam &param, OperatorNode *op_node) = 0;
+		virtual OperatorStatus execute(const OperatorEnvParam &param, OperatorNode *op_node) = 0;
 	};
 
-	template<BackendType T_backend>
-	class Backend { };
+	class BackendFactory {
+	public:
+		using BackendConfiguration = std::map<std::string, std::string>;
+		using BackendGeneratorFunc = std::unique_ptr<AbstractBackend>(*)(const BackendConfiguration &);
 
+	private:
+		std::unordered_map<std::string, BackendGeneratorFunc> generator_map_;
+		
+	public:
+		BackendFactory();
+
+	public:
+		std::unique_ptr<AbstractBackend> init_backend(const std::string &backend_name, const BackendConfiguration &config) {
+			const auto iter = generator_map_.find(backend_name);
+			if (iter == generator_map_.end()) {
+				spy_fatal("Failed to find backend with name: {}", backend_name);
+			}
+
+			const BackendGeneratorFunc generator_func = iter->second;
+			return generator_func(config);
+		}
+
+		void add_backend_map(const std::string &backend_name, const BackendGeneratorFunc func) {
+			const auto [iter, no_overwrite] = generator_map_.insert_or_assign(backend_name, func);
+			if (!no_overwrite) {
+				spy_warn("Overwrite backend: {}", backend_name);
+			}
+		}
+
+	public: /* Rule */
+		static std::string make_backend_name(const std::string_view device_type, const std::string_view policy_name) {
+			return std::string(device_type) + ":" + std::string(policy_name);
+		}
+	};
+
+#ifdef SPY_BACKEND_CPU
+	namespace cpu { void init_backend(BackendFactory &); }
+#endif
+
+#ifdef SPY_BACKEND_GPU
+	namespace gpu { void init_backend(BackendFactory &); }
+#endif
+
+	inline BackendFactory::BackendFactory() {
+#ifdef SPY_BACKEND_CPU
+		cpu::init_backend(*this);
+#endif
+
+#ifdef SPY_BACKEND_GPU
+		gpu::init_backend(*this);
+#endif
+	}
 
 }  // namespace spy

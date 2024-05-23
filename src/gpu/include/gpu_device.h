@@ -110,4 +110,4 @@ namespace spy::gpu {
 
 		DeviceMemoryPool *get_memory_pool() const { return pool_ptr.get(); }
 	};
-}
+} // namespace spy::gpu

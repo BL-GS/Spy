@@ -5,18 +5,23 @@
 
 #pragma once
 
+#include <charconv>
 #include <mutex>
 #include <condition_variable>
 #include <queue>
+#include <stop_token>
 #include <thread>
 #include <functional>
 
-#include "backend/gpu/type.h"
-#include "backend/gpu/operator_impl.h"
+#include "abstract_backend.h"
+#include "gpu_device.h"
 
-namespace spy {
+namespace spy::gpu {
 
 	class DefaultGPUBackend final: public GPUBackend {
+	public:
+		static constexpr int DEFAULT_DEVICE_ID = 0;
+
 	private:
 		std::mutex 									 task_lock_;
 
@@ -29,7 +34,11 @@ namespace spy {
 		std::stop_source stop_source_;
 
 	public:
-		DefaultGPUBackend(int device_id): GPUBackend(device_id), worker_thread_([this](){ thread_entry(); }) { }
+		DefaultGPUBackend(const BackendFactory::BackendConfiguration &config): 
+			GPUBackend(get_device_id(config)), worker_thread_([this](){ thread_entry(); }) { }
+
+		DefaultGPUBackend(int device_id): 
+			GPUBackend(device_id), worker_thread_([this](){ thread_entry(); }) { }
 
 		~DefaultGPUBackend() noexcept {
 			stop_source_.request_stop();
@@ -38,9 +47,15 @@ namespace spy {
 		}
 
 	public:
-		void * alloc_memory(size_t size) override;
+		void *alloc_memory(size_t size) override {
+			auto *pool_ptr = metadata_.get_memory_pool();
+			return pool_ptr->allocate(size);
+		}
 
-		void dealloc_memory(void *ptr, size_t size) override;
+		void dealloc_memory(void *ptr, size_t size) override {
+			auto *pool_ptr = metadata_.get_memory_pool();
+			pool_ptr->deallocate(ptr, size);
+		}
 
 	public:
 		/*!
@@ -94,6 +109,16 @@ namespace spy {
 					new_task(0);
 				}
 			}
+		}
+
+		static int get_device_id(const BackendFactory::BackendConfiguration &config) {
+			int device_id = DEFAULT_DEVICE_ID;
+			const auto iter = config.find("device_id");
+			if (iter != config.cend()) { 
+				const std::string &value = iter->second;
+				std::from_chars(value.data(), value.data() + value.size(), device_id); 
+			}
+			return device_id;
 		}
 
 	};

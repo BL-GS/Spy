@@ -20,7 +20,12 @@ FILE(GLOB_RECURSE operator_files ${PROJECT_SOURCE_DIR}/operator/*.cpp)
 
 # Main project ----------------------------------------------------------
 ADD_LIBRARY(${PROJECT_NAME} ${backend_files} ${operator_files})
-TARGET_INCLUDE_DIRECTORIES(${PROJECT_NAME} PRIVATE ${spy_include_dir})
+TARGET_INCLUDE_DIRECTORIES(${PROJECT_NAME} PRIVATE
+        # Parent interface
+        ${spy_include_dir}
+        # Internal interface
+        ${PROJECT_SOURCE_DIR}/include
+)
 TARGET_LINK_LIBRARIES(${PROJECT_NAME} PRIVATE
     # External library
     fmt::fmt-header-only

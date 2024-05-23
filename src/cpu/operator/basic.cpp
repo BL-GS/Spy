@@ -1,7 +1,7 @@
 #include "number/tensor.h"
 #include "graph/graph.h"
 #include "operator/config.h"
-#include "backend/cpu/operator_impl.h"
+#include "operator_impl.h"
 
 namespace spy::cpu {
 
