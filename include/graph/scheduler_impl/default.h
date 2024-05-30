@@ -49,7 +49,7 @@ namespace spy {
 			using CounterArrayType = std::vector<RelaxedAtomWrapper<size_t>>;
 			auto data_recv_counts    = graph_ptr->get_data_recv_count<CounterArrayType>();
 			auto data_send_counts    = graph_ptr->get_data_send_count<CounterArrayType>();
-			auto op_recv_counts 	    = graph_ptr->get_op_recv_count<CounterArrayType>();
+			auto op_recv_counts 	 = graph_ptr->get_op_recv_count<CounterArrayType>();
 
 			TopoNodeQueue node_queue;
 

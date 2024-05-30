@@ -15,7 +15,6 @@ add_vectorexts("all")
 set_languages("c17", "c++20")
 set_warnings("all")
 
-
 -- Library 
 add_requires("liburing")
 add_requires("fmt", "spdlog", "argparse", "magic_enum", "concurrentqueue")

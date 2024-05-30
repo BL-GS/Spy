@@ -109,12 +109,6 @@ namespace spy {
 	template<OperatorType T_op_type>
 	struct OperatorNodeImpl { };
 
-	class SpyUnimplementedOperatorException: protected SpyUnimplementedException {
-	public:
-		SpyUnimplementedOperatorException(BackendType backend_type, OperatorType op_type):
-			SpyUnimplementedException(fmt::format("backend: {}; operator: {}", magic_enum::enum_name(backend_type), magic_enum::enum_name(op_type))) {}
-	};
-
 	inline constexpr bool is_view(OperatorType op_type) { 
 		switch (op_type) {
 		case OperatorType::View:

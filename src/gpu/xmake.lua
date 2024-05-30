@@ -3,6 +3,9 @@ target("spy_gpu")
     set_default(false)
     add_toolchains("cuda")
 
+    set_languages("c17", "c++20")
+    set_warnings("all")
+
     add_values("cuda.build.devlink", true)
     -- generate SASS code for SM architecture of current host
     add_cugencodes("native")

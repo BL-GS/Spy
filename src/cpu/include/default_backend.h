@@ -95,23 +95,8 @@ namespace spy::cpu {
 
 	public:
 		DefaultCPUBackend(const BackendFactory::BackendConfiguration &config) {
-
-			size_t num_thread = DEFAULT_NUM_THREAD;
-			size_t max_mem	  = DEFAULT_MAX_MEM;
-			{
-				const auto iter = config.find("num_thread");
-				if (iter != config.cend()) { 
-					const std::string &value = iter->second;
-					std::from_chars(value.data(), value.data() + value.size(), num_thread); 
-				}
-			}
-			{
-				const auto iter = config.find("max_mem");
-				if (iter != config.cend()) { 
-					const std::string &value = iter->second;
-					std::from_chars(value.data(), value.data() + value.size(), max_mem); 
-				}
-			}
+			int num_thread = config.parse_or("num_thread", DEFAULT_NUM_THREAD);
+			int max_mem	   = config.parse_or("max_mem", DEFAULT_MAX_MEM);
 			init(num_thread, max_mem);
 		}
 

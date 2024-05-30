@@ -35,7 +35,8 @@ namespace spy::gpu {
 
 	public:
 		DefaultGPUBackend(const BackendFactory::BackendConfiguration &config): 
-			GPUBackend(get_device_id(config)), worker_thread_([this](){ thread_entry(); }) { }
+			GPUBackend(config.parse_or("device_id", DEFAULT_DEVICE_ID)), 
+			worker_thread_([this](){ thread_entry(); }) { }
 
 		DefaultGPUBackend(int device_id): 
 			GPUBackend(device_id), worker_thread_([this](){ thread_entry(); }) { }
@@ -109,16 +110,6 @@ namespace spy::gpu {
 					new_task(0);
 				}
 			}
-		}
-
-		static int get_device_id(const BackendFactory::BackendConfiguration &config) {
-			int device_id = DEFAULT_DEVICE_ID;
-			const auto iter = config.find("device_id");
-			if (iter != config.cend()) { 
-				const std::string &value = iter->second;
-				std::from_chars(value.data(), value.data() + value.size(), device_id); 
-			}
-			return device_id;
 		}
 
 	};

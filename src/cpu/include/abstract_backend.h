@@ -1,12 +1,13 @@
 #pragma once
 
+#include "backend/type.h"
 #include "backend/config.h"
 
 namespace spy::cpu {
 
     class CPUBackend: public AbstractBackend {
 	public:
-		CPUBackend() = default;
+		CPUBackend(): AbstractBackend(BackendType::Host) {}
 
 		~CPUBackend() noexcept override = default;
 

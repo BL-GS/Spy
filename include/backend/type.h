@@ -2,13 +2,18 @@
 
 namespace spy {
 
-    enum class MemoryLevel: int {
-        Cache       = 0, 
-        ScratchPad  = 1, 
-        Memory      = 2, 
-        Disk        = 3
+    enum class BackendType {
+        /// The data is accessible by host who control all of the devices.
+        /// Data in this backend, can be transferred or used directly to the device.
+        /// e.g. CPU memory
+        Host,
+        /// The data is of the same accessibility as the Host.
+        /// e.g. NPU memory
+        Share,
+        /// The data is only accessible by the device itself.
+        /// Data in this backend cannnot be transferred to other devices
+        /// e.g. GPU memory
+        Device
     };
-
-    enum class BackendType { CPU, GPU };
 
 } // namespace spy

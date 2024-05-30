@@ -11,6 +11,7 @@
 #include <unordered_map>
 
 #include "util/shell/logger.h"
+#include "util/wrapper/config_table.h"
 #include "backend/type.h"
 
 namespace spy {
@@ -30,12 +31,16 @@ namespace spy {
 	using BackendTaskCredit = int;
 
 	class AbstractBackend {
-	public:
+	private:
+		BackendType backend_type_;
 
 	public:
-		AbstractBackend() = default;
+		AbstractBackend(BackendType backend_type): backend_type_(backend_type) {}
 
 		virtual ~AbstractBackend() = default;
+
+	public:
+		BackendType type() const { return backend_type_; }
 
 	public:
 		/*!
@@ -128,7 +133,7 @@ namespace spy {
 
 	class BackendFactory {
 	public:
-		using BackendConfiguration = std::map<std::string, std::string>;
+		using BackendConfiguration = ConfigTable;
 		using BackendGeneratorFunc = std::unique_ptr<AbstractBackend>(*)(const BackendConfiguration &);
 
 	private:

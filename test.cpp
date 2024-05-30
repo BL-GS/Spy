@@ -4,6 +4,7 @@
  */
 
 #include <iostream>
+#include <chrono>
 #include <coroutine>
 #include "async/loop.h"
 #include <liburing.h>
@@ -42,9 +43,17 @@ Task<> write_stdout() {
 }
 
 int main() {
+	const auto loop_build_start = std::chrono::steady_clock::now();
 	SystemLoop loop;
 	loop.start(1);
+	const auto loop_build_end = std::chrono::steady_clock::now();
+
+	const auto loop_task_start = std::chrono::steady_clock::now();
 	loop.co_synchronize(write_stdout());
-//	uring_test();
+	const auto loop_task_end = std::chrono::steady_clock::now();
+	
+	spy_info("Build time:   {}ns", std::chrono::duration_cast<std::chrono::nanoseconds>(loop_build_end - loop_build_start).count());
+	spy_info("Execute time: {}ns", std::chrono::duration_cast<std::chrono::nanoseconds>(loop_task_end - loop_task_start).count());
+	uring_test();
 	return 0;
 }
