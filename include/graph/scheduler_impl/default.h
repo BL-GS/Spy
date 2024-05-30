@@ -137,14 +137,14 @@ namespace spy {
 			const OperatorNode *input_node_ptr = graph_ptr->get_node_content<OperatorNode>(cur_node_credit);
 			const auto &data_nodes = input_node_ptr->get_output();
 			for (const DataNode *data_node_ptr: data_nodes) {
-				const NodeCredit data_credit = data_node_ptr->get_credit();
+				const NodeCredit data_credit = data_node_ptr->credit;
 
 				const size_t cur_data_dep_count = --data_dep_count[data_credit.node_id];
 
 				if (cur_data_dep_count == 0) {
 					const auto &start_op_nodes = data_node_ptr->get_output();
 					for (const OperatorNode *start_op_node_ptr: start_op_nodes) {
-						const NodeCredit start_node_credit = start_op_node_ptr->get_credit();
+						const NodeCredit start_node_credit = start_op_node_ptr->credit;
 
 						const size_t cur_dep_count = --op_dep_count[start_node_credit.node_id];
 						if (cur_dep_count == 0) { node_queue.enqueue(start_node_credit); }
@@ -172,7 +172,7 @@ namespace spy {
 				DataNode *view_src = (input_node_ptr->view_src == nullptr) ? input_node_ptr : input_node_ptr->view_src;
 				output_node_ptr->view_src = view_src;
 				// Count up the dependency of the source because we fork a new view
-				const NodeCredit src_credit = view_src->get_credit();
+				const NodeCredit src_credit = view_src->credit;
 				++data_dep_count[src_credit.node_id];
 			}
 		}
@@ -182,7 +182,7 @@ namespace spy {
 			const auto &inputs = cur_node_ptr->get_input();
 
 			for (DataNode *data_node_ptr: inputs) {
-				const NodeCredit node_credit = data_node_ptr->get_credit();
+				const NodeCredit node_credit = data_node_ptr->credit;
 
 				if (data_node_ptr->data_type == DataNodeType::Variable) {
 					const size_t cur_data_dep_count = --data_dep_count[node_credit.node_id];
@@ -190,13 +190,13 @@ namespace spy {
 					if (cur_data_dep_count == 0) {
 						Tensor &tensor = data_node_ptr->tensor;
 
-						spy_debug(DebugFlag::Memory, "Release node: {:32} ({})", data_node_ptr->get_name(), tensor.get());
+						spy_debug(DebugFlag::Memory, "Release node: {:32} ({})", data_node_ptr->name, tensor.get());
 
 						backend_ptr->dealloc_memory(tensor.get(), tensor.total_size());
 						tensor.set_data_ptr(nullptr);
 					}
 				} else if (data_node_ptr->data_type == DataNodeType::View) {
-					const NodeCredit src_node_credit = data_node_ptr->view_src->get_credit();
+					const NodeCredit src_node_credit = data_node_ptr->view_src->credit;
 					DataNode *src_data_node_ptr 	 = data_node_ptr->view_src;
 					Tensor &src_tensor = src_data_node_ptr->tensor;
 					// We need to count down the dependency of the source, and release it if needed.
@@ -209,7 +209,7 @@ namespace spy {
 
 					case DataNodeType::Variable:
 						if (cur_data_dep_count == 0) {
-							spy_debug(DebugFlag::Memory, "Release view node: {:27} (0x{})", src_data_node_ptr->get_name(), src_tensor.get());
+							spy_debug(DebugFlag::Memory, "Release view node: {:27} (0x{})", src_data_node_ptr->name, src_tensor.get());
 
 							backend_ptr->dealloc_memory(src_tensor.get(), src_tensor.total_size());
 							src_tensor.set_data_ptr(nullptr);

@@ -79,17 +79,6 @@ namespace spy {
 		 */
 		template<class T>
 		T &get_output(size_t idx) 					const { return *static_cast<T *>(output[idx]);  }
-
-	public: /* Utilities */
-		/*!
-		 * @brief Get the credit of this node, which denote the position of the node in the graph
-		 */
-		NodeCredit  get_credit() const { return credit;  }
-
-		/*!
-		 * @brief Get the name of this node.
-		 */
-		std::string get_name()   const { return name; }
 	};
 
 	struct OperatorNode {
