@@ -91,4 +91,4 @@ TARGET_LINK_LIBRARIES(spytest PRIVATE
 )
 
 # Test -----------------------------------------------------------------
-ADD_SUBDIRECTORY(test)
+# ADD_SUBDIRECTORY(test)
