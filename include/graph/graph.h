@@ -45,8 +45,10 @@ namespace spy {
 		Tensor 			tensor;
 		/// The source of view
 		DataNode *		view_src 		= nullptr;
+		/// The type of backend
+		BackendType		backend_type	= BackendType::Unknown;
 		/// The type of data
-		DataNodeType 	data_type	= DataNodeType::Variable;
+		DataNodeType 	data_type		= DataNodeType::Variable;
 
 	protected:
 		NodeArray		output;
@@ -96,6 +98,8 @@ namespace spy {
 		NodeArray   	input;
 		/// Output nodes
 		NodeArray  		output;
+		/// The type of backend
+		BackendType		backend_type	= BackendType::Unknown;
 
 	public:
 		OperatorNode() : op_type(OperatorType::Nop) {}
@@ -140,17 +144,6 @@ namespace spy {
 		 */
 		template<class T>
 		T &get_output(size_t idx) 					const { return *static_cast<T *>(output[idx]);  }
-
-	public: /* Utilities */
-		/*!
-		 * @brief Get the credit of this node, which denote the position of the node in the graph
-		 */
-		NodeCredit  get_credit() const { return credit;  }
-
-		/*!
-		 * @brief Get the name of this node.
-		 */
-		std::string get_name()   const { return name; }
 	};
 
 	class Graph {

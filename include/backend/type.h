@@ -13,7 +13,9 @@ namespace spy {
         /// The data is only accessible by the device itself.
         /// Data in this backend cannnot be transferred to other devices
         /// e.g. GPU memory
-        Device
+        Device,
+
+        Unknown
     };
 
 } // namespace spy

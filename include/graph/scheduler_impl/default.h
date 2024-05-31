@@ -59,7 +59,7 @@ namespace spy {
 					const auto &op_nodes  = data_node->get_output();
 
 					for (const auto &op_node: op_nodes) {
-						const auto op_credit  = op_node->get_credit();
+						const auto op_credit  = op_node->credit;
 						const auto op_node_id = op_credit.node_id;
 						const auto res_count  = --op_recv_counts[op_node_id];
 
@@ -73,7 +73,7 @@ namespace spy {
 				// Deallocate outdated input
 				try_deallocate_inputs(backend_ptr, cur_node_ptr, data_send_counts);
 				// Step forward
-				const NodeCredit cur_credit = cur_node_ptr->get_credit();
+				const NodeCredit cur_credit = cur_node_ptr->credit;
 
 				step_op_node(graph_ptr, node_queue, data_recv_counts, op_recv_counts, cur_credit);
 			};
@@ -97,7 +97,7 @@ namespace spy {
 				// Allocate buffer
 				std::span<uint8_t> buffer_span = allocate_buffer(backend_ptr, cur_node_ptr);
 
-				spy_debug(DebugFlag::Execute, "Execute {:32} -> {}", cur_node_ptr->get_name(), magic_enum::enum_name(cur_node_ptr->op_type));
+				spy_debug(DebugFlag::Execute, "Execute {:32} -> {}", cur_node_ptr->name, magic_enum::enum_name(cur_node_ptr->op_type));
 
 				const size_t task_num = backend_ptr->get_task_num(cur_node_ptr);
 				if (is_view(op_type) && task_num == 1) { // For view operator, which contains little operation, we do not need to bother thread pool.
