@@ -1,11 +1,19 @@
 #pragma once
 
+#include "operator/type.h"
 #include "backend/type.h"
 #include "backend/config.h"
 
 namespace spy::cpu {
 
+	struct OperatorResult;
+	struct OperatorEnvParam;
+	struct ControlHeader;
+
     class CPUBackend: public AbstractBackend {
+	public:
+		using TaskFunc = OperatorResult (*)(CPUBackend *, const OperatorEnvParam &, OperatorNode *);
+		
 	public:
 		CPUBackend(): AbstractBackend(BackendType::Host) {}
 
@@ -27,11 +35,18 @@ namespace spy::cpu {
 		size_t get_avail_concurrency() 	const override;
 
 	public:
-		size_t get_task_num(const OperatorNode *node_ptr) const override;
+		/*!
+		 * @brief Execute the operator
+		 * @param param The parameter of environment. Specifically, it denote the concurrency and thread id of CPU backend.
+		 * @param op_node The OperatorNode deriving from OperatorDefinition<T_op_type>, which store necessary operands and hyper parameters.
+		 * @return true if supported, otherwise false.
+		 */
+		virtual OperatorResult execute(const OperatorEnvParam &param, OperatorNode *node_ptr);
 
-		size_t get_buffer_size(const OperatorNode *node_ptr) const override;
+	protected:
+		TaskFunc get_execute_func(OperatorType op_type) const;
 
-		OperatorStatus execute(const OperatorEnvParam &param, OperatorNode *node_ptr) override;
+		std::shared_ptr<ControlHeader> get_control_header(OperatorType op_type, OperatorNode *node_ptr);
 	};
 
 }

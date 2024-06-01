@@ -16,6 +16,7 @@
 
 #include "operator_impl.h"
 #include "abstract_backend.h"
+#include "task.h"
 
 namespace spy::cpu {
 
@@ -67,31 +68,23 @@ namespace spy::cpu {
 
 #endif // _WIN32
 
-    size_t CPUBackend::get_task_num(const OperatorNode *node_ptr) const {
+    OperatorResult CPUBackend::execute(const OperatorEnvParam &param, OperatorNode *node_ptr) {
         const OperatorType op_type = node_ptr->op_type;
 
-        auto func = magic_enum::enum_switch([](auto type){
-            return cpu::OperatorImpl<type>::get_task_num;
-        }, op_type);
-        return func(this, node_ptr);
+        const auto func = get_execute_func(op_type);
+        return func(this, param, node_ptr);
     }
 
-    size_t CPUBackend::get_buffer_size(const OperatorNode *node_ptr) const {
-        const OperatorType op_type = node_ptr->op_type;
-
-        auto func = magic_enum::enum_switch([](auto type){
-            return cpu::OperatorImpl<type>::get_buffer_size;
-        }, op_type);
-        return func(this, node_ptr);
-    }
-
-    OperatorStatus CPUBackend::execute(const OperatorEnvParam &param, OperatorNode *node_ptr) {
-        const OperatorType op_type = node_ptr->op_type;
-
-        auto func = magic_enum::enum_switch([](auto type){
+    CPUBackend::TaskFunc CPUBackend::get_execute_func(OperatorType op_type) const {
+        return magic_enum::enum_switch([](auto type){
             return cpu::OperatorImpl<type>::execute;
         }, op_type);
-        return func(this, param, node_ptr);
+    }
+
+    std::shared_ptr<ControlHeader> CPUBackend::get_control_header(OperatorType op_type, OperatorNode *node_ptr) {
+        return magic_enum::enum_switch([this, node_ptr](auto type){
+            return cpu::OperatorImpl<type>::get_control_header(this, node_ptr);
+        }, op_type);
     }
 
 } // namespace spy

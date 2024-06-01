@@ -17,6 +17,7 @@
 #endif
 
 #include "util/shell/logger.h"
+#include "task.h"
 #include "abstract_backend.h"
 #include "operator_impl.h"
 
@@ -27,8 +28,9 @@ namespace spy::cpu {
 	class DefaultThreadPool {
 		friend class DefaultCPUBackend;
 	public:
-		using TaskFunc  = std::function<void()>;
-		using TaskQueue = moodycamel::ConcurrentQueue<TaskFunc>;
+		using TaskFunc  = OperatorResult (*)(CPUBackend *, const OperatorEnvParam &, OperatorNode *);
+		using TaskInfo  = OperatorEnvParam;
+		using TaskQueue = moodycamel::ConcurrentQueue<TaskInfo>;
 
 	private:
 		/// Worker threads
@@ -37,14 +39,18 @@ namespace spy::cpu {
 		TaskQueue                       task_queue_;
 		/// Stop all threads if true
 		std::atomic_flag        		stop_flag_;
+		/// Pointer to the backend
+		CPUBackend *					backend_ptr_;
 
 	public:
-		DefaultThreadPool() = default;
+		DefaultThreadPool(CPUBackend * backend_ptr): backend_ptr_(backend_ptr) {}
 
 		~DefaultThreadPool() noexcept {
 			stop_flag_.test_and_set();
 			// Push nullptr to notifying all threads
-			for (size_t i = 0; i < workers_.size(); ++i) { task_queue_.enqueue(nullptr); }
+			for (size_t i = 0; i < workers_.size(); ++i) { 
+				task_queue_.enqueue({}); 
+			}
 			// Wait for all threads
 			for (auto &worker: workers_) { worker.join(); }
 		}
@@ -56,28 +62,43 @@ namespace spy::cpu {
 				workers_.emplace_back([this](){
 					while (!stop_flag_.test()) {
 						// Sleep if no task
-						TaskFunc task;
+						TaskInfo task_info;
 						// Try to fetch a task
-						while (!task_queue_.try_dequeue(task)) { std::this_thread::yield(); }
+						while (!task_queue_.try_dequeue(task_info)) { std::this_thread::yield(); }
+						if (!task_info.func) { continue; }
+
 						// Execute task
-						if (task) { task(); }
+						const OperatorResult result = task_info.func(backend_ptr_, task_info, task_info.node_ptr);
+
+						using magic_enum::enum_name;
+						spy_assert(result.phase == OperatorPhaseType::End, 
+							"Cannot finish executing operator {} at phase {}", enum_name(task_info.node_ptr->op_type), enum_name(result.phase));
+						spy_assert(result.status == OperatorStatus::Success,
+							"Failed execute operator: {}", enum_name(result.status));
 					}
 				});
 			}
 		}
 
 	public:
-		int submit(std::function<void(int)> &&task_func, int concurrency) {
-			if (concurrency == 1) {
-				task_queue_.enqueue([func=std::move(task_func)](){ func(0); });
-				return 0;
+		void submit(TaskInfo &&task_info) {
+			const auto &header_ptr = task_info.header_ptr;
+			const int   num_task   = header_ptr->num_task;
+			if (num_task == 1) {
+				task_info.concurrency = 1;
+				task_info.tid 		  = 0;
+				task_queue_.enqueue(std::forward<TaskInfo>(task_info));
+			} else {
+				const int concurrency = task_info.concurrency = std::min<int>(max_concurrency(), num_task);
+				std::vector<TaskInfo> func_bulk;
+				func_bulk.reserve(concurrency);
+				for (int i = 0; i < concurrency; ++i) { 
+					func_bulk.emplace_back(task_info.fork(i)); 
+				}
+				task_queue_.enqueue_bulk(func_bulk.begin(), concurrency);
 			}
-			std::vector<TaskFunc> func_bulk;
-			func_bulk.reserve(concurrency);
-			for (int i = 0; i < concurrency; ++i) { func_bulk.emplace_back([task_func, i] { task_func(i); }); }
-			task_queue_.enqueue_bulk(func_bulk.begin(), concurrency);
-			return 0;
 		}
+
 	public:
 		bool poll() { return task_queue_.size_approx() == 0; }
 
@@ -94,13 +115,13 @@ namespace spy::cpu {
 		DefaultThreadPool thread_pool_;
 
 	public:
-		DefaultCPUBackend(const BackendFactory::BackendConfiguration &config) {
+		DefaultCPUBackend(const BackendFactory::BackendConfiguration &config): thread_pool_(this) {
 			int num_thread = config.parse_or("num_thread", DEFAULT_NUM_THREAD);
 			int max_mem	   = config.parse_or("max_mem", DEFAULT_MAX_MEM);
 			init(num_thread, max_mem);
 		}
 
-		DefaultCPUBackend(int num_thread, int64_t max_mem) { init(num_thread, max_mem); }
+		DefaultCPUBackend(int num_thread, int64_t max_mem): thread_pool_(this) { init(num_thread, max_mem); }
 
 		~DefaultCPUBackend() noexcept override = default;
 
@@ -134,25 +155,28 @@ namespace spy::cpu {
 	public:
 		/*!
 		 * @brief Submit `concurrency` tasks into task queue
-		 * @param func task function
-		 * @param concurrency The number of task in batch for parallel execution
-		 * @return non-sense value
+		 * @param op_node The operator node to be executed
+		 * @param callback The callback function after executing the `op_node`
 		 */
-		int submit(std::function<void (int)> &&func, int concurrency) override {
-			return thread_pool_.submit(std::forward<decltype(func)>(func), concurrency);
+		void submit(OperatorNode *op_node_ptr, std::function<void()> &&callback) override {
+			using TaskInfo = DefaultThreadPool::TaskInfo;
+
+			const OperatorType op_type = op_node_ptr->op_type;
+			TaskInfo info {
+				.func 		 = get_execute_func(op_type),
+				.node_ptr	 = op_node_ptr,
+				.header_ptr  = get_control_header(op_type, op_node_ptr)
+			};
+
+			if (info.header_ptr == nullptr) {
+				const OperatorResult result = info.func(this, info, op_node_ptr);
+				spy_assert(result.status == OperatorStatus::Success);
+				callback();
+			} else {
+				info.header_ptr->callback = std::forward<std::function<void()>>(callback);
+				thread_pool_.submit(std::move(info));	
+			}
 		}
-
-		/*!
-		 * @brief Return whether all worker threads have finished tasks in the task queue.
-		 * @note This backend DO NOT support synchronization in fine granularity
-		 */
-		bool poll([[maybe_unused]] int task_token) override { return thread_pool_.poll(); }
-
-		/*!
-		 * @brief Waiting for all worker threads finishing tasks in the task queue
-		 * @note This backend DO NOT support synchronization in fine granularity
-		 */
-		void sync([[maybe_unused]] int task_token) override { thread_pool_.sync(); }
 
 	public:
 		/*!

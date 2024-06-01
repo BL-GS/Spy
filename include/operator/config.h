@@ -27,15 +27,6 @@ namespace spy {
 		bool 			xpos_down;
 	};
 
-	struct OperatorEnvParam {
-		/// The concurrency of operator execution
-		int concurrency;
-		/// The id of thread executing the operator
-		int tid;
-		/// The buffer
-		std::span<uint8_t> buffer;
-	};
-
 	/*!
 	 * @brief Definition of operator
 	 * @note When implementing the definition, it should be derived from OperatorNode.

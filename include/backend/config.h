@@ -17,7 +17,6 @@
 namespace spy {
 
 	struct OperatorNode;
-	struct OperatorEnvParam;
 
 	enum class OperatorStatus {
 		/// This operator is finished successfully
@@ -27,8 +26,6 @@ namespace spy {
 		/// This operator is unsupported on this backend
 		Unsupport
 	};
-
-	using BackendTaskCredit = int;
 
 	class AbstractBackend {
 	private:
@@ -86,49 +83,11 @@ namespace spy {
 	public: /* Schedule */
 		/*!
 		 * @brief Submit `concurrency` tasks to the backend.
-		 * @param task The function of task
-		 * @param concurrency The number of task to be executed concurrently
+		 * @param op_node The operator node to be executed
+		 * @param callback The callback function after executing the `op_node`
 		 * @note The task function SHOULD NOT use blocking algorithm if the backend support concurrency overcommitment..
-		 * @return The credit of the task, which can be used to execute `poll` and `sync`
 		 */
-		virtual BackendTaskCredit submit(std::function<void(int)> &&task, int concurrency)	= 0;
-
-		/*!
-		 * @brief Query whether the task is finished if supported
-		 * @param task_credit The credit of the specific task
-		 */
-		virtual bool poll(BackendTaskCredit task_credit)	{
-			throw SpyUnimplementedException("This backend do not support `poll` function");
-		}
-
-		/*!
-		 * @brief Synchronize with a specific task
-		 * @param task_credit The credit of the specific task
-		 */
-		virtual void sync(BackendTaskCredit task_credit) {
-			throw SpyUnimplementedException("This backend do not support explicit synchronization");
-		}
-
-	public:
-		/*!
-		 * @brief Get the number of task that can be executed in parallelism.
-		 * Most of the time, the number will be 1 if not to be executed on accelerator
-		 */
-		virtual size_t get_task_num(const OperatorNode *op_node) const = 0;
-
-		/*!
-		 * @brief Get the number of task that can be executed in parallelism.
-		 * Most of the time, the number will be 1 if not to be executed on accelerator
-		 */
-		virtual size_t get_buffer_size(const OperatorNode *op_node) const = 0;
-
-		/*!
-		 * @brief Execute the operator
-		 * @param param The parameter of environment. Specifically, it denote the concurrency and thread id of CPU backend.
-		 * @param op_node The OperatorNode deriving from OperatorDefinition<T_op_type>, which store necessary operands and hyper parameters.
-		 * @return true if supported, otherwise false.
-		 */
-		virtual OperatorStatus execute(const OperatorEnvParam &param, OperatorNode *op_node) = 0;
+		virtual void submit(OperatorNode *op_node_ptr, std::function<void()> &&callback = nullptr)	= 0;
 	};
 
 	class BackendFactory {

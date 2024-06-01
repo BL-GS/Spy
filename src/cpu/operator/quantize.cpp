@@ -9,17 +9,14 @@
 
 namespace spy::cpu {
 
-    size_t OperatorQuantizeImpl::get_task_num([[maybe_unused]] const CPUBackend *backend_ptr, const OperatorNode *op_node) {
+	std::shared_ptr<ControlHeader> OperatorQuantizeImpl::get_control_header([[maybe_unused]] CPUBackend *backend_ptr, const OperatorNode *op_node) {
         const auto &operand  = op_node->get_input<DataNode>(0).tensor;
-        const Shape &shape_operand = operand.get_shape();
-        return shape_operand.num_row();
-	}
+        const auto &shape_operand = operand.get_shape();
+        const int num_task = shape_operand.num_row();
+        return std::make_shared<ControlHeader>(num_task);
+    }
 
-	size_t OperatorQuantizeImpl::get_buffer_size([[maybe_unused]] const CPUBackend *backend_ptr, const OperatorNode *op_node) {
-		return 0;
-	}
-
-	bool OperatorQuantizeImpl::execute([[maybe_unused]] CPUBackend *backend_ptr, const OperatorEnvParam &param, OperatorNode *op_node) {
+	OperatorResult OperatorQuantizeImpl::execute([[maybe_unused]] CPUBackend *backend_ptr, const OperatorEnvParam &param, OperatorNode *op_node) {
 		const auto &operand = op_node->get_input<DataNode>(0).tensor;
 		const auto &result  = op_node->get_output<DataNode>(0).tensor;
 
@@ -40,8 +37,7 @@ namespace spy::cpu {
 	        auto_quantize_inner(from_type, src_ptr, to_type, dst_ptr, ne00 / get_block_size(from_type));
         }
 
-        return true;
+        return { 0_op_end };
     }
-
 
 }  // namespace spy::cpu

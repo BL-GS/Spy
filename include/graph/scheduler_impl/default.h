@@ -68,8 +68,7 @@ namespace spy {
 				}
 			}
 
-			const auto op_step = [&] (OperatorNode *cur_node_ptr, const std::span<uint8_t> &buffer, AbstractBackend *backend_ptr) {
-				deallocate_buffer(backend_ptr, buffer);
+			const auto op_step = [&] (OperatorNode *cur_node_ptr,  AbstractBackend *backend_ptr) {
 				// Deallocate outdated input
 				try_deallocate_inputs(backend_ptr, cur_node_ptr, data_send_counts);
 				// Step forward
@@ -89,45 +88,18 @@ namespace spy {
 				if (cur_credit == Graph::OUTPUT_NODE_CREDIT) [[unlikely]] { break; }
 
 				OperatorNode *cur_node_ptr = graph_ptr->get_node_content<OperatorNode>(cur_credit);
-				OperatorType op_type = cur_node_ptr->op_type;
 
 				// Allocate to-be-use output
 				 try_allocate_outputs(backend_ptr, cur_node_ptr, data_send_counts);
 
 				// Allocate buffer
-				std::span<uint8_t> buffer_span = allocate_buffer(backend_ptr, cur_node_ptr);
-
 				spy_debug(DebugFlag::Execute, "Execute {:32} -> {}", cur_node_ptr->name, magic_enum::enum_name(cur_node_ptr->op_type));
 
-				const size_t task_num = backend_ptr->get_task_num(cur_node_ptr);
-				if (is_view(op_type) && task_num == 1) { // For view operator, which contains little operation, we do not need to bother thread pool.
-					const OperatorEnvParam param {
-						.concurrency = 1,
-						.tid 		 = 0,
-						.buffer      = buffer_span
-					};
-					backend_ptr->execute(param, cur_node_ptr);
-					op_step(cur_node_ptr, buffer_span, backend_ptr);
-				} else {
-					const size_t max_concurrency 	= backend_ptr->get_max_concurrency();
-					const int concurrency 			= std::min(task_num, max_concurrency);
-
-					auto task_counter = std::make_shared<std::atomic_int>(concurrency);
-					backend_ptr->submit([cur_node_ptr, backend_ptr, concurrency, buffer_span, task_counter = std::move(task_counter), &op_step](int tid){
-						const OperatorEnvParam param {
-							.concurrency = concurrency,
-							.tid		 = tid,
-							.buffer      = buffer_span
-						};
-						backend_ptr->execute(param, cur_node_ptr);
-
-						int task_id = task_counter->fetch_sub(1);
-
-						if (task_id == 1) {
-							op_step(cur_node_ptr, buffer_span, backend_ptr);
-						}
-					}, concurrency);
-				}
+				backend_ptr->submit(cur_node_ptr, 
+					[op_step, backend_ptr, cur_node_ptr](){ 
+						op_step(cur_node_ptr, backend_ptr); 
+					} 
+				);
 			}
 		}
 
@@ -220,20 +192,6 @@ namespace spy {
 					}					
 				}
 			}
-		}
-
-		static std::span<uint8_t> allocate_buffer(AbstractBackend *backend_ptr, const OperatorNode *cur_node_ptr) {
-			const size_t buffer_size = backend_ptr->get_buffer_size(cur_node_ptr);
-			// no buffer
-			if (buffer_size == 0) { return {}; }
-			// allocate buffer
-			void *buffer_ptr = backend_ptr->alloc_memory(buffer_size);
-			spy_assert(buffer_ptr != nullptr, "failed allocate memory");
-			return { static_cast<uint8_t *>(buffer_ptr), buffer_size };
-		}
-
-		static void deallocate_buffer(AbstractBackend *backend_ptr, const std::span<uint8_t> &buffer) {
-			backend_ptr->dealloc_memory(buffer.data(), buffer.size());
 		}
 	};
 

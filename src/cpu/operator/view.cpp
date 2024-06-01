@@ -16,30 +16,23 @@
 
 namespace spy::cpu {
 
-	size_t OperatorNopImpl::get_task_num([[maybe_unused]] const CPUBackend *backend_ptr, const OperatorNode *op_node) {
-        return 1;
-	}
-
-	size_t OperatorNopImpl::get_buffer_size([[maybe_unused]] const CPUBackend *backend_ptr, const OperatorNode *op_node) {
-		return 0;
-	}
-
-	bool OperatorNopImpl::execute([[maybe_unused]] CPUBackend *backend_ptr, const OperatorEnvParam &param, OperatorNode *op_node) {
-        return true;
+	std::shared_ptr<ControlHeader> OperatorNopImpl::get_control_header([[maybe_unused]] CPUBackend *backend_ptr, const OperatorNode *op_node) {
+        return nullptr;
     }
 
-	size_t OperatorGetRowImpl::get_task_num([[maybe_unused]] const CPUBackend *backend_ptr, const OperatorNode *op_node) {
+	OperatorResult OperatorNopImpl::execute([[maybe_unused]] CPUBackend *backend_ptr, const OperatorEnvParam &param, OperatorNode *op_node) {
+        return { 0_op_end };
+    }
+
+	std::shared_ptr<ControlHeader> OperatorGetRowImpl::get_control_header([[maybe_unused]] CPUBackend *backend_ptr, const OperatorNode *op_node) {
         const auto &operand_1  = op_node->get_input<DataNode>(1).tensor;
         const auto &shape_1 = operand_1.get_shape();
 		const auto [ne10, ne11, ne12, ne13] = shape_1.elements;
-        return ne12 * ne11 * ne10;
-	}
+        const int num_task = ne12 * ne11 * ne10;
+        return std::make_shared<ControlHeader>(num_task);
+    }
 
-	size_t OperatorGetRowImpl::get_buffer_size([[maybe_unused]] const CPUBackend *backend_ptr, const OperatorNode *op_node) {
-		return 0;
-	}
-
-	bool OperatorGetRowImpl::execute([[maybe_unused]] CPUBackend *backend_ptr, const OperatorEnvParam &param, OperatorNode *op_node) {
+	OperatorResult OperatorGetRowImpl::execute([[maybe_unused]] CPUBackend *backend_ptr, const OperatorEnvParam &param, OperatorNode *op_node) {
 		const auto &operand_0 = op_node->get_input<DataNode>(0).tensor;
 		const auto &operand_1 = op_node->get_input<DataNode>(1).tensor;
 		const auto &result    = op_node->get_output<DataNode>(0).tensor;
@@ -89,10 +82,10 @@ namespace spy::cpu {
             }
         }
 
-        return true;
+        return { 0_op_end };
     }
 
-    static bool dup_execute(CPUBackend *backend_ptr, const OperatorEnvParam &param, Tensor &result, const Tensor &operand) {
+    static OperatorResult dup_execute(CPUBackend *backend_ptr, const OperatorEnvParam &param, Tensor &result, const Tensor &operand) {
         const auto &shape_operand = operand.get_shape();
         const auto &shape_res     = result.get_shape();
 
@@ -202,120 +195,95 @@ namespace spy::cpu {
             }
         }
 
-        return true;
+        return { 0_op_end };
     }
 
-	size_t OperatorDupImpl::get_task_num([[maybe_unused]] const CPUBackend *backend_ptr, const OperatorNode *op_node) {
+	std::shared_ptr<ControlHeader> OperatorDupImpl::get_control_header([[maybe_unused]] CPUBackend *backend_ptr, const OperatorNode *op_node) {
         const auto &operand  = op_node->get_input<DataNode>(0).tensor;
         const auto &shape_operand = operand.get_shape();
-        return shape_operand.num_row();
+        const int num_task = shape_operand.num_row();
+        return std::make_shared<ControlHeader>(num_task);
     }
 
-	size_t OperatorDupImpl::get_buffer_size([[maybe_unused]] const CPUBackend *backend_ptr, const OperatorNode *op_node) {
-		return 0;
-	}
-
-	bool OperatorDupImpl::execute([[maybe_unused]] CPUBackend *backend_ptr, const OperatorEnvParam &param, OperatorNode *op_node) {
+	OperatorResult OperatorDupImpl::execute([[maybe_unused]] CPUBackend *backend_ptr, const OperatorEnvParam &param, OperatorNode *op_node) {
 		const auto &operand = op_node->get_input<DataNode>(0).tensor;
 		      auto &result  = op_node->get_output<DataNode>(0).tensor;
 
         return dup_execute(backend_ptr, param, result, operand);
 	}
 
-	size_t OperatorCopyImpl::get_task_num([[maybe_unused]] const CPUBackend *backend_ptr, const OperatorNode *op_node) {
-        return OperatorDupImpl::get_task_num(backend_ptr, op_node);
+
+	std::shared_ptr<ControlHeader> OperatorCopyImpl::get_control_header([[maybe_unused]] CPUBackend *backend_ptr, const OperatorNode *op_node) {
+        return OperatorDupImpl::get_control_header(backend_ptr, op_node);
     }
 
-	size_t OperatorCopyImpl::get_buffer_size([[maybe_unused]] const CPUBackend *backend_ptr, const OperatorNode *op_node) {
-		return 0;
-	}
-
-	bool OperatorCopyImpl::execute(CPUBackend *backend_ptr, const OperatorEnvParam &param, OperatorNode *op_node) {
+	OperatorResult OperatorCopyImpl::execute(CPUBackend *backend_ptr, const OperatorEnvParam &param, OperatorNode *op_node) {
 		const auto &operand_0 = op_node->get_input<DataNode>(0).tensor;
 		      auto &operand_1  = op_node->get_input<DataNode>(1).tensor;
 			  auto &result  = op_node->get_output<DataNode>(0).tensor;
 
-        const bool ret = dup_execute(backend_ptr, param, operand_1, operand_0);
-		if (ret) { result.set_data_ptr(operand_1.get()); }
+        const OperatorResult ret = dup_execute(backend_ptr, param, operand_1, operand_0);
+		if (ret.status == OperatorStatus::Success) { result.set_data_ptr(operand_1.get()); }
 		return ret;
     }
 
-	size_t OperatorReshapeImpl::get_task_num([[maybe_unused]] const CPUBackend *backend_ptr, [[maybe_unused]] const OperatorNode *op_node) { 
-        return 1; 
+	std::shared_ptr<ControlHeader> OperatorReshapeImpl::get_control_header([[maybe_unused]] CPUBackend *backend_ptr, const OperatorNode *op_node) {
+        return nullptr;
     }
 
-	size_t OperatorReshapeImpl::get_buffer_size([[maybe_unused]] const CPUBackend *backend_ptr, const OperatorNode *op_node) {
-		return 0;
-	}
-
-	bool OperatorReshapeImpl::execute([[maybe_unused]] CPUBackend *backend_ptr, const OperatorEnvParam &param, OperatorNode *op_node) {
+	OperatorResult OperatorReshapeImpl::execute([[maybe_unused]] CPUBackend *backend_ptr, const OperatorEnvParam &param, OperatorNode *op_node) {
 		const auto &operand = op_node->get_input<DataNode>(0).tensor;
 		auto &result  = op_node->get_output<DataNode>(0).tensor;
 
         result.set_data_ptr(operand.get());
-        return true;
+        return { 0_op_end };
     }
 
-	size_t OperatorViewImpl::get_task_num([[maybe_unused]] const CPUBackend *backend_ptr, const OperatorNode *op_node) { 
-        return 1; 
+	std::shared_ptr<ControlHeader> OperatorViewImpl::get_control_header([[maybe_unused]] CPUBackend *backend_ptr, const OperatorNode *op_node) {
+        return nullptr;
     }
 
-	size_t OperatorViewImpl::get_buffer_size([[maybe_unused]] const CPUBackend *backend_ptr, const OperatorNode *op_node) {
-		return 0;
-	}
-
-	bool OperatorViewImpl::execute([[maybe_unused]] CPUBackend *backend_ptr, const OperatorEnvParam &param, OperatorNode *op_node) {
+	OperatorResult OperatorViewImpl::execute([[maybe_unused]] CPUBackend *backend_ptr, const OperatorEnvParam &param, OperatorNode *op_node) {
         const auto &operand  = op_node->get_input<DataNode>(0).tensor;
         auto  &result        = op_node->get_output<DataNode>(0).tensor;
         const int64_t offset = static_cast<OperatorDefinition<OperatorType::View> *>(op_node)->offset;
 
         result.set_data_ptr(operand.get<uint8_t>() + offset);
-        return true;
+        return { 0_op_end };
     }
 
-	size_t OperatorTransposeImpl::get_task_num([[maybe_unused]] const CPUBackend *backend_ptr, const OperatorNode *op_node) { 
-        return 1; 
+	std::shared_ptr<ControlHeader> OperatorTransposeImpl::get_control_header([[maybe_unused]] CPUBackend *backend_ptr, const OperatorNode *op_node) {
+        return nullptr;
     }
 
-	size_t OperatorTransposeImpl::get_buffer_size([[maybe_unused]] const CPUBackend *backend_ptr, const OperatorNode *op_node) {
-		return 0;
-	}
-
-    bool OperatorTransposeImpl::execute([[maybe_unused]] CPUBackend *backend_ptr, const OperatorEnvParam &param, OperatorNode *op_node) {
+    OperatorResult OperatorTransposeImpl::execute([[maybe_unused]] CPUBackend *backend_ptr, const OperatorEnvParam &param, OperatorNode *op_node) {
 		const auto &operand = op_node->get_input<DataNode>(0).tensor;
 		auto &result  = op_node->get_output<DataNode>(0).tensor;
 
         result.set_data_ptr(operand.get());
-        return true;
+        return { 0_op_end };
     }
 
-	size_t OperatorPermuteImpl::get_task_num([[maybe_unused]] const CPUBackend *backend_ptr, const OperatorNode *op_node) { 
-        return 1; 
+	std::shared_ptr<ControlHeader> OperatorPermuteImpl::get_control_header([[maybe_unused]] CPUBackend *backend_ptr, const OperatorNode *op_node) {
+        return nullptr;
     }
 
-	size_t OperatorPermuteImpl::get_buffer_size([[maybe_unused]] const CPUBackend *backend_ptr, const OperatorNode *op_node) {
-		return 0;
-	}
-
-	bool OperatorPermuteImpl::execute([[maybe_unused]] CPUBackend *backend_ptr, const OperatorEnvParam &param, OperatorNode *op_node) {
+	OperatorResult OperatorPermuteImpl::execute([[maybe_unused]] CPUBackend *backend_ptr, const OperatorEnvParam &param, OperatorNode *op_node) {
 		const auto &operand = op_node->get_input<DataNode>(0).tensor;
 		auto &result  = op_node->get_output<DataNode>(0).tensor;
 
         result.set_data_ptr(operand.get());
-        return true;
+        return { 0_op_end };
     }
 
-	size_t OperatorContiguousImpl::get_task_num([[maybe_unused]] const CPUBackend *backend_ptr, const OperatorNode *op_node) {
+	std::shared_ptr<ControlHeader> OperatorContiguousImpl::get_control_header([[maybe_unused]] CPUBackend *backend_ptr, const OperatorNode *op_node) {
         const auto &operand  = op_node->get_input<DataNode>(0).tensor;
         const auto &shape_operand = operand.get_shape();
-        return shape_operand.num_row();
+        const int num_task = shape_operand.num_row();
+        return std::make_shared<ControlHeader>(num_task);
     }
 
-	size_t OperatorContiguousImpl::get_buffer_size([[maybe_unused]] const CPUBackend *backend_ptr, const OperatorNode *op_node) {
-		return 0;
-	}
-
-	bool OperatorContiguousImpl::execute([[maybe_unused]] CPUBackend *backend_ptr, const OperatorEnvParam &param, OperatorNode *op_node) {
+	OperatorResult OperatorContiguousImpl::execute([[maybe_unused]] CPUBackend *backend_ptr, const OperatorEnvParam &param, OperatorNode *op_node) {
         const auto &operand  = op_node->get_input<DataNode>(0).tensor;
         auto  &result        = op_node->get_output<DataNode>(0).tensor;
 
@@ -350,8 +318,7 @@ namespace spy::cpu {
             }
         }
 
-        return true;
+        return { 0_op_end };
     }
-
 
 }  // namespace spy::cpu
