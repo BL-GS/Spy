@@ -15,6 +15,7 @@
 
 #include "abstract_backend.h"
 #include "gpu_device.h"
+#include "task.h"
 
 namespace spy::gpu {
 
@@ -27,7 +28,7 @@ namespace spy::gpu {
 
 		std::condition_variable						 task_cond_;
 
-		std::queue<std::function<void (int)>> task_list_;
+		std::queue<OperatorEnvParam> 				 task_list_;
 
 		std::thread 	 worker_thread_;
 
@@ -60,41 +61,23 @@ namespace spy::gpu {
 
 	public:
 		/*!
-		 * @brief Submit `concurrency` tasks into task queue
-		 * @param func task function
-		 * @param concurrency The number of task in batch for parallel execution
-		 * @return non-sense value
+		 * @brief Submit `concurrent` tasks into task queue
+		 * @param op_node_ptr The pointer of the submitted OperatorNode
+		 * @param callback The callback function 
 		 */
-		int submit(std::function<void (int)> &&func, int concurrency) override {
+		void submit(OperatorNode *op_node_ptr, std::function<void()> &&callback = nullptr) override {
 			std::unique_lock<std::mutex> lock(task_lock_);
-			task_list_.push(std::forward<std::function<void (int)>>(func));
+
+			OperatorEnvParam param{
+				.stream   = metadata_.get_stream(0),  
+				.node_ptr = op_node_ptr,
+				.func	  = get_execute_func(op_node_ptr->op_type),
+				.callback = callback
+			};
+
+			task_list_.push(param);
 			lock.unlock();
 			task_cond_.notify_one();
-			return 0;
-		}
-
-		/*!
-		 * @brief Return whether all worker threads have finished tasks in the task queue.
-		 * @note This backend DO NOT support synchronization in fine granularity
-		 */
-		bool poll(int task_token) override {
-			sync(task_token);
-			return true;
-		}
-
-		/*!
-		 * @brief Waiting for all worker threads finishing tasks in the task queue
-		 * @note This backend DO NOT support synchronization in fine granularity
-		 */
-		void sync(int task_token) override {
-			while (true) {
-				std::lock_guard<std::mutex> lock(task_lock_);
-				if (!task_list_.empty()) { 
-					GPUBackend::sync(task_token);
-					return; 
-				}
-				std::this_thread::yield();
-			}
 		}
 
 	private:
@@ -104,10 +87,11 @@ namespace spy::gpu {
 				task_cond_.wait(lock);
 
 				if (!task_list_.empty()) {
-					auto new_task = std::move(task_list_.front());
+					const auto new_task = std::move(task_list_.front());
 					task_list_.pop();
-					
-					new_task(0);
+
+					new_task.func(this, new_task);
+					new_task.callback();
 				}
 			}
 		}

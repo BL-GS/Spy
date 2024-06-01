@@ -2,12 +2,17 @@
 
 #include "backend/config.h"
 #include "gpu_device.h"
+#include "operator/type.h"
+#include "task.h"
 
 namespace spy::gpu {
 
 	void print_cuda_devices();
 
 	class GPUBackend: public AbstractBackend {
+	public:
+		using TaskFunc = OperatorStatus (*)(GPUBackend *, const OperatorEnvParam &);
+
 	public:
 		/// Pointer to the metadata of the GPU device
 		/// which is allocated and deallocated in CUDA file
@@ -28,9 +33,6 @@ namespace spy::gpu {
 
 		void  dealloc_memory(void *ptr, size_t size) 	override { };
 
-	public:
-		void sync(int task_token) override;
-
 	public: /* Processor Operation */
 		/*!
 		 * @brief Return the max concurrency of GPU.
@@ -45,12 +47,15 @@ namespace spy::gpu {
 		size_t get_avail_concurrency() 	const override { return 1; }
 
 	public:
+		/*!
+		 * @brief Execute the operator
+		 * @param param The parameter of environment. Specifically, it denote the concurrency and thread id of CPU backend.
+		 * @return true if supported, otherwise false.
+		 */
+		virtual OperatorStatus execute(const OperatorEnvParam &param);
 
-		size_t get_task_num(const OperatorNode *node_ptr) const override;
-
-		size_t get_buffer_size(const OperatorNode *node_ptr) const override;
-
-		OperatorStatus execute(const OperatorEnvParam &param, OperatorNode *node_ptr) override;
+	protected:
+		TaskFunc get_execute_func(OperatorType op_type) const;
 	};
 
 }  // namespace spy
