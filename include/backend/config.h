@@ -13,6 +13,7 @@
 #include "util/shell/logger.h"
 #include "util/wrapper/config_table.h"
 #include "backend/type.h"
+#include "operator/type.h"
 
 namespace spy {
 
@@ -81,6 +82,9 @@ namespace spy {
 		virtual size_t get_avail_concurrency() 	const = 0;
 
 	public: /* Schedule */
+
+		virtual bool is_support(OperatorType op_type) const = 0;
+
 		/*!
 		 * @brief Submit `concurrency` tasks to the backend.
 		 * @param op_node The operator node to be executed

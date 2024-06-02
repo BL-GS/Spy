@@ -68,6 +68,12 @@ namespace spy::cpu {
 
 #endif // _WIN32
 
+	bool CPUBackend::is_support(OperatorType op_type) const {
+		return magic_enum::enum_switch([](auto type){
+			return cpu::OperatorImpl<type>::is_support();
+		}, op_type);
+	}
+
     OperatorResult CPUBackend::execute(const OperatorEnvParam &param, OperatorNode *node_ptr) {
         const OperatorType op_type = node_ptr->op_type;
 

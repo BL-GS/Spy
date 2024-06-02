@@ -26,6 +26,15 @@ namespace spy::gpu {
 	}
 
 	template<OperatorType T_op_type>
+	struct IsSupportExtractor {
+		constexpr auto operator()() const { return gpu::OperatorImpl<T_op_type>::is_support(); }
+	};
+
+	bool GPUBackend::is_support(OperatorType op_type) const { ;
+		return operator_type_switch<IsSupportExtractor>(op_type);
+	}
+
+	template<OperatorType T_op_type>
 	struct ExecuteExtractor {
 		constexpr auto operator()() const { return gpu::OperatorImpl<T_op_type>::execute; }
 	};

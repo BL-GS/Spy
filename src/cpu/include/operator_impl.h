@@ -21,6 +21,8 @@ namespace spy::cpu {
 		 */
 		static std::shared_ptr<ControlHeader> get_control_header([[maybe_unused]] CPUBackend *backend_ptr, [[maybe_unused]] const OperatorNode *op_node_ptr) { return nullptr; }
 
+		static constexpr bool is_support() { return false; }
+
 		/*!
 		 * @brief Execute the operator 
 		 * @param param The parameter of environment. Specifically, it denote the concurrency and thread id of CPU backend.
@@ -44,6 +46,8 @@ namespace spy::cpu {
             return Operator##op_type##Impl::get_control_header(backend_ptr, op_node);                                               \
         }                                                                                                                           \
                                                                                                                                     \
+        static constexpr bool is_support() { return true; }                                                                         \
+																																	\
         static OperatorResult execute(CPUBackend *backend_ptr, const OperatorEnvParam &param, OperatorNode *op_node) {              \
             return Operator##op_type##Impl::execute(backend_ptr, param, op_node);                                                   \
         }                                                                                                                           \

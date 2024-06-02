@@ -18,6 +18,7 @@
 #include "number/tensor.h"
 #include "operator/type.h"
 #include "graph/type.h"
+#include "backend/type.h"
 
 namespace spy {
 

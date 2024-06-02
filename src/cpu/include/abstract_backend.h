@@ -25,8 +25,7 @@ namespace spy::cpu {
 		size_t get_avail_memory_capacity() 	const override;
 
 	public: /* Data Management */
-		void *alloc_memory(size_t size) override { return new uint8_t[size];    
-                 }
+		void *alloc_memory(size_t size) override { return new uint8_t[size]; }
 		void  dealloc_memory(void *ptr, [[maybe_unused]]size_t size) 	override { delete[] static_cast<uint8_t *>(ptr); }
 
 	public: /* Processor Operation */
@@ -35,6 +34,8 @@ namespace spy::cpu {
 		size_t get_avail_concurrency() 	const override;
 
 	public:
+		bool is_support(OperatorType op_type) const override;
+
 		/*!
 		 * @brief Execute the operator
 		 * @param param The parameter of environment. Specifically, it denote the concurrency and thread id of CPU backend.

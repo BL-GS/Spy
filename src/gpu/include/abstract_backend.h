@@ -47,6 +47,8 @@ namespace spy::gpu {
 		size_t get_avail_concurrency() 	const override { return 1; }
 
 	public:
+		bool is_support(OperatorType op_type) const override;
+
 		/*!
 		 * @brief Execute the operator
 		 * @param param The parameter of environment. Specifically, it denote the concurrency and thread id of CPU backend.

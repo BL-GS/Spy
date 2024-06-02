@@ -10,7 +10,7 @@
 #include <fmt/format.h>
 
 #include "util/exception.h"
-#include "backend/config.h"
+#include "util/shell/logger.h"
 
 namespace spy {
 

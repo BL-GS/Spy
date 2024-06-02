@@ -13,6 +13,7 @@ namespace spy::gpu {
 	template<OperatorType T_op_type>
 	struct OperatorImpl {
 	public: /* Interface for schedule and execution */
+		static constexpr bool is_support() { return false; }
 		/*!
 		 * @brief Execute the operator 
 		 * @param param The parameter of environment. Specifically, it denote the concurrency and thread id of CPU backend.
@@ -28,6 +29,8 @@ namespace spy::gpu {
                                                                     \
     template<>                                                      \
     struct OperatorImpl<OperatorType:: op_type> {                   \
+        static constexpr bool is_support() { return true; }         \
+                                                                    \
         static OperatorStatus execute(GPUBackend *backend_ptr, const OperatorEnvParam &param) {     \
             return Operator##op_type##Impl::execute(backend_ptr, param);                            \
         }                                                                                           \

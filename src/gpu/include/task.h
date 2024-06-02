@@ -3,6 +3,7 @@
 #include <functional>
 
 #include "graph/graph.h"
+#include "backend/config.h"
 
 namespace spy::gpu {
 
