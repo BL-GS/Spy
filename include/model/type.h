@@ -39,21 +39,5 @@ namespace spy {
 		/// modifies a preceding `Character` or `RangedCharacter` to add an alternate char to match ([ab], [a-zA])
 		AlternateCharacter         = 6
 	};
-
-	enum class ModelTensorType: size_t {
-		TokenEmbedding = 0, TokenEmbeddingNorm, TokenTypes, PositionEmbedding,
-
-		Output, OutputNorm, RopeFrequency, LayerOutNorm,
-
-		AttentionQ, AttentionK, AttentionV, AttentionQKV, 
-		AttentionQNorm, AttentionKNorm,
-		AttentionOutput, AttentionNorm, AttentionNorm2,
-		AttentionOutNorm, AttentionRotationEmbedding,
-
-		FFNGateInp, FFNNorm, FFNDown, FFNGate, FFNUp, FFNActivation, 
-		FFNDownExp, FFNGateExp, FFNUpExp,
-
-		ModelTensorTypeEnd
-	};
 	
 }  // namespace spy

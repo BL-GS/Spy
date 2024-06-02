@@ -50,78 +50,139 @@ namespace spy {
 
 
         template<bool T_use_kv_cache>
-        NodeCredit connect_attention(Graph &graph, const std::string &layer_suffix) const {
+        NodeCredit connect_attention(Graph &graph, int layer_id = -1, int expert_id = -1) const {
 
-            NodeCredit attn_norm_buffer = make_stream<OperatorType::NormRMS>(graph, "attn norm buffer" + layer_suffix, { input_embedding }, ffn_norm_rms_eps);
-            NodeCredit attn_norm        = make_stream<OperatorType::Mul>(graph, "attn norm" + layer_suffix, { attn_norm_buffer, weight.attention_norm });
+            NodeCredit attn_norm = make_stream<OperatorType::NormRMS>(graph,
+                TensorType::V_AttentionNorm, layer_id, expert_id, 
+                { input_embedding }, ffn_norm_rms_eps
+            );
+            NodeCredit attn_norm_weighted = make_stream<OperatorType::Mul>(graph, 
+                TensorType::V_AttentionNormWeighted, layer_id, expert_id, 
+                { attn_norm, weight.attention_norm }
+            );
 
             /* Self-attention */
-            const auto [Q_cur_out, K_cur_out, V_cur_out] = input_linear_map(graph, layer_suffix, attn_norm);
-            const auto [Q_rope, K_rope] = position_encode(graph, layer_suffix, Q_cur_out, K_cur_out);
+            const auto [Q_cur_out, K_cur_out, V_cur_out] = input_linear_map(graph, layer_id, expert_id, attn_norm_weighted);
+            const auto [Q_rope, K_rope] = position_encode(graph, layer_id, expert_id, Q_cur_out, K_cur_out);
 
-            NodeCredit Q_out = make_stream<OperatorType::Permute>(graph, "Q - out" + layer_suffix, { Q_rope },
+            NodeCredit Q_out = make_stream<OperatorType::Permute>(graph, 
+                TensorType::V_QRope, layer_id, expert_id,
+                { Q_rope },
                 std::initializer_list<size_t>{0, 2, 1, 3}
             );
             
-            NodeCredit V_t   = make_stream<OperatorType::Transpose>(graph, "V - transpose" + layer_suffix, { V_cur_out });
+            NodeCredit V_t   = make_stream<OperatorType::Transpose>(graph, 
+                TensorType::V_VWeightedBiased, layer_id, expert_id,
+                { V_cur_out }
+            );
 
-            const auto [K_out, V_out] = (T_use_kv_cache) ? connect_KVCache(graph, layer_suffix, K_rope, V_t) : reshape_KV(graph, layer_suffix, K_rope, V_t);
+            const auto [K_out, V_out] = (T_use_kv_cache) ? connect_KVCache(graph, layer_id, expert_id, K_rope, V_t) : reshape_KV(graph, layer_id, expert_id, K_rope, V_t);
 
-            NodeCredit attn_out = attention_projection(graph, layer_suffix, Q_out, K_out, V_out);
+            NodeCredit attn_out = attention_projection(graph, layer_id, expert_id, Q_out, K_out, V_out);
             return attn_out;
         }
 
     protected:
-        std::tuple<NodeCredit, NodeCredit, NodeCredit> input_linear_map(Graph &graph, const std::string &layer_suffix, 
+        std::tuple<NodeCredit, NodeCredit, NodeCredit> input_linear_map(Graph &graph, 
+                int layer_id, int expert_id, 
                 NodeCredit attn_norm) const {
-            NodeCredit Q_cur    = make_stream<OperatorType::MatMul>(graph, "Qcur" + layer_suffix, { weight.weight_q, attn_norm });
-            NodeCredit K_cur    = make_stream<OperatorType::MatMul>(graph, "Kcur" + layer_suffix, { weight.weight_k, attn_norm });
-            NodeCredit V_cur    = make_stream<OperatorType::MatMul>(graph, "Vcur" + layer_suffix, { weight.weight_v, attn_norm });
+
+            NodeCredit Q_cur    = make_stream<OperatorType::MatMul>(graph, 
+                TensorType::V_QWeighted, layer_id, expert_id, 
+                { weight.weight_q, attn_norm }
+            );
+            NodeCredit K_cur    = make_stream<OperatorType::MatMul>(graph,
+                TensorType::V_KWeighted, layer_id, expert_id,
+                { weight.weight_k, attn_norm }
+            );
+            NodeCredit V_cur    = make_stream<OperatorType::MatMul>(graph,
+                TensorType::V_VWeighted, layer_id, expert_id, 
+                { weight.weight_v, attn_norm }
+            );
 
             NodeCredit Q_cur_out = (weight.bias_q == Graph::INVALID_NODE_CREDIT) ? Q_cur :
-                make_stream<OperatorType::Add>(graph, "Qcur - biased" + layer_suffix, { Q_cur, weight.bias_q });
+                make_stream<OperatorType::Add>(graph, 
+                    TensorType::V_QWeightedBiased, layer_id, expert_id, 
+                    { Q_cur, weight.bias_q }
+                );
             NodeCredit K_cur_out = (weight.bias_k == Graph::INVALID_NODE_CREDIT) ? K_cur :
-                make_stream<OperatorType::Add>(graph, "Kcur - biased" + layer_suffix, { K_cur, weight.bias_k });
+                make_stream<OperatorType::Add>(graph, 
+                    TensorType::V_KWeightedBiased, layer_id, expert_id, 
+                    { K_cur, weight.bias_k }
+                );
             NodeCredit V_cur_out = (weight.bias_v == Graph::INVALID_NODE_CREDIT) ? V_cur :
-                make_stream<OperatorType::Add>(graph, "Vcur - biased" + layer_suffix, { V_cur, weight.bias_v });
+                make_stream<OperatorType::Add>(graph, 
+                    TensorType::V_VWeightedBiased, layer_id, expert_id, 
+                    { V_cur, weight.bias_v }
+                );
 
             return { Q_cur_out, K_cur_out, V_cur_out };
         }
 
-        std::pair<NodeCredit, NodeCredit> position_encode(Graph &graph, const std::string &layer_suffix, 
+        std::pair<NodeCredit, NodeCredit> position_encode(Graph &graph, 
+                int layer_id, int expert_id, 
                 NodeCredit Q_cur, NodeCredit K_cur) const {
-            NodeCredit Q_reshaped_cur = make_stream<OperatorType::Reshape>(graph, "Qcur - reshaped" + layer_suffix, { Q_cur }, 
+            NodeCredit Q_reshaped_cur = make_stream<OperatorType::Reshape>(graph, 
+                TensorType::V_QWeightedBiased, layer_id, expert_id, 
+                { Q_cur }, 
                 std::initializer_list<size_t>{ num_embedding_head, num_head, num_token },
                 NumberType::FP32
             );
-            NodeCredit K_reshaped_cur = make_stream<OperatorType::Reshape>(graph, "Kcur - reshaped" + layer_suffix, { K_cur }, 
+            NodeCredit K_reshaped_cur = make_stream<OperatorType::Reshape>(graph,
+                TensorType::V_KWeightedBiased, layer_id, expert_id, 
+                { K_cur }, 
                 std::initializer_list<size_t>{ num_embedding_head, num_head, num_token },
                 NumberType::FP32
             );
 
-            NodeCredit Q_rope = make_stream<OperatorType::Rope>(graph, "Qcur - rope" + layer_suffix, { Q_reshaped_cur, input_pos }, rope_context);
-            NodeCredit K_rope = make_stream<OperatorType::Rope>(graph, "Kcur - rope" + layer_suffix, { K_reshaped_cur, input_pos }, rope_context);
+            NodeCredit Q_rope = make_stream<OperatorType::Rope>(graph, 
+                TensorType::V_QRope, layer_id, expert_id, 
+                { Q_reshaped_cur, input_pos }, rope_context
+            );
+            NodeCredit K_rope = make_stream<OperatorType::Rope>(graph,
+                TensorType::V_KRope, layer_id, expert_id, 
+                { K_reshaped_cur, input_pos }, rope_context
+            );
 
             return { Q_rope, K_rope };
         }
 
-        NodeCredit attention_projection(Graph &graph, const std::string &layer_suffix, 
+        NodeCredit attention_projection(Graph &graph, 
+                int layer_id, int expert_id, 
                 NodeCredit query, NodeCredit key, NodeCredit value) const {
-			NodeCredit KQ_out         = make_stream<OperatorType::MatMul>(graph, "Attention Score" + layer_suffix, { key, query });
-			NodeCredit KQ_softmax_out = make_stream<OperatorType::Softmax>(graph, "Attention Context" + layer_suffix, { KQ_out, KQ_mask },
+			NodeCredit KQ_out         = make_stream<OperatorType::MatMul>(graph, 
+                TensorType::V_AttentionScore, layer_id, expert_id, 
+                { key, query }
+            );
+			NodeCredit KQ_softmax_out = make_stream<OperatorType::Softmax>(graph, 
+                TensorType::V_AttentionContext, layer_id, expert_id, 
+                { KQ_out, KQ_mask },
 				1.0F / std::sqrt(static_cast<float>(static_cast<int>(num_embedding_head)))  // Scale
 			);
 			
-			NodeCredit KQV       = make_stream<OperatorType::MatMul>(graph, "K - Q - V" + layer_suffix, { value, KQ_softmax_out });
-			NodeCredit KQV_merge = make_stream<OperatorType::Permute>(graph, "K - Q - V merged" + layer_suffix, { KQV }, 
+			NodeCredit KQV       = make_stream<OperatorType::MatMul>(graph, 
+                TensorType::V_KQV, layer_id, expert_id, 
+                { value, KQ_softmax_out }
+            );
+			NodeCredit KQV_merge = make_stream<OperatorType::Permute>(graph, 
+                TensorType::V_KQV, layer_id, expert_id, 
+                { KQV }, 
 				std::initializer_list<size_t>{0, 2, 1, 3}
 			);
-			NodeCredit KQV_merged_cont = make_stream<OperatorType::Contiguous>(graph, "K - Q - V contiguous" + layer_suffix, { KQV_merge },
+			NodeCredit KQV_merged_cont = make_stream<OperatorType::Contiguous>(graph, 
+                TensorType::V_KQV, layer_id, expert_id,
+                { KQV_merge },
 				std::initializer_list<size_t>{num_embedding_head * num_head, num_token}, NumberType::FP32
 			);
-			NodeCredit KQV_w_out = make_stream<OperatorType::MatMul>(graph, "K - Q - V weight" + layer_suffix, { weight.weight_o, KQV_merged_cont });
+			NodeCredit KQV_w_out = make_stream<OperatorType::MatMul>(graph, 
+                TensorType::V_KQVWeighted, layer_id, expert_id, 
+                { weight.weight_o, KQV_merged_cont }
+            );
 			NodeCredit KQV_out              = (weight.bias_o == Graph::INVALID_NODE_CREDIT) ?  KQV_w_out :
-				make_stream<OperatorType::Add>(graph, "Attention output" + layer_suffix, { KQV_w_out, weight.bias_o });
+				make_stream<OperatorType::Add>(graph,
+                TensorType::V_AttentionOutput, layer_id, expert_id,
+                { KQV_w_out, weight.bias_o }
+            );
 
 			return KQV_out;
         }
@@ -132,9 +193,12 @@ namespace spy {
          * @brief If we don't use KV cache. then it is necessary for the consequent MatMul operator to make Value tensor contiguous.
          * Reshape Key and Value tensor for grouped head attention.
          */
-        std::pair<NodeCredit, NodeCredit> reshape_KV(Graph &graph, const std::string &layer_suffix, 
+        std::pair<NodeCredit, NodeCredit> reshape_KV(Graph &graph,
+            int layer_id, int expert_id, 
 			NodeCredit key, NodeCredit value) const {
-            NodeCredit K_out = make_stream<OperatorType::View>(graph, "K - out" + layer_suffix, { key }, 
+            NodeCredit K_out = make_stream<OperatorType::View>(graph, 
+                TensorType::KCache, layer_id, expert_id, 
+                { key }, 
                 0, // offset
                 std::initializer_list<size_t>{ num_embedding_head, num_token, num_head_kv }, // New dimensions
                 std::initializer_list<size_t>{ get_type_size(NumberType::FP32),
@@ -144,7 +208,9 @@ namespace spy {
             );
             // If we don't use KV cache, the value is incontiguous, which may incur performance degradation consequentially.
             // Therefore, we reconstruct it.
-            NodeCredit V_out = make_stream<OperatorType::Contiguous>(graph, "V - transpose - contiguous" + layer_suffix, { value },
+            NodeCredit V_out = make_stream<OperatorType::Contiguous>(graph, 
+                TensorType::VCache, layer_id, expert_id, 
+                { value },
                 std::initializer_list<size_t>{ num_token, num_embedding_head, num_head_kv }, NumberType::FP32
             );	
             return {K_out, V_out}; 
@@ -168,7 +234,8 @@ namespace spy {
          *      - Each time we store `num_token` columns of `num_embedding_v_gqa` elements
          *
          */
-		std::pair<NodeCredit, NodeCredit> connect_KVCache(Graph &graph, const std::string &layer_suffix, 
+		std::pair<NodeCredit, NodeCredit> connect_KVCache(Graph &graph, 
+            int layer_id, int expert_id, 
 			NodeCredit key, NodeCredit value) const {
 
 			// TODO: Fix when implementing long context
@@ -181,15 +248,22 @@ namespace spy {
 			const NumberType k_type = k_cache_tensor.get_number_type();
 
 			const int64_t k_cache_update_offset = get_row_size(k_type, num_embedding_k_gqa) * num_past_token;
-			const NodeCredit k_cache_view = make_stream<OperatorType::View>(graph, "K cache" + layer_suffix, {k_cache},
+			const NodeCredit k_cache_view = make_stream<OperatorType::View>(graph, 
+                TensorType::KCache, layer_id, expert_id, 
+                {k_cache},
 				k_cache_update_offset,
 				std::initializer_list<size_t>{ num_token * num_embedding_k_gqa },
 				std::initializer_list<size_t>{ get_type_size(NumberType::FP16) },
 				NumberType::FP16
 			);
-			const NodeCredit k_cache_sync = make_stream<OperatorType::Copy>(graph, "K cache update", {key, k_cache_view});
+			const NodeCredit k_cache_sync = make_stream<OperatorType::Copy>(graph, 
+                TensorType::KCache, layer_id, expert_id, 
+                {key, k_cache_view}
+            );
 			// Concat K cache and output
-			const NodeCredit K_out = make_stream<OperatorType::View>(graph, "K - cache - view" + layer_suffix, { k_cache_sync },
+			const NodeCredit K_out = make_stream<OperatorType::View>(graph, 
+                TensorType::KCache, layer_id, expert_id, 
+                { k_cache_sync },
                -k_cache_update_offset, // offset
                std::initializer_list<size_t>{ num_embedding_head, num_kv, num_head_kv }, // New dimensions
                std::initializer_list<size_t>{ get_type_size(NumberType::FP16),
@@ -205,7 +279,9 @@ namespace spy {
 			const NumberType v_type = v_cache_tensor.get_number_type();
 
 			const int64_t v_cache_update_offset = get_type_size(v_type) * num_past_token;
-			const NodeCredit v_cache_view = make_stream<OperatorType::View>(graph, "V cache" + layer_suffix, {v_cache},
+			const NodeCredit v_cache_view = make_stream<OperatorType::View>(graph, 
+                TensorType::VCache, layer_id, expert_id, 
+                {v_cache},
 				v_cache_update_offset,
 				std::initializer_list<size_t>{ num_token, num_embedding_v_gqa },
 				std::initializer_list<size_t>{ get_type_size(NumberType::FP16),
@@ -213,9 +289,14 @@ namespace spy {
 				NumberType::FP16
 			);
 			// A fake output for synchronization
-			const NodeCredit v_cache_sync = make_stream<OperatorType::Copy>(graph, "V cache update", {value, v_cache_view});
+			const NodeCredit v_cache_sync = make_stream<OperatorType::Copy>(graph, 
+                TensorType::VCache, layer_id, expert_id, 
+                {value, v_cache_view}
+            );
 			// Concat value cache and output
-			const NodeCredit V_out = make_stream<OperatorType::View>(graph, "V - cache - view" + layer_suffix, { v_cache_sync },
+			const NodeCredit V_out = make_stream<OperatorType::View>(graph,
+                TensorType::VCache, layer_id, expert_id, 
+                { v_cache_sync },
 	             -v_cache_update_offset, // offset
 	             std::initializer_list<size_t>{ num_kv, num_embedding_head, num_head_kv }, // New dimensions
 	             std::initializer_list<size_t>{ get_type_size(NumberType::FP16),

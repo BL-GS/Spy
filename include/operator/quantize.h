@@ -18,8 +18,8 @@ namespace spy {
 	public:
 		OperatorDefinition() = default;
 
-		OperatorDefinition(NodeCredit credit, std::string_view name, NumberType target_type): 
-				OperatorNode(credit, name, TYPE), target_type(target_type) {}
+		OperatorDefinition(NodeCredit credit, NumberType target_type): 
+				OperatorNode(credit, TYPE), target_type(target_type) {}
 
 	public: /* Interface for graph deduction */
 		/*! 

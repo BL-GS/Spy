@@ -6,9 +6,7 @@
 #include <variant>
 #include <map>
 #include <optional>
-#include <string_view>
 
-#include "number/number.h"
 #include "number/tensor.h"
 #include "model/config.h"
 #include "model/file/type.h"

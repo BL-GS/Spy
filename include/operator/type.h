@@ -92,6 +92,7 @@ namespace spy {
 		}
 #undef OPERATOR_TYPE_CASE
 		spy_assert(false, "Unknown type of number");
+		spy_unreachable();
 	}
 
 	template<template<OperatorType> class T_func, class ...Args>
@@ -104,6 +105,7 @@ namespace spy {
 		}
 #undef OPERATOR_TYPE_CASE
 		spy_assert(false, "Unknown type of number");
+		spy_unreachable();
 	}
 
 	template<OperatorType T_op_type>

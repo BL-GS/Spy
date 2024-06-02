@@ -16,7 +16,7 @@ namespace spy {
 	public:
 		OperatorDefinition() = default;
 
-		OperatorDefinition(NodeCredit credit, std::string_view name): OperatorNode(credit, name, TYPE) {}
+		OperatorDefinition(NodeCredit credit): OperatorNode(credit, TYPE) {}
 
 	public: /* Interface for graph deduction */
 		/*! 
@@ -43,8 +43,8 @@ namespace spy {
 	public:
 		OperatorDefinition() = default;
 
-		OperatorDefinition(NodeCredit credit, std::string_view name, NumberType type_res = NumberType::FP32): 
-			OperatorNode(credit, name, TYPE), type_res(type_res) {}
+		OperatorDefinition(NodeCredit credit, NumberType type_res = NumberType::FP32): 
+			OperatorNode(credit, TYPE), type_res(type_res) {}
 
 	public: /* Interface for graph deduction */
 		/*! 
@@ -83,7 +83,7 @@ namespace spy {
 	public:
 		OperatorDefinition() = default;
 
-		OperatorDefinition(NodeCredit credit, std::string_view name): OperatorNode(credit, name, TYPE) {}
+		OperatorDefinition(NodeCredit credit): OperatorNode(credit, TYPE) {}
 
 	public: /* Interface for graph deduction */
 		/*! 
@@ -108,7 +108,7 @@ namespace spy {
 	public:
 		OperatorDefinition() = default;
 
-		OperatorDefinition(NodeCredit credit, std::string_view name): OperatorNode(credit, name, TYPE) {}
+		OperatorDefinition(NodeCredit credit): OperatorNode(credit, TYPE) {}
 
 	public: /* Interface for graph deduction */
 		/*! 
@@ -146,8 +146,8 @@ namespace spy {
 		OperatorDefinition() = default;
 
         template<class ...Args>
-		OperatorDefinition(NodeCredit credit, std::string_view name, Args &&...args): 
-				OperatorNode(credit, name, TYPE), new_shape(std::forward<Args>(args)...) {}
+		OperatorDefinition(NodeCredit credit, Args &&...args): 
+				OperatorNode(credit, TYPE), new_shape(std::forward<Args>(args)...) {}
 
 	public: /* Interface for graph deduction */
 		/*! 
@@ -185,8 +185,8 @@ namespace spy {
 		OperatorDefinition() = default;
 
 		template<class ...Args>
-		OperatorDefinition(NodeCredit credit, std::string_view name, int64_t offset, Args &&...args):
-				OperatorNode(credit, name, TYPE), offset(offset), new_shape(std::forward<Args>(args)...) {}
+		OperatorDefinition(NodeCredit credit, int64_t offset, Args &&...args):
+				OperatorNode(credit, TYPE), offset(offset), new_shape(std::forward<Args>(args)...) {}
 
 	public: /* Interface for graph deduction */
 		/*! 
@@ -217,7 +217,7 @@ namespace spy {
 	public:
 		OperatorDefinition() = default;
 
-		OperatorDefinition(NodeCredit credit, std::string_view name): OperatorNode(credit, name, TYPE) {}
+		OperatorDefinition(NodeCredit credit): OperatorNode(credit, TYPE) {}
 
 	public: /* Interface for graph deduction */
 		/*! 
@@ -247,12 +247,12 @@ namespace spy {
 	public:
 		OperatorDefinition() = default;
 
-		OperatorDefinition(NodeCredit credit, std::string_view name, const std::array<size_t, MAX_DIM> &axis): 
-				OperatorNode(credit, name, TYPE), axis(axis) {}
+		OperatorDefinition(NodeCredit credit, const std::array<size_t, MAX_DIM> &axis): 
+				OperatorNode(credit, TYPE), axis(axis) {}
 
 		template<class T>
-		OperatorDefinition(NodeCredit credit, std::string_view name, const std::initializer_list<T> &new_axis): 
-				OperatorNode(credit, name, TYPE), axis{0} {
+		OperatorDefinition(NodeCredit credit, const std::initializer_list<T> &new_axis): 
+				OperatorNode(credit, TYPE), axis{0} {
 			spy_assert(new_axis.size() == MAX_DIM, "Expect the initializer list to be of dim {} (cur: {})", MAX_DIM, new_axis.size());
 			auto iter_new = new_axis.begin();
 			for (size_t i = 0; i < MAX_DIM; ++i) {
@@ -289,12 +289,12 @@ namespace spy {
 	public:
 		OperatorDefinition() = default;
 
-		OperatorDefinition(NodeCredit credit, std::string_view name, const Shape &new_shape): 
-				OperatorNode(credit, name, TYPE), new_shape(new_shape) {}
+		OperatorDefinition(NodeCredit credit, const Shape &new_shape): 
+				OperatorNode(credit, TYPE), new_shape(new_shape) {}
 
 		template<class ...Args>
-		OperatorDefinition(NodeCredit credit, std::string_view name, Args &&...args): 
-				OperatorNode(credit, name, TYPE), new_shape(std::forward<Args>(args)...) { }
+		OperatorDefinition(NodeCredit credit, Args &&...args): 
+				OperatorNode(credit, TYPE), new_shape(std::forward<Args>(args)...) { }
 
 	public: /* Interface for graph deduction */
 		/*! 

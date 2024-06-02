@@ -93,7 +93,10 @@ namespace spy {
 				 try_allocate_outputs(backend_ptr, cur_node_ptr, data_send_counts);
 
 				// Allocate buffer
-				spy_debug(DebugFlag::Execute, "Execute {:32} -> {}", cur_node_ptr->name, magic_enum::enum_name(cur_node_ptr->op_type));
+				spy_debug(DebugFlag::Execute, "Execute {:8} -> {:32}", 
+					magic_enum::enum_name(cur_node_ptr->op_type),
+					cur_node_ptr->get_input<DataNode>(0).property.to_string()
+				);
 
 				backend_ptr->submit(cur_node_ptr, 
 					[op_step, backend_ptr, cur_node_ptr](){ 
@@ -154,26 +157,28 @@ namespace spy {
 			const auto &inputs = cur_node_ptr->get_input();
 
 			for (DataNode *data_node_ptr: inputs) {
-				const NodeCredit node_credit = data_node_ptr->credit;
+				const NodeCredit 	node_credit = data_node_ptr->credit;
+				const DataNodeType	node_type	= data_node_ptr->property.node_type; 
 
-				if (data_node_ptr->data_type == DataNodeType::Variable) {
+				if (node_type == DataNodeType::Variable) {
 					const size_t cur_data_dep_count = --data_dep_count[node_credit.node_id];
 					spy_assert(data_node_ptr->view_src == nullptr);
 					if (cur_data_dep_count == 0) {
 						Tensor &tensor = data_node_ptr->tensor;
 
-						spy_debug(DebugFlag::Memory, "Release node: {:32} ({})", data_node_ptr->name, tensor.get());
+						spy_debug(DebugFlag::Memory, "Release node: {:32} ({})", data_node_ptr->property.to_string(), tensor.get());
 
 						backend_ptr->dealloc_memory(tensor.get(), tensor.total_size());
 						tensor.set_data_ptr(nullptr);
 					}
-				} else if (data_node_ptr->data_type == DataNodeType::View) {
-					const NodeCredit src_node_credit = data_node_ptr->view_src->credit;
-					DataNode *src_data_node_ptr 	 = data_node_ptr->view_src;
-					Tensor &src_tensor = src_data_node_ptr->tensor;
+				} else if (node_type == DataNodeType::View) {
+					const    NodeCredit src_node_credit      = data_node_ptr->view_src->credit;
+					DataNode *src_data_node_ptr              = data_node_ptr->view_src;
+					const    DataNodeType src_data_node_type = src_data_node_ptr->property.node_type;
+					Tensor   &src_tensor                     = src_data_node_ptr->tensor;
 					// We need to count down the dependency of the source, and release it if needed.
 					const size_t cur_data_dep_count = --data_dep_count[src_node_credit.node_id];
-					switch (src_data_node_ptr->data_type) {
+					switch (src_data_node_type) {
 
 					case DataNodeType::Constant:
 					case DataNodeType::Buffered:
@@ -181,7 +186,7 @@ namespace spy {
 
 					case DataNodeType::Variable:
 						if (cur_data_dep_count == 0) {
-							spy_debug(DebugFlag::Memory, "Release view node: {:27} (0x{})", src_data_node_ptr->name, src_tensor.get());
+							spy_debug(DebugFlag::Memory, "Release view node: {:27} (0x{})", src_data_node_ptr->property.to_string(), src_tensor.get());
 
 							backend_ptr->dealloc_memory(src_tensor.get(), src_tensor.total_size());
 							src_tensor.set_data_ptr(nullptr);

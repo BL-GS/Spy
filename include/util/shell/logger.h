@@ -147,4 +147,12 @@ namespace spy {
 	inline void spy_assert_debug([[maybe_unused]]bool expression, [[maybe_unused]]spdlog::format_string_t<Args...> fmt, [[maybe_unused]]Args &&...args) { }
 #endif
 
+	[[noreturn]] inline void spy_unreachable() {
+#ifdef __GNUC__
+		__builtin_unreachable();
+#elif defined(_MSC_VER)
+		__assume(false);
+#endif
+	}
+
 }  // namespace spy

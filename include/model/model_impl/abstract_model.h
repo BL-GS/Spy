@@ -160,13 +160,6 @@ namespace spy {
 
         const auto &                        get_tensor_info_map()   const { return context_ptr_->infos; }
 
-        const GGUFTensorInfo &              get_tensor_info(ModelTensorType tensor_type)       const {
-            const auto &tensor_table      = context_ptr_->model_tensor_table;
-            const std::string tensor_name = tensor_table(tensor_type);
-            const auto &info_map          = get_tensor_info_map();
-            return info_map.at(std::string(tensor_name));
-        }
-
     public:
         const ModelMetadata &   get_info()      const { return metadata_;       }
 

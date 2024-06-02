@@ -15,7 +15,7 @@ namespace spy {
 	public:
 		OperatorDefinition() = default;
 
-		OperatorDefinition(NodeCredit credit, std::string_view name): OperatorNode(credit, name, TYPE) {}
+		OperatorDefinition(NodeCredit credit): OperatorNode(credit, TYPE) {}
 
 	public: /* Interface for graph deduction */
 		/*! 
@@ -44,7 +44,7 @@ namespace spy {
 	public:
 		OperatorDefinition() = default;
 
-		OperatorDefinition(NodeCredit credit, std::string_view name): OperatorNode(credit, name, TYPE) {}
+		OperatorDefinition(NodeCredit credit): OperatorNode(credit, TYPE) {}
 
 	public: /* Interface for graph deduction */
 		/*! 
@@ -76,7 +76,7 @@ namespace spy {
 	public:
 		OperatorDefinition() = default;
 
-		OperatorDefinition(NodeCredit credit, std::string_view name, const float scale): OperatorNode(credit, name, TYPE), scale(scale) {}
+		OperatorDefinition(NodeCredit credit, const float scale): OperatorNode(credit, TYPE), scale(scale) {}
 
 	public: /* Interface for graph deduction */
 		/*! 
@@ -105,7 +105,7 @@ namespace spy {
 	public:
 		OperatorDefinition() = default;
 
-		OperatorDefinition(NodeCredit credit, std::string_view name, float eps): OperatorNode(credit, name, TYPE), eps(eps) {}
+		OperatorDefinition(NodeCredit credit, float eps): OperatorNode(credit, TYPE), eps(eps) {}
 
 	public: /* Interface for graph deduction */
 		/*! 
@@ -134,8 +134,8 @@ namespace spy {
 	public:
 		OperatorDefinition() = default;
 
-		OperatorDefinition(NodeCredit credit, std::string_view name, const RopeContext &rope_context): 
-				OperatorNode(credit, name, TYPE), rope_context(rope_context) {}
+		OperatorDefinition(NodeCredit credit, const RopeContext &rope_context): 
+				OperatorNode(credit, TYPE), rope_context(rope_context) {}
 
 	public: /* Interface for graph deduction */
 		/*! 

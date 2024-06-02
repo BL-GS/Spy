@@ -38,27 +38,25 @@ namespace spy {
 		using NodeArray = std::vector<OperatorNode *>;
 
 	public: /* Content */
-		NodeCredit  	credit;
+		NodeCredit  		credit;
 		/// The name of the node
-		std::string 	name;
+		DataNodeProperty 	property;
 		/// The metadata of tensor
-		Tensor 			tensor;
+		Tensor 				tensor;
 		/// The source of view
-		DataNode *		view_src 		= nullptr;
+		DataNode *			view_src 		= nullptr;
 		/// The type of backend
-		BackendType		backend_type	= BackendType::Unknown;
-		/// The type of data
-		DataNodeType 	data_type		= DataNodeType::Variable;
+		BackendType			backend_type	= BackendType::Unknown;
 
 	protected:
-		NodeArray		output;
+		NodeArray			output;
 
 	public:
 		DataNode() = default;
 
 		template<class ...Args>
-		DataNode(NodeCredit credit, std::string_view name, DataNodeType data_type, Args &&...args) : 
-			credit(credit), name(name), tensor(std::forward<Args>(args)...), data_type(data_type) {}
+		DataNode(NodeCredit credit, DataNodeProperty property, Args &&...args) : 
+			credit(credit), property(property), tensor(std::forward<Args>(args)...) {}
 
 		DataNode(const DataNode &other) = default;
 
@@ -90,8 +88,6 @@ namespace spy {
 
 	public: /* Content */
 		NodeCredit  	credit;
-		/// The name of the node
-		std::string 	name;
 		/// The type of operation
 		OperatorType 	op_type;
 		/// Input nodes
@@ -104,7 +100,7 @@ namespace spy {
 	public:
 		OperatorNode() : op_type(OperatorType::Nop) {}
 
-		OperatorNode(NodeCredit credit, std::string_view name, OperatorType op_type): credit(credit), name(name), op_type(op_type) {}
+		OperatorNode(NodeCredit credit, OperatorType op_type): credit(credit), op_type(op_type) {}
 
 		OperatorNode(const OperatorNode &other) = default;
 
@@ -163,7 +159,7 @@ namespace spy {
 
 	public:
 		Graph(const std::string_view name): name_(name) {
-			const NodeCredit credit = alloc_node<OperatorNode>("output", OperatorType::Nop);
+			const NodeCredit credit = alloc_node<OperatorNode>(OperatorType::Nop);
 			spy_assert(credit == OUTPUT_NODE_CREDIT, "The first operator node should be output node");
 		}
 
@@ -176,18 +172,18 @@ namespace spy {
 		 * @brief Allocate a new node in graph
 		 */
 		template<class T_Node, class ...Args>
-		NodeCredit alloc_node(const std::string_view name, Args &&...args) { 
+		NodeCredit alloc_node(Args &&...args) { 
 			if constexpr (std::is_same_v<T_Node, DataNode>) {
 				const uint32_t new_node_id = data_nodes_.size();
 				const NodeCredit new_node_credit{ true, new_node_id };
 
-				data_nodes_.emplace_back(std::make_unique<T_Node>(new_node_credit, name, std::forward<Args>(args)...));
-				return new_node_credit;				
+				data_nodes_.emplace_back(std::make_unique<T_Node>(new_node_credit, std::forward<Args>(args)...));
+				return new_node_credit;	
 			} else {
 				const uint32_t new_node_id = op_nodes_.size();
 				const NodeCredit new_node_credit{ false, new_node_id };
 
-				op_nodes_.emplace_back(std::make_unique<T_Node>(new_node_credit, name, std::forward<Args>(args)...));
+				op_nodes_.emplace_back(std::make_unique<T_Node>(new_node_credit, std::forward<Args>(args)...));
 				return new_node_credit;				
 			}
 		}

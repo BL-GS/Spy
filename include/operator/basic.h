@@ -15,7 +15,7 @@ namespace spy {
 	public:
 		OperatorDefinition() = default;
 
-		OperatorDefinition(NodeCredit credit, std::string_view name): OperatorNode(credit, name, TYPE) {}
+		OperatorDefinition(NodeCredit credit): OperatorNode(credit, TYPE) {}
 
 	public: /* Interface for graph deduction */
 		/*! 
@@ -56,7 +56,7 @@ namespace spy {
 	public:
 		OperatorDefinition() = default;
 
-		OperatorDefinition(NodeCredit credit, std::string_view name): OperatorNode(credit, name, TYPE) {}
+		OperatorDefinition(NodeCredit credit): OperatorNode(credit, TYPE) {}
 
 	
 	public: /* Interface for graph deduction */
@@ -98,7 +98,7 @@ namespace spy {
 	public:
 		OperatorDefinition() = default;
 
-		OperatorDefinition(NodeCredit credit, std::string_view name): OperatorNode(credit, name, TYPE) {}
+		OperatorDefinition(NodeCredit credit): OperatorNode(credit, TYPE) {}
 
 
 	public: /* Interface for graph deduction */
@@ -140,7 +140,7 @@ namespace spy {
 	public:
 		OperatorDefinition() = default;
 
-		OperatorDefinition(NodeCredit credit, std::string_view name): OperatorNode(credit, name, TYPE) {}
+		OperatorDefinition(NodeCredit credit): OperatorNode(credit, TYPE) {}
 
 
 	public: /* Interface for graph deduction */
