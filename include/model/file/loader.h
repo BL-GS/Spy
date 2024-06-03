@@ -58,10 +58,9 @@ namespace spy {
 				for (size_t i = 0; i < num_kv; ++i) {
 					const std::string  cur_key  = read_gguf_string(file);
 					const GGUFDataType cur_type = read_gguf_type(file);
-
-					spy_info("Load kv pair: {:<48} - {:8}", cur_key, cur_type);
-
 					context.add_gguf_value(cur_key, read_gguf_kv(file, cur_type));
+					const GGUFValue cur_value = context.find_gguf_value(cur_key);
+					spy_info("Load kv pair: {:<48} - {}", cur_key, cur_value.value);
 				}
 			} catch (const std::exception &err) {
 				spy_fatal("Failed reading gguf kv pairs from file {}: {}", filename, err.what());

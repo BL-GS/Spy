@@ -6,6 +6,8 @@
 #include <variant>
 #include <map>
 #include <optional>
+#include <fmt/core.h>
+#include <fmt/format.h>
 
 #include "number/tensor.h"
 #include "model/config.h"
@@ -158,3 +160,62 @@ namespace spy {
 	};
 
 }// namespace spy
+
+template <>
+struct fmt::formatter<spy::GGUFArray>: fmt::formatter<std::string> {
+	auto format(const spy::GGUFArray &array, fmt::format_context& ctx) const {
+		constexpr size_t MAX_PRINT_SIZE = 4;
+
+		const size_t size = array.size();
+		std::string str = fmt::format("[Array({})]: ", size);
+
+		str += '{';
+		const size_t print_size = std::min(size, MAX_PRINT_SIZE);
+		for (size_t i = 0; i < print_size; ++i) {
+			if (i != 0) { str += ", "; }
+
+			const auto &cur = array[i];
+			switch (cur.index()) {
+			case 0:  str += std::to_string(std::get<0>(cur)); break;
+			case 1:  str += std::to_string(std::get<1>(cur)); break;
+			case 2:  str += std::to_string(std::get<2>(cur)); break;
+			case 3:  str += std::to_string(std::get<3>(cur)); break;
+			case 4:  str += std::to_string(std::get<4>(cur)); break;
+			case 5:  str += std::to_string(std::get<5>(cur)); break;
+			case 6:  str += std::to_string(std::get<6>(cur)); break;
+			case 7:  str += std::to_string(std::get<7>(cur)); break;
+			case 8:  str += std::get<8>(cur); break;
+			case 9:  str += std::to_string(std::get<9>(cur)); break;
+			case 10: str += std::to_string(std::get<10>(cur)); break;
+			case 11: str += std::to_string(std::get<11>(cur)); break;
+			}
+		}
+		if (print_size != size) { str += "..."; }
+		str += '}';
+		return fmt::formatter<std::string>::format(str, ctx);
+	}
+};
+
+template <>
+struct fmt::formatter<spy::GGUFElement>: fmt::formatter<std::string> {
+	auto format(const spy::GGUFElement &element, fmt::format_context& ctx) const {
+		const auto type = static_cast<spy::GGUFDataType>(element.index());
+		std::string str = fmt::format("[{}]: ", type);
+		switch (element.index()) {
+			case 0:  str += std::to_string(std::get<0>(element)); break;
+			case 1:  str += std::to_string(std::get<1>(element)); break;
+			case 2:  str += std::to_string(std::get<2>(element)); break;
+			case 3:  str += std::to_string(std::get<3>(element)); break;
+			case 4:  str += std::to_string(std::get<4>(element)); break;
+			case 5:  str += std::to_string(std::get<5>(element)); break;
+			case 6:  str += std::to_string(std::get<6>(element)); break;
+			case 7:  str += std::to_string(std::get<7>(element)); break;
+			case 8:  str += std::get<8>(element); break;
+			case 9:  str =  fmt::format("{}", std::get<9>(element)); break;
+			case 10: str += std::to_string(std::get<10>(element)); break;
+			case 11: str += std::to_string(std::get<11>(element)); break;
+			case 12: str += std::to_string(std::get<12>(element)); break;
+		}
+		return fmt::formatter<std::string>::format(str, ctx);
+	}
+};
