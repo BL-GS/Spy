@@ -34,10 +34,6 @@ namespace spy::cpu {
         const auto &shape_operand = operand.get_shape();
         const auto &shape_res     = result.get_shape();
 
-        spy_assert(shape_operand == shape_res, 
-                    "Result and operands should be of the same shape (operand: {}, result: {})", 
-                    shape_operand.to_string(), shape_res.to_string());
-
         const auto [ne00, ne01, ne02, ne03] = shape_operand.elements;
         const size_t num_row = ne01 * ne02 * ne03;
 

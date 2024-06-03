@@ -36,8 +36,7 @@ namespace spy {
 			const auto  type_1   = operand_1.get_number_type();
 			
 			spy_assert(shape_0 == shape_1 || Shape::can_repeat(shape_0, shape_1), 
-					"Operands should be of the same shape or repeatable shape (operand1: {}, operand2: {})", 
-					shape_0.to_string(), shape_1.to_string());
+					"Operands should be of the same shape or repeatable shape (operand1: {}, operand2: {})", shape_0, shape_1);
 			spy_assert(type_0 == type_1, 
 					"Operands should be of the same type (operand1: {}, operand2: {})", type_0, type_1);
 
@@ -77,8 +76,7 @@ namespace spy {
 			const auto  type_1   = operand_1.get_number_type();
 			
 			spy_assert(shape_0 == shape_1 || Shape::can_repeat(shape_0, shape_1), 
-					"Operands should be of the same shape or repeatable shape (operand1: {}, operand2: {})", 
-					shape_0.to_string(), shape_1.to_string());
+					"Operands should be of the same shape or repeatable shape (operand1: {}, operand2: {})", shape_0, shape_1);
 			spy_assert(type_0 == type_1, 
 					"Operands should be of the same type (operand1: {}, operand2: {})", type_0, type_1);
 
@@ -118,8 +116,7 @@ namespace spy {
 			const auto  type_1   = operand_1.get_number_type();
 			
 			spy_assert(shape_0 == shape_1 || Shape::can_repeat(shape_0, shape_1), 
-					"Operands should be of the same shape or repeatable shape (operand1: {}, operand2: {})", 
-					shape_0.to_string(), shape_1.to_string());
+					"Operands should be of the same shape or repeatable shape (operand1: {}, operand2: {})", shape_0, shape_1);
 			spy_assert(type_0 == type_1, 
 					"Operands should be of the same type (operand1: {}, operand2: {})", type_0, type_1);
 
@@ -159,8 +156,7 @@ namespace spy {
 			const auto  type_1   = operand_1.get_number_type();
 			
 			spy_assert(shape_0 == shape_1 || Shape::can_repeat(shape_0, shape_1), 
-					"Operands should be of the same shape or repeatable shape (operand1: {}, operand2: {})", 
-					shape_0.to_string(), shape_1.to_string());
+					"Operands should be of the same shape or repeatable shape (operand1: {}, operand2: {})", shape_0, shape_1);
 			spy_assert(type_0 == type_1, 
 					"Operands should be of the same type (operand1: {}, operand2: {})", type_0, type_1);
 

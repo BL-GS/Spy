@@ -43,8 +43,7 @@ namespace spy {
 			const auto [ne10, ne11, ne12, ne13] = shape_1.elements;
 
 			spy_assert(ne00 == ne10 && ne02 == ne12 && ne03 == ne13, 
-					"Operands should be of the same shape (operand1: {}, operand2: {})", 
-					shape_0.to_string(), shape_1.to_string());
+					"Operands should be of the same shape (operand1: {}, operand2: {})", shape_0, shape_1);
 			spy_assert(shape_1.number_type == NumberType::FP32, 
 						"Expect the type of operand 1 to be fp32 (cur: {})", shape_1.number_type);
 

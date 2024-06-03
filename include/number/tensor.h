@@ -13,6 +13,7 @@
 #include <magic_enum.hpp>
 
 #include "util/shell/logger.h"
+#include "util/type/printable.h"
 #include "number/number.h"
 
 namespace spy {
@@ -263,3 +264,5 @@ namespace spy {
 	};
 
 }  // namespace spy
+
+SPY_PRINTABLE_FORMATTER(spy::Shape);

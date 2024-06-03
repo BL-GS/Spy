@@ -124,9 +124,7 @@ namespace spy {
 			const Shape &shape_1 = operand_1.get_shape();
 
 			spy_assert(shape_0.total_element() == shape_1.total_element(), 
-				"Expect the size of operands to be the same (operand_0: {}, operand_1: {})",
-				shape_0.to_string(), shape_1.to_string()
-			);
+				"Expect the size of operands to be the same (operand_0: {}, operand_1: {})", shape_0, shape_1);
 			// No output
 			return { shape_1, nullptr };
 		}
@@ -162,8 +160,7 @@ namespace spy {
             const Shape shape_res = new_shape;
 
 			spy_assert(shape_res.total_element() == shape_0.total_element(),
-			           "Result and operands should be of the same number of elements (operand: {}, result: {})",
-			           shape_res.to_string(), shape_0.to_string());
+			           "Result and operands should be of the same number of elements (operand: {}, result: {})", shape_res, shape_0);
 
 			return { shape_res, nullptr };
 		}
@@ -200,8 +197,7 @@ namespace spy {
             const Shape shape_res   = new_shape;
 
 			spy_assert(shape_res.total_size() + offset <= shape_0.total_size(),
-			           "Operand should be within the range of the result (operand: {}, result: {}, offset: {})",
-			           shape_0.to_string(), shape_res.to_string(), offset);
+			           "Operand should be within the range of the result (operand: {}, result: {}, offset: {})", shape_0, shape_res, offset);
 
 			return { shape_res, nullptr };
 		}
@@ -309,9 +305,7 @@ namespace spy {
             const Shape shape_res = new_shape;
 
 			spy_assert(shape_0.total_element() == shape_res.total_element(), 
-				"Expect the total number of element of operand and result to be the same. (operand: {}, result: {})",
-				shape_0.to_string(), shape_res.to_string()
-			);
+				"Expect the total number of element of operand and result to be the same. (operand: {}, result: {})", shape_0, shape_res);
 			
 			return { shape_res, nullptr };
 		}
