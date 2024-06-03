@@ -123,7 +123,6 @@ namespace spy {
 			}
 
 			model_type         	       = get_arch_type_from_name(context.arch_name);
-			context.model_tensor_table = TensorNameTable(model_type);
 
 			return { std::move(context_ptr), model_type };
 		}

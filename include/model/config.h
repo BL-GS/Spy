@@ -35,19 +35,4 @@ namespace spy {
 		return ModelType::ModelTypeEnd;
 	}
 
-	struct TensorNameTable {
-	public:
-		ModelType               model_type;
-		ModelArchitectureTable  arch_table;
-
-	public:
-		constexpr TensorNameTable(): model_type(ModelType::ModelTypeEnd) {}
-		constexpr TensorNameTable(ModelType model_type): model_type(model_type) { load(model_type); }
-
-		constexpr void load(const ModelType new_model_type) {
-			model_type = new_model_type;
-			arch_table = get_tensor_array(model_type);
-		}
-	};
-
 } // namespace spy

@@ -80,7 +80,6 @@ namespace spy {
 		GGUFHeader                              header;
 		std::map<std::string, GGUFValue>        kv_pairs;
 		std::map<std::string, GGUFTensorInfo>   infos;
-		TensorNameTable         				model_tensor_table;
 
 		std::string                 			arch_name;
 
@@ -130,33 +129,6 @@ namespace spy {
 			const std::string key_name = get_LLM_name(key, arch_name);
 			return find_gguf_value_option(key_name);
 		}
-	};
-
-	/*!
-	 * @brief Metadata of tensor stored in the model file
-	 */
-	struct ModelTensorMetadata {
-		static constexpr size_t MAX_NAME_LEN = 32;
-
-		/* The dimension of tensor */
-		/// The name of the tensor
-		char tensor_name[MAX_NAME_LEN];
-		/// The shape of the tensor
-		Shape shape;
-
-		/* The information of tensor stored in the file */
-		/// The offset of the tensor in the model file
-		size_t offset;
-	};
-
-	/*!
-	 * @brief The table stored in the file denoting the metadata of all tensors
-	 */
-	struct ModelTensorMetadataTable {
-		/// The number of tensor
-		size_t num_tensor;
-		/// The array of all tensor metadata
-		ModelTensorMetadata metadata_table[];
 	};
 
 }// namespace spy
