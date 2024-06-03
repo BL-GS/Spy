@@ -1,7 +1,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <cuda_runtime.h>
-#include <magic_enum.hpp>
 #include <magic_enum_fuse.hpp>
 
 #include "util/shell/logger.h"
@@ -60,7 +59,6 @@ namespace spy::gpu {
 
 
     void cuda_op_convert_raw(DeviceContext &ctx, NumberType dst_type, void *dst_ptr, NumberType src_type, void *src_ptr, const size_t num) {
-        using magic_enum::enum_name;
         using magic_enum::enum_fuse;
 
         cudaStream_t stream = ctx.get_stream();
@@ -79,9 +77,7 @@ namespace spy::gpu {
             dequantize_row_q4_0_cuda(static_cast<half *>(dst_ptr), static_cast<const block_q4_0_t *>(src_ptr), num, stream);
             break;
         default:
-            spy_assert(false, "Unsupport type for convert: dst: {}; src: {}",
-                enum_name(dst_type), enum_name(src_type)
-            );
+            spy_assert(false, "Unsupported type for convert: dst: {}; src: {}", dst_type, src_type);
         }
     }
 

@@ -62,8 +62,7 @@ namespace spy {
 			const auto  type_1  = operand_1.get_number_type();
 			
 			spy_assert(type_1 == NumberType::INT32, 
-					"Expect the index to be of type INT32 (cur: {})", 
-					magic_enum::enum_name(type_1));
+					"Expect the index to be of type INT32 (cur: {})", type_1);
 
 			const auto num_element = Shape::DimensionArray {
 				shape_0.elements[0], shape_1.elements[0], shape_1.elements[1], shape_1.elements[2]

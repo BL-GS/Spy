@@ -53,7 +53,7 @@ namespace spy::gpu {
             mem_ptr_ = static_cast<T *>(pool_ptr->allocate(mem_size_));
         }
 
-        DeviceUniquePointer(DeviceUniquePointer &&other): pool_ptr_(other.pool_ptr_), mem_ptr_(other.mem_ptr_), mem_size_(other.mem_size_) {
+        DeviceUniquePointer(DeviceUniquePointer &&other) noexcept : pool_ptr_(other.pool_ptr_), mem_ptr_(other.mem_ptr_), mem_size_(other.mem_size_) {
             other.pool_ptr_ = nullptr;
             other.mem_ptr_  = nullptr;
             other.mem_size_ = 0;

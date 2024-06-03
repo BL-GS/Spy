@@ -13,6 +13,9 @@ namespace spy::gpu {
 	template<OperatorType T_op_type>
 	struct OperatorImpl {
 	public: /* Interface for schedule and execution */
+		/*!
+		 * @brief Whether the backend support operator `T_op_type`
+		 */
 		static constexpr bool is_support() { return false; }
 		/*!
 		 * @brief Execute the operator 

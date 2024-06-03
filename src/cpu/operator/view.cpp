@@ -68,16 +68,13 @@ namespace spy::cpu {
                 std::memcpy(dst_ptr + src0_row_size * row_idx, src_ptr, src0_row_size);
             } else {
                 using magic_enum::enum_fuse;
-                using magic_enum::enum_name;
 
                 switch (enum_fuse(type_0, type_res).value()) {
                 case enum_fuse(NumberType::Q8_0, NumberType::FP32).value(): {
                     quantize_inner<NumberType::Q8_0, NumberType::FP32>(src_ptr, dst_ptr + res_row_size * row_idx, ne00 / get_block_size(NumberType::Q8_0));
                 } break;
                 default:
-                    spy_assert(false, "Unimplemented get row operator {} -> {}",
-                        enum_name(type_0), enum_name(type_res)
-                    );
+                    spy_assert(false, "Unimplemented get row operator {} -> {}", type_0, type_res);
                 }
             }
         }
@@ -114,7 +111,6 @@ namespace spy::cpu {
                         std::memcpy(dst_ptr, src_ptr, src_row_size);
                     } else {
                         using magic_enum::enum_fuse;
-                        using magic_enum::enum_name;
 
                         switch (enum_fuse(type_operand, type_result).value()) {
                         case enum_fuse(NumberType::FP32, NumberType::FP16).value():
@@ -132,8 +128,7 @@ namespace spy::cpu {
                             );
                             break;
                         default:
-                            spy_assert(false, "Unimplemented dup operator for {} -> {}",
-                                enum_name(type_operand), enum_name(type_result));
+                            spy_assert(false, "Unimplemented dup operator for {} -> {}", type_operand, type_result);
                         }
                     }                     
                 } else if (result.is_continuous()) {
@@ -144,7 +139,6 @@ namespace spy::cpu {
                         std::memcpy(dst_ptr, src_ptr, src_row_size);
                     } else {
                         using magic_enum::enum_fuse;
-                        using magic_enum::enum_name;
 
                         switch (enum_fuse(type_operand, type_result).value()) {
                         case enum_fuse(NumberType::FP32, NumberType::FP16).value():
@@ -162,8 +156,7 @@ namespace spy::cpu {
                             );
                             break;
                         default:
-                            spy_assert(false, "Unimplemented dup operator for {} -> {}",
-                                enum_name(type_operand), enum_name(type_result));
+                            spy_assert(false, "Unimplemented dup operator for {} -> {}", type_operand, type_result);
                         }
                     }      
                 } else {
@@ -172,7 +165,6 @@ namespace spy::cpu {
             } else {
                 for (size_t i00 = 0; i00 < ne00; ++i00) {
                     using magic_enum::enum_fuse;
-                    using magic_enum::enum_name;
 
                     const size_t global_iter = i00 + ne00 * row_idx;
                     const size_t i0 = global_iter % ne0;

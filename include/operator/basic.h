@@ -39,8 +39,7 @@ namespace spy {
 					"Operands should be of the same shape or repeatable shape (operand1: {}, operand2: {})", 
 					shape_0.to_string(), shape_1.to_string());
 			spy_assert(type_0 == type_1, 
-					"Operands should be of the same type (operand1: {}, operand2: {})", 
-					magic_enum::enum_name(type_0), magic_enum::enum_name(type_1));
+					"Operands should be of the same type (operand1: {}, operand2: {})", type_0, type_1);
 
 			const Shape shape_res     = shape_0;
 			return { shape_res, nullptr };
@@ -81,8 +80,7 @@ namespace spy {
 					"Operands should be of the same shape or repeatable shape (operand1: {}, operand2: {})", 
 					shape_0.to_string(), shape_1.to_string());
 			spy_assert(type_0 == type_1, 
-					"Operands should be of the same type (operand1: {}, operand2: {})", 
-					magic_enum::enum_name(type_0), magic_enum::enum_name(type_1));
+					"Operands should be of the same type (operand1: {}, operand2: {})", type_0, type_1);
 
 			const Shape shape_res     = shape_0;
 			return { shape_res, nullptr };
@@ -123,8 +121,7 @@ namespace spy {
 					"Operands should be of the same shape or repeatable shape (operand1: {}, operand2: {})", 
 					shape_0.to_string(), shape_1.to_string());
 			spy_assert(type_0 == type_1, 
-					"Operands should be of the same type (operand1: {}, operand2: {})", 
-					magic_enum::enum_name(type_0), magic_enum::enum_name(type_1));
+					"Operands should be of the same type (operand1: {}, operand2: {})", type_0, type_1);
 
 			const Shape shape_res     = shape_0;
 			return { shape_res, nullptr };
@@ -165,8 +162,7 @@ namespace spy {
 					"Operands should be of the same shape or repeatable shape (operand1: {}, operand2: {})", 
 					shape_0.to_string(), shape_1.to_string());
 			spy_assert(type_0 == type_1, 
-					"Operands should be of the same type (operand1: {}, operand2: {})", 
-					magic_enum::enum_name(type_0), magic_enum::enum_name(type_1));
+					"Operands should be of the same type (operand1: {}, operand2: {})", type_0, type_1);
 
 			const Shape shape_res     = shape_0;
 			return { shape_res, nullptr };

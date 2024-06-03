@@ -6,6 +6,10 @@
  */
 
 #include <utility>
+#include <string_view>
+#include <magic_enum.hpp>
+#include <fmt/core.h>
+#include <fmt/format.h>
 
 namespace spy {
 
@@ -78,5 +82,14 @@ namespace spy {
 		}
 	};
 
-    
+#ifndef SPY_ENUM_FORMATTER
+#define SPY_ENUM_FORMATTER(EnumType)                                            \
+	template <>                                                                 \
+	struct fmt::formatter<EnumType>: fmt::formatter<std::string_view> {         \
+		auto format(EnumType e, fmt::format_context& ctx) const {               \
+            std::string_view name = magic_enum::enum_name(e);                   \
+			return fmt::formatter<string_view>::format(name, ctx);              \
+		}                                                                       \
+	}
+#endif // SPY_ENUM_FORMATTER
 }

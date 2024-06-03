@@ -31,4 +31,9 @@ namespace spy {
 		Byte        = 6
 	};
 
-}
+} // namespace spy
+
+SPY_ENUM_FORMATTER(spy::ModelVocabType);
+SPY_ENUM_FORMATTER(spy::ModelRopeType);
+SPY_ENUM_FORMATTER(spy::ModelTokenType);
+

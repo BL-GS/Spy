@@ -47,4 +47,6 @@ namespace spy::cpu {
     inline static constexpr OperatorPhaseType operator""_op_finish(unsigned long long id)   { return operator_phase(OperatorPhaseType::Finish, id);     }
     inline static constexpr OperatorPhaseType operator""_op_end(unsigned long long id)      { return operator_phase(OperatorPhaseType::End, id);        }
 
-} // namepsace spy::cpu
+} // namespace spy::cpu
+
+SPY_ENUM_FORMATTER(spy::cpu::OperatorPhaseType);

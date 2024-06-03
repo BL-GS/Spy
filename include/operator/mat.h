@@ -46,8 +46,7 @@ namespace spy {
 					"Operands should be of the same shape (operand1: {}, operand2: {})", 
 					shape_0.to_string(), shape_1.to_string());
 			spy_assert(shape_1.number_type == NumberType::FP32, 
-						"Expect the type of operand 1 to be fp32 (cur: {})", 
-						magic_enum::enum_name(shape_1.number_type));
+						"Expect the type of operand 1 to be fp32 (cur: {})", shape_1.number_type);
 
 			auto num_element = shape_1.elements;
 			num_element[0] = shape_0.elements[1];

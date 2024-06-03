@@ -59,7 +59,7 @@ namespace spy {
 					const std::string  cur_key  = read_gguf_string(file);
 					const GGUFDataType cur_type = read_gguf_type(file);
 
-					spy_info("Load kv pair: {:<48} - {:8}", cur_key, magic_enum::enum_name(cur_type));
+					spy_info("Load kv pair: {:<48} - {:8}", cur_key, cur_type);
 
 					context.add_gguf_value(cur_key, read_gguf_kv(file, cur_type));
 				}
@@ -117,7 +117,7 @@ namespace spy {
 				const size_t block_size = get_block_size(cur_info.type);
 				spy_assert(num_element % block_size == 0, 
 					"tensor: number of {} elements({}) is not a multiple of block size()", 
-					magic_enum::enum_name(cur_info.type), num_element, block_size);
+					cur_info.type, num_element, block_size);
 
 				const size_t cur_size = get_row_size(cur_info.type, num_element);
 				context.size 		 += align_ceil(cur_size, context.alignment);

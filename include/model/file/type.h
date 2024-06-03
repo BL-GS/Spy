@@ -3,6 +3,8 @@
 #include <string>
 #include <string_view>
 
+#include "util/type/enum.h"
+
 namespace spy {
 
 	enum class GGUFDataType : int {
@@ -159,3 +161,6 @@ namespace spy {
 	}
 	
 }  // namespace spy
+
+SPY_ENUM_FORMATTER(spy::GGUFDataType);
+SPY_ENUM_FORMATTER(spy::LLMKey);

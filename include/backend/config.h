@@ -148,3 +148,5 @@ namespace spy {
 	}
 
 }  // namespace spy
+
+SPY_ENUM_FORMATTER(spy::OperatorStatus);

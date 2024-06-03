@@ -44,10 +44,6 @@ namespace spy {
 		IQ1_M = 29
 	};
 
-	inline static std::ostream &operator<<(std::ostream& os, NumberType type) {
-		return os << magic_enum::enum_name(type);
-	}
-
 	template<class T_Enum, std::underlying_type_t<T_Enum> T_end = 256, std::underlying_type_t<T_Enum> T_begin = 0>
 		requires std::is_enum_v<T_Enum>
 	using EnumMapperAlias = EnumMapper<T_Enum, static_cast<T_Enum>(T_end), static_cast<T_Enum>(T_begin)>;
@@ -77,3 +73,5 @@ namespace spy {
 	};
 
 } // namespace spy
+
+SPY_ENUM_FORMATTER(spy::NumberType);

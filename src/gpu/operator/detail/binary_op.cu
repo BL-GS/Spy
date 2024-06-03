@@ -1,6 +1,5 @@
 #include <cstddef>
 #include <cuda_runtime.h>
-#include <magic_enum.hpp>
 #include <magic_enum_fuse.hpp>
 
 #include "util/shell/logger.h"
@@ -234,7 +233,6 @@ namespace spy::gpu {
         spy_assert(type_1 == NumberType::FP32);
 
         using magic_enum::enum_fuse;
-        using magic_enum::enum_name;
         switch (enum_fuse(type_0, type_res).value()) {
         case enum_fuse(NumberType::FP32, NumberType::FP32).value():
             T_Operator::execute(operand_0, operand_1, result, 
@@ -255,9 +253,7 @@ namespace spy::gpu {
             );
             break;
         default:
-            spy_assert(false, "Unsupport type: result: {}, operand_0: {}, operand_1: {}", 
-                enum_name(type_res), enum_name(type_0), enum_name(type_1)
-            );
+            spy_assert(false, "Unsupported type: result: {}, operand_0: {}, operand_1: {}", type_res, type_0, type_1);
         }
     }
 

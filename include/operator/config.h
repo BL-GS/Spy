@@ -40,7 +40,7 @@ namespace spy {
 		 * @return The tensor with the expected shape
 		 */
 		Tensor deduce_result() const { 
-			spy_assert(false, "The definition of operator {} hasn't been implemented.", magic_enum::enum_name(T_op_type));
+			spy_assert(false, "The definition of operator {} hasn't been implemented.", T_op_type);
 			return {};
 		}
 	};

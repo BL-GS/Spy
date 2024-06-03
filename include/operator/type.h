@@ -10,6 +10,7 @@
 #include <fmt/format.h>
 
 #include "util/exception.h"
+#include "util/type/enum.h"
 #include "util/shell/logger.h"
 
 namespace spy {
@@ -129,3 +130,5 @@ namespace spy {
 	}
 
 }  // namespace spy
+
+SPY_ENUM_FORMATTER(spy::OperatorType);

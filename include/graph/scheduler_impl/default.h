@@ -94,7 +94,7 @@ namespace spy {
 
 				// Allocate buffer
 				spy_debug(DebugFlag::Execute, "Execute {:8} -> {:32}", 
-					magic_enum::enum_name(cur_node_ptr->op_type),
+					cur_node_ptr->op_type,
 					cur_node_ptr->get_input<DataNode>(0).property.to_string()
 				);
 

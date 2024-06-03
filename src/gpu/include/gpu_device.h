@@ -85,7 +85,7 @@ namespace spy::gpu {
 		std::unique_ptr<DeviceMemoryPool> 	pool_ptr;
 
 	public:
-		DeviceContext(int device_id): Device(device_id) {
+		DeviceContext(int device_id): stream_array{nullptr}, cublas_handle(nullptr), Device(device_id) {
 			gpu_check(cudaSetDevice(device_id));
 			for (size_t i = 0; i < MAX_NUM_STREAM; ++i)  {
 				gpu_check(cudaStreamCreateWithFlags(&stream_array[i], cudaStreamNonBlocking));
@@ -93,7 +93,7 @@ namespace spy::gpu {
 			gpu_check(cublasCreate_v2(&cublas_handle));
 			gpu_check(cublasSetMathMode(cublas_handle, CUBLAS_TF32_TENSOR_OP_MATH));
 
-			pool_ptr.reset(new DefaultDeviceMemoryPool(device_id));
+			pool_ptr = std::make_unique<DefaultDeviceMemoryPool>(device_id);
 		}
 
 		~DeviceContext() noexcept override {

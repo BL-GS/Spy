@@ -71,10 +71,10 @@ namespace spy::cpu {
 						const OperatorResult result = task_info.func(backend_ptr_, task_info, task_info.node_ptr);
 
 						using magic_enum::enum_name;
-						spy_assert(result.phase == OperatorPhaseType::End, 
-							"Cannot finish executing operator {} at phase {}", enum_name(task_info.node_ptr->op_type), enum_name(result.phase));
+						spy_assert(result.phase == OperatorPhaseType::End,
+							"Cannot finish executing operator {} at phase {}", task_info.node_ptr->op_type, result.phase);
 						spy_assert(result.status == OperatorStatus::Success,
-							"Failed execute operator: {}", enum_name(result.status));
+						    "Failed execute operator: {}", result.status);
 					}
 				});
 			}

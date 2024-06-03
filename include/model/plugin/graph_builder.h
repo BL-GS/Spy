@@ -125,8 +125,8 @@ namespace spy {
             OperatorDefNode *   op_node_ptr  = graph.get_node_content<OperatorDefNode>(op_node_credit);
             const OperatorType  op_type      = op_node_ptr->op_type;
             spy_assert(op_type == T_op_type, 
-                "Trying to get result tensor with different op_type (assign: {}, template: {})", 
-                magic_enum::enum_name(op_type), magic_enum::enum_name(T_op_type));
+                "Trying to get result tensor with different op_type (assign: {}, template: {})",
+                op_type, T_op_type);
 
             const DataNodeProperty property {
                 .node_type      = is_view(op_type) ? DataNodeType::View : DataNodeType::Variable,

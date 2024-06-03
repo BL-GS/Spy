@@ -11,8 +11,6 @@
 
 namespace spy::cpu {
 
-    using magic_enum::enum_name;
-
     inline constexpr NumberType target_buffer_type(NumberType type_0, NumberType type_1) {
         return type_0;
     }
@@ -62,7 +60,7 @@ namespace spy::cpu {
         const   size_t buffer_size = buffer_span.size_bytes();
 
         const auto matmul_without_buffer = [&](){
-            spy_assert(type_0 == type_1, "Expect the operands to be of the same type: {}, {}", enum_name(type_0), enum_name(type_1));
+            spy_assert(type_0 == type_1, "Expect the operands to be of the same type: {}, {}", type_0, type_1);
 
             const auto dot_func = NumberTypeMapper::product_map([](const auto T_type_0, const auto T_type_1){
                 return Dot<T_type_0, T_type_1>::exec_raw;

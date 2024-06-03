@@ -106,7 +106,7 @@ namespace spy {
 				if (!new_id_option.has_value()) { return; }
 				const uint32_t new_id = new_id_option.value().get_value<uint32_t>();
 				if (new_id >= token_id_table.size()) {
-					spy_warn("Bad special token for {}: {}, using default id {}", magic_enum::enum_name(key), new_id, token_id);
+					spy_warn("Bad special token for {}: {}, using default id {}", key, new_id, token_id);
 				} else {
 					token_id = new_id;
 				}
