@@ -1468,7 +1468,7 @@ namespace spy {
 			throw std::invalid_argument("invalid character");
 		}
 		if (!(utf8[offset + 0] & 0x20)) {
-			if (offset + 1 >= utf8.size() || ! ((utf8[offset + 1] & 0xc0) == 0x80)) {
+			if (offset + 1 >= utf8.size() || (utf8[offset + 1] & 0xc0) != 0x80) {
 				throw std::invalid_argument("invalid character");
 			}
 			auto result = ((utf8[offset + 0] & 0x1f) << 6) | (utf8[offset + 1] & 0x3f);
@@ -1476,7 +1476,7 @@ namespace spy {
 			return result;
 		}
 		if (!(utf8[offset + 0] & 0x10)) {
-			if (offset + 2 >= utf8.size() || ! ((utf8[offset + 1] & 0xc0) == 0x80) || ! ((utf8[offset + 2] & 0xc0) == 0x80)) {
+			if (offset + 2 >= utf8.size() || (utf8[offset + 1] & 0xc0) != 0x80 || (utf8[offset + 2] & 0xc0) != 0x80) {
 				throw std::invalid_argument("invalid character");
 			}
 			auto result = ((utf8[offset + 0] & 0x0f) << 12) | ((utf8[offset + 1] & 0x3f) << 6) | (utf8[offset + 2] & 0x3f);
@@ -1484,7 +1484,7 @@ namespace spy {
 			return result;
 		}
 		if (!(utf8[offset + 0] & 0x08)) {
-			if (offset + 3 >= utf8.size() || ! ((utf8[offset + 1] & 0xc0) == 0x80) || ! ((utf8[offset + 2] & 0xc0) == 0x80) || !((utf8[offset + 3] & 0xc0) == 0x80)) {
+			if (offset + 3 >= utf8.size() || (utf8[offset + 1] & 0xc0) != 0x80 || (utf8[offset + 2] & 0xc0) != 0x80 || (utf8[offset + 3] & 0xc0) != 0x80) {
 				throw std::invalid_argument("invalid character");
 			}
 			auto result = ((utf8[offset + 0] & 0x07) << 18) | ((utf8[offset + 1] & 0x3f) << 12) | ((utf8[offset + 2] & 0x3f) << 6) | (utf8[offset + 3] & 0x3f);
@@ -1544,10 +1544,10 @@ namespace spy {
 		return result;
 	}
 
-	inline static std::string unicode_cpts_to_utf8(const std::vector<uint32_t> & cps) {
+	inline static std::string unicode_cpts_to_utf8(const std::vector<uint32_t> & cpts) {
 		std::string result;
-		for (size_t i = 0; i < cps.size(); ++i) {
-			result.append(unicode_cpt_to_utf8(cps[i]));
+		for (uint32_t cpt : cpts) {
+			result.append(unicode_cpt_to_utf8(cpt));
 		}
 		return result;
 	}
@@ -1643,10 +1643,10 @@ namespace spy {
 	inline  std::vector<uint32_t> unicode_cpt_normalize_nfd(const std::vector<uint32_t> &cpts) {
 		std::vector<uint32_t> result;
 		result.reserve(cpts.size());
-		for (size_t i = 0; i < cpts.size(); ++i) {
-			auto it = unicode_map_nfd.find(cpts[i]);
+		for (uint32_t cpt : cpts) {
+			auto it = unicode_map_nfd.find(cpt);
 			if (it == unicode_map_nfd.end()) {
-				result.push_back(cpts[i]);
+				result.push_back(cpt);
 			} else {
 				result.push_back(it->second);
 			}
@@ -1656,12 +1656,12 @@ namespace spy {
 
 	inline CodePointType unicode_cpt_type(uint32_t cp) {
 		static std::unordered_map<uint32_t, CodePointType> cpt_types = unicode_cpt_type_map();
-		const auto it = cpt_types.find(cp);
-		return it == cpt_types.end() ? CodePointType::Unidentified : it->second;
+		const auto iter = cpt_types.find(cp);
+		return iter == cpt_types.end() ? CodePointType::Unidentified : iter->second;
 	}
 
 	inline CodePointType unicode_cpt_type(const std::string_view utf8) {
-		if (utf8.length() == 0) {
+		if (utf8.empty()) {
 			return CodePointType::Unidentified;
 		}
 		size_t offset = 0;

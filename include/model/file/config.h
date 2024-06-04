@@ -34,8 +34,7 @@ namespace spy {
 		GGUFValue(T &&new_val): value(std::forward<T>(new_val)) {}
 
 	public:
-		GGUFDataType get_type() const { 
-			return static_cast<GGUFDataType>(value.index()); }
+		GGUFDataType get_type() const { return static_cast<GGUFDataType>(value.index()); }
 
 		template<class T>
 		T get_value() const { return std::get<T>(value); }

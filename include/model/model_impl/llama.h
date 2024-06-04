@@ -8,7 +8,6 @@
 #include <vector>
 
 #include "model/file/config.h"
-#include "model/cache/kv_cache.h"
 #include "model/model_impl/abstract_model.h"
 
 #include "model/plugin/graph_builder.h"
@@ -126,7 +125,7 @@ namespace spy {
 				if (kv_cache_ptr_ == nullptr) { kv_cache_ptr_ = std::make_unique<KVCache>(); }
 				kv_cache_ptr_->reserve(num_embedding_k_gqa, num_embedding_v_gqa, 
 					num_context, num_layer);
-				for (uint32_t layer_id = 0; layer_id < num_layer; ++layer_id) {
+				for (int layer_id = 0; layer_id < num_layer; ++layer_id) {
 					build_kv_cache(graph, layer_id);
 				}
 			}
@@ -147,7 +146,7 @@ namespace spy {
 			// Set constant tensor
 			build_input(graph);
 			build_output(graph);
-			for (uint32_t layer_id = 0; layer_id < num_layer; ++layer_id) {
+			for (int layer_id = 0; layer_id < num_layer; ++layer_id) {
 				build_attention(graph, layer_id);
 				build_ffn(graph, layer_id);
 			}
@@ -189,7 +188,7 @@ namespace spy {
 
 			/* Connection */
 			{
-				for (uint32_t layer_id = 0; layer_id < num_layer; ++layer_id) {
+				for (int layer_id = 0; layer_id < num_layer; ++layer_id) {
 					LLAMALayer &layer = graph.layers[layer_id];
 
 					const NodeCredit attn_out = MultiHeadAttentionBlock {
@@ -281,7 +280,7 @@ namespace spy {
 			}
 		}
 
-        void build_attention(LLAMAGraph &graph, uint32_t layer_id) {
+        void build_attention(LLAMAGraph &graph, int layer_id) {
 			const GGUFContext &context = *context_ptr_;
 			auto  &layer               = graph.layers[layer_id];
 
@@ -315,7 +314,7 @@ namespace spy {
 					TensorType::AttentionOutput, layer_id);
         }
 
-        void build_ffn(LLAMAGraph &graph, uint32_t layer_id) {
+        void build_ffn(LLAMAGraph &graph, int layer_id) {
 			const GGUFContext &context = *context_ptr_;
 			auto &layer = graph.layers[layer_id];
 
@@ -333,7 +332,7 @@ namespace spy {
 					TensorType::FFNDown, layer_id);
         }
 
-		void build_kv_cache(LLAMAGraph &graph, uint32_t layer_id) {
+		void build_kv_cache(LLAMAGraph &graph, int layer_id) {
 			auto &layer = graph.layers[layer_id];
 			const size_t num_embedding_k_gqa = metadata_.num_embedding_k_gqa;
 			const size_t num_embedding_v_gqa = metadata_.num_embedding_v_gqa;
