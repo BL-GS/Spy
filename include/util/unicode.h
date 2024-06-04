@@ -17,7 +17,7 @@
 namespace spy {
 
 
-	static const std::vector<std::pair<uint32_t, uint32_t>> unicode_ranges_digit = {
+	inline static constexpr std::pair<uint32_t, uint32_t> unicode_ranges_digit[] {
 			{0x00000030, 0x00000039}, {0x000000B2, 0x000000B3}, {0x000000B9, 0x000000B9}, {0x00000660, 0x00000669},
 			{0x000006F0, 0x000006F9}, {0x000007C0, 0x000007C9}, {0x00000966, 0x0000096F}, {0x000009E6, 0x000009EF},
 			{0x00000A66, 0x00000A6F}, {0x00000AE6, 0x00000AEF}, {0x00000B66, 0x00000B6F}, {0x00000BE6, 0x00000BEF},
@@ -40,7 +40,7 @@ namespace spy {
 			{0x0001E2F0, 0x0001E2F9}, {0x0001E950, 0x0001E959}, {0x0001F100, 0x0001F10A}, {0x0001FBF0, 0x0001FBF9},
 	};
 
-	static const std::vector<std::pair<uint32_t, uint32_t>> unicode_ranges_letter = {
+	inline static constexpr std::pair<uint32_t, uint32_t> unicode_ranges_letter[] = {
 			{0x00000041, 0x0000005A}, {0x00000061, 0x0000007A}, {0x000000AA, 0x000000AA}, {0x000000B5, 0x000000B5},
 			{0x000000BA, 0x000000BA}, {0x000000C0, 0x000000D6}, {0x000000D8, 0x000000F6}, {0x000000F8, 0x000002C1},
 			{0x000002C6, 0x000002D1}, {0x000002E0, 0x000002E4}, {0x000002EC, 0x000002EC}, {0x000002EE, 0x000002EE},
@@ -199,13 +199,13 @@ namespace spy {
 			{0x0002F800, 0x0002FA1D}, {0x00030000, 0x0003134A},
 	};
 
-	static const std::vector<std::pair<uint32_t, uint32_t>> unicode_ranges_whitespace = {
+	inline static constexpr std::pair<uint32_t, uint32_t> unicode_ranges_whitespace[] {
 			{0x00000009, 0x0000000D}, {0x0000001C, 0x00000020}, {0x00000085, 0x00000085}, {0x000000A0, 0x000000A0},
 			{0x00001680, 0x00001680}, {0x00002000, 0x0000200A}, {0x00002028, 0x00002029}, {0x0000202F, 0x0000202F},
 			{0x0000205F, 0x0000205F}, {0x00003000, 0x00003000},
 	};
 
-	static const std::vector<std::pair<uint32_t, uint32_t>> unicode_ranges_accent_mark = {
+	inline static constexpr std::pair<uint32_t, uint32_t> unicode_ranges_accent_mark[] {
 			{0x00000300, 0x0000036F}, {0x00000483, 0x00000489}, {0x00000591, 0x000005BD}, {0x000005BF, 0x000005BF},
 			{0x000005C1, 0x000005C2}, {0x000005C4, 0x000005C5}, {0x000005C7, 0x000005C7}, {0x00000610, 0x0000061A},
 			{0x0000064B, 0x0000065F}, {0x00000670, 0x00000670}, {0x000006D6, 0x000006DC}, {0x000006DF, 0x000006E4},
@@ -281,7 +281,7 @@ namespace spy {
 			{0x0001E944, 0x0001E94A}, {0x000E0100, 0x000E01EF},
 	};
 
-	static const std::vector<std::pair<uint32_t, uint32_t>> unicode_ranges_punctuation = {
+	inline static constexpr std::pair<uint32_t, uint32_t> unicode_ranges_punctuation[] {
 			{0x00000021, 0x00000023}, {0x00000025, 0x0000002A}, {0x0000002C, 0x0000002F}, {0x0000003A, 0x0000003B},
 			{0x0000003F, 0x00000040}, {0x0000005B, 0x0000005D}, {0x0000005F, 0x0000005F}, {0x0000007B, 0x0000007B},
 			{0x0000007D, 0x0000007D}, {0x000000A1, 0x000000A1}, {0x000000A7, 0x000000A7}, {0x000000AB, 0x000000AB},
@@ -331,7 +331,7 @@ namespace spy {
 			{0x0001E95E, 0x0001E95F},
 	};
 
-	static const std::vector<std::pair<uint32_t, uint32_t>> unicode_ranges_symbol = {
+	inline static constexpr std::pair<uint32_t, uint32_t> unicode_ranges_symbol[] = {
 			{0x00000024, 0x00000024}, {0x0000002B, 0x0000002B}, {0x0000003C, 0x0000003E}, {0x0000005E, 0x0000005E},
 			{0x00000060, 0x00000060}, {0x0000007C, 0x0000007C}, {0x0000007E, 0x0000007E}, {0x000000A2, 0x000000A6},
 			{0x000000A8, 0x000000A9}, {0x000000AC, 0x000000AC}, {0x000000AE, 0x000000B1}, {0x000000B4, 0x000000B4},
@@ -392,7 +392,7 @@ namespace spy {
 			{0x0001FB94, 0x0001FBCA},
 	};
 
-	static const std::vector<std::pair<uint32_t, uint32_t>> unicode_ranges_control = {
+	inline static constexpr std::pair<uint32_t, uint32_t> unicode_ranges_control[] {
 			{0x00000000, 0x00000008}, {0x0000000E, 0x0000001B}, {0x0000007F, 0x00000084}, {0x00000086, 0x0000009F},
 			{0x000000AD, 0x000000AD}, {0x00000378, 0x00000379}, {0x00000380, 0x00000383}, {0x0000038B, 0x0000038B},
 			{0x0000038D, 0x0000038D}, {0x000003A2, 0x000003A2}, {0x00000530, 0x00000530}, {0x00000557, 0x00000558},
@@ -1592,7 +1592,7 @@ namespace spy {
 		return cpt_types;
 	}
 
-	static std::unordered_map<uint8_t, std::string> unicode_byte_to_utf8_map() {
+	inline static std::unordered_map<uint8_t, std::string> unicode_byte_to_utf8_map() {
 		std::unordered_map<uint8_t, std::string> map;
 		for (int ch = u'!'; ch <= u'~'; ++ch) {
 			assert(0 <= ch && ch < 256);
@@ -1616,7 +1616,7 @@ namespace spy {
 		return map;
 	}
 
-	static std::unordered_map<std::string, uint8_t> unicode_utf8_to_byte_map() {
+	inline static std::unordered_map<std::string, uint8_t> unicode_utf8_to_byte_map() {
 		std::unordered_map<std::string, uint8_t> map;
 		for (int ch = u'!'; ch <= u'~'; ++ch) {
 			assert(0 <= ch && ch < 256);
@@ -1640,7 +1640,7 @@ namespace spy {
 		return map;
 	}
 
-	inline  std::vector<uint32_t> unicode_cpt_normalize_nfd(const std::vector<uint32_t> &cpts) {
+	inline std::vector<uint32_t> unicode_cpt_normalize_nfd(const std::vector<uint32_t> &cpts) {
 		std::vector<uint32_t> result;
 		result.reserve(cpts.size());
 		for (uint32_t cpt : cpts) {
