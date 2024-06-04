@@ -12,7 +12,7 @@ namespace spy {
 	using magic_enum::enum_switch;
 
 	/// 
-	/// @brief A factory class scheduling graph scheduler dynamically or staically.
+	/// @brief A factory class scheduling graph scheduler dynamically or statically.
 	/// @note Please look up the `GraphSchedulerImpl<SchedulerType>` for the detail of scheduler.
 	/// 
 	class GraphSchedulerBuilder {
