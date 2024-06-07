@@ -12,15 +12,16 @@
 namespace spy::cpu {
 
 	struct BufferLatchControlHeader: public BufferControlHeader {
-		Uninitialized<std::latch> latch;
+		std::atomic<int> src1_quantize_counter;
+		std::atomic<int> src1_quantize_done;
 
 		BufferLatchControlHeader() = default;
-		BufferLatchControlHeader(int num_task): BufferControlHeader(num_task) {}
-		BufferLatchControlHeader(int num_task, CPUBackend *backend_ptr, int size): BufferControlHeader(num_task, backend_ptr, size) { }
+		BufferLatchControlHeader(int num_task, int num_src1_row):
+			BufferControlHeader(num_task), src1_quantize_counter(num_src1_row), src1_quantize_done(num_src1_row) {}
+		BufferLatchControlHeader(int num_task, int num_src1_row, CPUBackend *backend_ptr, int size):
+			BufferControlHeader(num_task, backend_ptr, size), src1_quantize_counter(num_src1_row), src1_quantize_done(num_src1_row) {}
 
 		~BufferLatchControlHeader() override = default;
-
-		void init(const spy::cpu::OperatorEnvParam &param) override { latch.put_value(param.concurrency); }
 	};
 
     inline constexpr NumberType target_buffer_type(NumberType type_0, NumberType type_1) {
@@ -46,7 +47,7 @@ namespace spy::cpu {
         const int num_src1_row       = shape_1.num_row();
         const size_t buffer_row_size = get_row_size(type_mid, ne10);
         const size_t buffer_size     = num_src1_row * buffer_row_size;
-        return std::make_shared<BufferLatchControlHeader>(num_task, backend_ptr, buffer_size);
+        return std::make_shared<BufferLatchControlHeader>(num_task, num_src1_row, backend_ptr, buffer_size);
 	}
 
     OperatorResult OperatorMatMulImpl::execute([[maybe_unused]] CPUBackend *backend_ptr, const OperatorEnvParam &param, OperatorNode *op_node) {
@@ -103,8 +104,10 @@ namespace spy::cpu {
             spy_assert(num_src1_row * buffer_row_size <= buffer_size,
                 "The size of buffer is less than that needed (buffer: {}, need: {})", buffer_size, num_src1_row * buffer_row_size);
 
-			const int avg_src1_row = div_ceil(num_src1_row, param.concurrency);
-            for (int cur_src1_row = param.tid * avg_src1_row; cur_src1_row < num_src1_row; ++cur_src1_row) {
+			while (true) {
+				const int cur_src1_row = --header_ptr->src1_quantize_counter;
+				if (cur_src1_row < 0) { break; }
+
                 const size_t i13 = cur_src1_row / (ne12 * ne11);
                 const size_t i12 = cur_src1_row % (ne12 * ne11) / ne11;
                 const size_t i11 = cur_src1_row %  ne11;
@@ -112,8 +115,10 @@ namespace spy::cpu {
                 const void *src1_row = operand_1.get<const void>({0, i11, i12, i13});
                 void *buffer_row     = buffer_ptr + cur_src1_row * buffer_row_size;
                 auto_quantize_inner(type_1, src1_row, type_mid, buffer_row, ne10 / get_block_size(type_1));
+
+				--header_ptr->src1_quantize_done;
             }
-			header_ptr->latch.value.arrive_and_wait();
+			while (header_ptr->src1_quantize_done.load() != 0) { std::this_thread::yield(); }
 
             // Compute
             for (size_t col_idx = param.tid; col_idx < num_dst; col_idx += param.concurrency) {
