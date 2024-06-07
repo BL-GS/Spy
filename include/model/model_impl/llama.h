@@ -32,6 +32,7 @@ namespace spy {
 		std::vector<LLAMALayer> 	layers;
 
 		LLAMAGraph(const std::string_view graph_name, uint32_t num_layer): Graph(graph_name), layers(num_layer) {}
+		~LLAMAGraph() noexcept override = default;
 	};
 
 	class LLAMAModel final : public AbstractModel, GraphBuilder {
@@ -111,15 +112,12 @@ namespace spy {
 				.xpos_down        = false
 			};
 
-			variable_graph_ptr_ = std::make_unique<Graph>("LLaMa");
-			Graph &variable_graph = *variable_graph_ptr_;
-
 			/*
 				Build all constant tensors、input tensors and buffered tensors.
 				NOTE: All buffered tensor should be allocated at fixed location each time.
 			 */
 
-			if (constant_graph_ptr_ == nullptr) {
+			if (constant_graph_ptr_ == nullptr) [[unlikely]] {
 				constant_graph_ptr_ = std::make_unique<LLAMAGraph>("LLaMa", num_layer);
 				LLAMAGraph &constant_graph = *constant_graph_ptr_;
 
@@ -144,6 +142,14 @@ namespace spy {
 				constant_graph_ptr_->clear_data_connection();
 			}
 			LLAMAGraph &constant_graph = *constant_graph_ptr_;
+
+			if (variable_graph_ptr_ == nullptr) [[unlikely]] {
+				variable_graph_ptr_ = std::make_unique<Graph>("LLaMa");
+			} else {
+				variable_graph_ptr_->clear_data_node();
+				variable_graph_ptr_->clear_op_node();
+			}
+			Graph &variable_graph = *variable_graph_ptr_;
 
 			/* Build KQ Mask */
 			{

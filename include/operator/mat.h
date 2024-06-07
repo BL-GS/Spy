@@ -18,6 +18,7 @@ namespace spy {
 	public:
 	    OperatorDefinition(): OperatorNode(TYPE) {}
 
+	    ~OperatorDefinition() noexcept = default;
 
 	public: /* Interface for graph deduction */
 		/*! 

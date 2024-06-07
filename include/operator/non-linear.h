@@ -15,6 +15,8 @@ namespace spy {
 	public:
 		OperatorDefinition(): OperatorNode(TYPE) {}
 
+	    ~OperatorDefinition() noexcept = default;
+
 	public: /* Interface for graph deduction */
 		/*! 
 		 * @brief Deduce the result tensor with proper shape
@@ -41,6 +43,8 @@ namespace spy {
 
 	public:
 	    OperatorDefinition(): OperatorNode(TYPE) {}
+
+	    ~OperatorDefinition() noexcept = default;
 
 	public: /* Interface for graph deduction */
 		/*! 
@@ -74,6 +78,8 @@ namespace spy {
 
 		OperatorDefinition(const float scale): OperatorNode(TYPE), scale(scale) {}
 
+	    ~OperatorDefinition() noexcept = default;
+
 	public: /* Interface for graph deduction */
 		/*! 
 		 * @brief Deduce the result tensor with proper shape
@@ -102,6 +108,8 @@ namespace spy {
 	    OperatorDefinition(): OperatorNode(TYPE) {}
 
 		OperatorDefinition(float eps): OperatorNode(TYPE), eps(eps) {}
+
+	    ~OperatorDefinition() noexcept = default;
 
 	public: /* Interface for graph deduction */
 		/*! 
@@ -132,6 +140,8 @@ namespace spy {
 
 		OperatorDefinition(const RopeContext &rope_context): 
 				OperatorNode(TYPE), rope_context(rope_context) {}
+
+	    ~OperatorDefinition() noexcept = default;
 
 	public: /* Interface for graph deduction */
 		/*! 

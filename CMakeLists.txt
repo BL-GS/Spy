@@ -8,6 +8,8 @@ SET(CMAKE_CXX_STANDARD 20)
 
 IF (CMAKE_BUILD_TYPE STREQUAL Release)
 	ADD_DEFINITIONS(-DNDEBUG)
+ELSE()
+	SET(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-fsanitize=address")
 ENDIF()
 
 # Hardware Architecture --------------------------------------------------

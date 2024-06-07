@@ -16,6 +16,8 @@ namespace spy {
 	public:
 	    OperatorDefinition(): OperatorNode(TYPE) {}
 
+	    ~OperatorDefinition() noexcept = default;
+
 	public: /* Interface for graph deduction */
 		/*! 
 		 * @brief Deduce the result tensor with proper shape
@@ -40,6 +42,8 @@ namespace spy {
 
 	public:
 		OperatorDefinition(NumberType type_res = NumberType::FP32): OperatorNode(TYPE), type_res(type_res) {}
+
+	    ~OperatorDefinition() noexcept = default;
 
 	public: /* Interface for graph deduction */
 		/*! 
@@ -77,6 +81,8 @@ namespace spy {
 	public:
 	    OperatorDefinition(): OperatorNode(TYPE) {}
 
+	    ~OperatorDefinition() noexcept = default;
+
 	public: /* Interface for graph deduction */
 		/*! 
 		 * @brief Deduce the result tensor with proper shape
@@ -99,6 +105,8 @@ namespace spy {
 
 	public:
 	    OperatorDefinition(): OperatorNode(TYPE) {}
+
+	    ~OperatorDefinition() noexcept = default;
 
 	public: /* Interface for graph deduction */
 		/*! 
@@ -136,6 +144,8 @@ namespace spy {
         template<class ...Args>
 		OperatorDefinition(Args &&...args): 
 				OperatorNode(TYPE), new_shape(std::forward<Args>(args)...) {}
+
+	    ~OperatorDefinition() noexcept = default;
 
 	public: /* Interface for graph deduction */
 		/*! 
@@ -175,6 +185,8 @@ namespace spy {
 		OperatorDefinition(int64_t offset, Args &&...args):
 				OperatorNode(TYPE), offset(offset), new_shape(std::forward<Args>(args)...) {}
 
+	    ~OperatorDefinition() noexcept = default;
+
 	public: /* Interface for graph deduction */
 		/*! 
 		 * @brief Deduce the result tensor with proper shape
@@ -202,6 +214,8 @@ namespace spy {
 
 	public:
 	    OperatorDefinition(): OperatorNode(TYPE) {}
+
+	    ~OperatorDefinition() noexcept = default;
 
 	public: /* Interface for graph deduction */
 		/*! 
@@ -243,6 +257,8 @@ namespace spy {
 			}
 		}
 
+	    ~OperatorDefinition() noexcept = default;
+
 	public: /* Interface for graph deduction */
 		/*! 
 		 * @brief Deduce the result tensor with proper shape
@@ -277,6 +293,8 @@ namespace spy {
 		template<class ...Args>
 		OperatorDefinition(Args &&...args):
 				OperatorNode(TYPE), new_shape(std::forward<Args>(args)...) { }
+
+	    ~OperatorDefinition() noexcept = default;
 
 	public: /* Interface for graph deduction */
 		/*! 

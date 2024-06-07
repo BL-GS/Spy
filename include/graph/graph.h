@@ -123,7 +123,7 @@ namespace spy {
 
 		OperatorNode(const OperatorNode &other) = default;
 
-		~OperatorNode() noexcept = default;
+		virtual ~OperatorNode() noexcept = default;
 
 	protected:
 		/*!
@@ -189,7 +189,7 @@ namespace spy {
 
 		Graph(Graph &&other) = delete;
 
-		~Graph() noexcept = default;
+		virtual ~Graph() noexcept = default;
 
 	public:
 		/*!

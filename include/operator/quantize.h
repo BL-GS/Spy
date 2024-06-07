@@ -21,6 +21,8 @@ namespace spy {
 		OperatorDefinition(NumberType target_type):
 				OperatorNode(TYPE), target_type(target_type) {}
 
+	    ~OperatorDefinition() noexcept = default;
+
 	public: /* Interface for graph deduction */
 		/*! 
 		 * @brief Deduce the result tensor with proper shape
