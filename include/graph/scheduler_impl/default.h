@@ -44,6 +44,8 @@ namespace spy {
 			GraphControlHeader graph_control_header = graph_view.get_control_header();
 			TopoNodeQueue node_queue;
 
+			std::atomic<size_t> num_unfinished_operator{ graph_control_header.num_op_node() };
+
 			for (size_t i = 0; i < graph_control_header.num_data_node(); ++i) {
 				if (graph_control_header.data_recv(i).load(std::memory_order_relaxed) == 0) {
 					const auto &data_node = graph_control_header.data_node(i);
@@ -63,6 +65,9 @@ namespace spy {
 				try_deallocate_inputs(backend_ptr, cur_node_ptr, graph_control_header);
 				// Step forward
 				step_op_node(node_queue, cur_node_ptr, graph_control_header);
+				// Push nullptr if reach the end
+				const size_t num_left_op = --num_unfinished_operator;
+				if (num_left_op == 0) [[unlikely]] { node_queue.enqueue(nullptr); }
 			};
 
 			while (true) {
@@ -73,7 +78,7 @@ namespace spy {
 				node_queue.wait_dequeue(cur_node_ptr);
 
 				// We reach the end of the graph
-				if (cur_node_ptr->id() == Graph::OUTPUT_NODE_ID) [[unlikely]] { break; }
+				if (cur_node_ptr == nullptr) [[unlikely]] { break; }
 
 				// Allocate to-be-use output
 				try_allocate_outputs(backend_ptr, cur_node_ptr, graph_control_header);
@@ -85,9 +90,9 @@ namespace spy {
 				);
 
 				backend_ptr->submit(cur_node_ptr, 
-					[op_step, backend_ptr, cur_node_ptr](){ 
-						op_step(cur_node_ptr, backend_ptr); 
-					} 
+					[&num_unfinished_operator, op_step, backend_ptr, cur_node_ptr](){
+						op_step(cur_node_ptr, backend_ptr);
+					}
 				);
 			}
 		}

@@ -42,11 +42,13 @@ namespace spy {
 		using Layer = LLAMALayer;
 
 	private: /* Graph structure */
-		std::unique_ptr<Graph>      graph_ptr_;
+		std::unique_ptr<LLAMAGraph>      constant_graph_ptr_;
 
-		std::vector<float>          kq_mask_;
+		std::unique_ptr<Graph>           variable_graph_ptr_;
 
-		std::unique_ptr<KVCache>    kv_cache_ptr_;
+		std::vector<float>               kq_mask_;
+
+		std::unique_ptr<KVCache>         kv_cache_ptr_;
 
 	public:
 		LLAMAModel(std::unique_ptr<GGUFContext> &&context_ptr, const HyperParam &hyper_param):
@@ -109,24 +111,39 @@ namespace spy {
 				.xpos_down        = false
 			};
 
-
-			graph_ptr_ = std::make_unique<LLAMAGraph>("LLaMa", num_layer);
-			LLAMAGraph &graph = *static_cast<LLAMAGraph *>(graph_ptr_.get());
+			variable_graph_ptr_ = std::make_unique<Graph>("LLaMa");
+			Graph &variable_graph = *variable_graph_ptr_;
 
 			/*
 				Build all constant tensors、input tensors and buffered tensors.
-				NOTE: All buffered tensor should allocated at fixed location each time.
+				NOTE: All buffered tensor should be allocated at fixed location each time.
 			 */
-			
-			// Set KV Cache
-			if (USE_KV_CACHE) {
-				if (kv_cache_ptr_ == nullptr) { kv_cache_ptr_ = std::make_unique<KVCache>(); }
-				kv_cache_ptr_->reserve(num_embedding_k_gqa, num_embedding_v_gqa, 
-					num_context, num_layer);
-				for (int layer_id = 0; layer_id < num_layer; ++layer_id) {
-					build_kv_cache(graph, layer_id);
+
+			if (constant_graph_ptr_ == nullptr) {
+				constant_graph_ptr_ = std::make_unique<LLAMAGraph>("LLaMa", num_layer);
+				LLAMAGraph &constant_graph = *constant_graph_ptr_;
+
+				// Set KV Cache
+				if constexpr (USE_KV_CACHE) {
+					if (kv_cache_ptr_ == nullptr) { kv_cache_ptr_ = std::make_unique<KVCache>(); }
+					kv_cache_ptr_->reserve(num_embedding_k_gqa, num_embedding_v_gqa,
+					                       num_context, num_layer);
+					for (int layer_id = 0; layer_id < num_layer; ++layer_id) {
+						build_kv_cache(constant_graph, layer_id);
+					}
 				}
+
+				// Set constant tensor
+				build_input(constant_graph);
+				build_output(constant_graph);
+				for (int layer_id = 0; layer_id < num_layer; ++layer_id) {
+					build_attention(constant_graph, layer_id);
+					build_ffn(constant_graph, layer_id);
+				}
+			} else {
+				constant_graph_ptr_->clear_data_connection();
 			}
+			LLAMAGraph &constant_graph = *constant_graph_ptr_;
 
 			/* Build KQ Mask */
 			{
@@ -141,37 +158,29 @@ namespace spy {
 				}
 			}
 
-			// Set constant tensor
-			build_input(graph);
-			build_output(graph);
-			for (int layer_id = 0; layer_id < num_layer; ++layer_id) {
-				build_attention(graph, layer_id);
-				build_ffn(graph, layer_id);
-			}
-
 			/* Set input */
 			DataNode *input_embedding = nullptr;
 			if (!model_io.token_id_array.empty()) {
-				DataNode *input_token_id = create_input_tensor(graph,
+				DataNode *input_token_id = create_input_tensor(variable_graph,
 					NumberType::INT32, 1, { num_token }, model_io.token_id_array.data(),
 					TensorType::InputTokenId
 				);
-				input_embedding = make_stream<OperatorType::GetRow>(graph, 
+				input_embedding = make_stream<OperatorType::GetRow>(variable_graph,
 					TensorType::InputTokenEmbedding, -1, -1,
-					{ graph.token_embedding, input_token_id }
+					{ constant_graph.token_embedding, input_token_id }
 				);
 			} else {
-				input_embedding = create_input_tensor(graph,
+				input_embedding = create_input_tensor(variable_graph,
 					NumberType::FP32, 1, { num_token }, model_io.embedding.data(),
 					TensorType::InputTokenEmbedding
 				);
 			}
-			DataNode *input_pos = create_input_tensor(graph,
+			DataNode *input_pos = create_input_tensor(variable_graph,
 				NumberType::INT32, 1, { num_token }, model_io.positions.data(),
 				TensorType::InputPosition
 			);
 
-			DataNode *KQ_mask = create_input_tensor(graph,
+			DataNode *KQ_mask = create_input_tensor(variable_graph,
 				NumberType::INT32, 2, { num_context, num_token }, kq_mask_.data(),
 				TensorType::InputKQMask
 			);
@@ -179,7 +188,7 @@ namespace spy {
 			
 			/* Set output */
 			model_io.logits.resize(num_token * num_vocab, 0.0F);
-			DataNode *output = create_output_tensor(graph,
+			DataNode *output = create_output_tensor(variable_graph,
 				NumberType::FP32, 2, {num_vocab, num_token}, model_io.logits.data(),
 				TensorType::OutputLogits
 			);
@@ -187,7 +196,7 @@ namespace spy {
 			/* Connection */
 			{
 				for (int layer_id = 0; layer_id < num_layer; ++layer_id) {
-					LLAMALayer &layer = graph.layers[layer_id];
+					LLAMALayer &layer = constant_graph.layers[layer_id];
 
 					DataNode *attn_out = MultiHeadAttentionBlock {
 						/* Hyper param */
@@ -210,10 +219,10 @@ namespace spy {
 						/* Input */
 						.input_embedding = input_embedding,
 						.input_pos		 = input_pos,
-					}.connect_attention<USE_KV_CACHE>(graph, layer_id);
+					}.connect_attention<USE_KV_CACHE>(variable_graph, layer_id);
 
 					/* Feed-forward network */
-					DataNode *ffn_inp  = make_stream<OperatorType::Add>(graph, 
+					DataNode *ffn_inp  = make_stream<OperatorType::Add>(variable_graph,
 						TensorType::V_FFNInput, layer_id, -1, 
 						{ attn_out, input_embedding }
 					);
@@ -221,10 +230,10 @@ namespace spy {
 						.ffn_norm_rms_eps = metadata_.ffn_norm_rms_eps,
 						.weight			  = layer,
 						.ffn_input 		  = ffn_inp,
-					}.connect_ffn(graph, layer_id);
+					}.connect_ffn(variable_graph, layer_id);
 
 					/* Output */
-					DataNode *logit_out = make_stream<OperatorType::Add>(graph, 
+					DataNode *logit_out = make_stream<OperatorType::Add>(variable_graph,
 						TensorType::V_FFNOutput, layer_id, -1,
 						{ ffn_inp, ffn_out }
 					);
@@ -232,18 +241,18 @@ namespace spy {
 					input_embedding = logit_out;
 				}
 
-				DataNode *result_norm = make_stream<OperatorType::NormRMS>(graph, 
+				DataNode *result_norm = make_stream<OperatorType::NormRMS>(variable_graph,
 					TensorType::V_ResultNorm, -1, -1, 
 					{ input_embedding }, metadata_.ffn_norm_rms_eps
 				);
-				DataNode *result_norm_weighted = make_stream<OperatorType::Mul>(graph, 
+				DataNode *result_norm_weighted = make_stream<OperatorType::Mul>(variable_graph,
 					TensorType::V_ResultNormWeighted, -1, -1,
-					{ result_norm, graph.output_norm }
+					{ result_norm, constant_graph.output_norm }
 				);
 				
 				// Final output
-				make_determined_stream<OperatorType::MatMul>(graph, 
-					{ graph.output, result_norm_weighted }, output
+				make_determined_stream<OperatorType::MatMul>(variable_graph,
+					{ constant_graph.output, result_norm_weighted }, output
 				);
 			}
 
@@ -251,10 +260,10 @@ namespace spy {
 				kv_cache_ptr_->step(num_token);
 			}			
 
-			return { graph_ptr_.get() };
+			return { constant_graph_ptr_.get(), variable_graph_ptr_.get() };
 		}
 
-	private: /* Graph component */
+	private: /* Constant Graph component */
 		void build_input(LLAMAGraph &graph) {
 			const GGUFContext &context = *context_ptr_;
 			graph.token_embedding = create_weight_tensor(context, graph, 

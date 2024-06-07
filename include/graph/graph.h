@@ -33,6 +33,7 @@ namespace spy {
 
 	struct DataNode {
 		friend class Graph;
+		friend class GraphView;
 		friend class GraphControlHeader;
 	public:
 		using NodeArray = std::vector<OperatorNode *>;
@@ -73,6 +74,8 @@ namespace spy {
 		 */
 		void output_connect(OperatorNode *out_node_ptr) { info.output.push_back(out_node_ptr);  }
 
+		void clear_output() { info.output.clear(); }
+
 	public:
 		NodeID id()                         const { return info.id;            }
 
@@ -90,6 +93,7 @@ namespace spy {
 
 	struct OperatorNode {
 		friend class Graph;
+		friend class GraphView;
 		friend class GraphControlHeader;
 	public:
 		using NodeArray = std::vector<DataNode *>;
@@ -134,6 +138,10 @@ namespace spy {
 		 */
 		void output_connect(DataNode *out_node_ptr) { info.output.push_back(out_node_ptr);  }
 
+		void clear_input()  { info.input.clear(); }
+
+		void clear_output() { info.output.clear(); }
+
 	public:
 		NodeID id()                     const { return info.id;            }
 
@@ -165,8 +173,6 @@ namespace spy {
 	class Graph {
 		friend class GraphView;
 	public:
-		static constexpr NodeID OUTPUT_NODE_ID = 0;
-
 		using DataNodeElement     = std::unique_ptr<DataNode>;
 
 		using OperatorNodeElement = std::unique_ptr<OperatorNode>;
@@ -179,10 +185,7 @@ namespace spy {
 		std::string 						name_;
 
 	public:
-		Graph(const std::string_view name): name_(name) {
-			OperatorNode *node_ptr = alloc_node<OperatorNode>(OperatorType::Nop);
-			node_ptr->info.id = OUTPUT_NODE_ID;
-		}
+		Graph(const std::string_view name): name_(name) { }
 
 		Graph(Graph &&other) = delete;
 
@@ -209,12 +212,14 @@ namespace spy {
 
 		void connect(DataNode *data_node_ptr, OperatorNode *op_node_ptr) const {
 			op_node_ptr->input_connect(data_node_ptr);
+			data_node_ptr->output_connect(op_node_ptr);
 		}
 
-		void set_end(DataNode *data_node_ptr) {
-			OperatorNodeElement &output_node_ptr = op_nodes_[OUTPUT_NODE_ID];
-			output_node_ptr->input_connect(data_node_ptr);
-		}
+	public:
+		void clear_data_node()          { data_nodes_.clear(); }
+		void clear_op_node()            { op_nodes_.clear(); }
+		void clear_data_connection()    { for (auto &data_node: data_nodes_) { data_node->clear_output(); } }
+		void clear_op_connection()      { for (auto &op_node: op_nodes_) { op_node->clear_output(); op_node->clear_input(); }}
 
 	public: /* Basic information */
 		size_t 	num_data_node() 						const { return data_nodes_.size(); }
@@ -233,31 +238,32 @@ namespace spy {
 		std::vector<RelaxedAtomWrapper<int>>            op_recv_count_array_;
 
 	public:
+		void reserve(size_t num_data_node, size_t num_op_node) {
+			data_node_ptr_array_.resize(num_data_node, nullptr);
+			op_node_ptr_array_.resize(num_op_node, nullptr);
+			data_recv_count_array_.resize(num_data_node, 0);
+			data_send_count_array_.resize(num_data_node, 0);
+			op_recv_count_array_.resize(num_op_node, 0);
+		}
+
 		void init_node_id() const {
 			for (size_t id = 0; DataNode *data_node_ptr: data_node_ptr_array_) { data_node_ptr->info.id = id++; }
 			for (size_t id = 0; OperatorNode *op_node_ptr: op_node_ptr_array_) { op_node_ptr->info.id = id++; }
 		}
 
 		void init_dep_count() {
-			data_recv_count_array_.clear();
-			data_send_count_array_.clear();
-			op_recv_count_array_.clear();
-
 			data_recv_count_array_.resize(data_node_ptr_array_.size(), 0);
 			data_send_count_array_.resize(data_node_ptr_array_.size(), 0);
 			op_recv_count_array_.resize(op_node_ptr_array_.size(), 0);
 
-			for (OperatorNode *op_node_ptr: op_node_ptr_array_) {
+			for (const OperatorNode *op_node_ptr: op_node_ptr_array_) {
 				op_recv_count_array_[op_node_ptr->info.id].store(op_node_ptr->num_input(), std::memory_order_relaxed);
 
-				for (DataNode *data_node_ptr: op_node_ptr->info.input) {
-					data_node_ptr->output_connect(op_node_ptr);
-				}
-				for (DataNode *data_node_ptr: op_node_ptr->info.output) {
+				for (const DataNode *data_node_ptr: op_node_ptr->info.output) {
 					data_recv_count_array_[data_node_ptr->info.id].value.fetch_add(1, std::memory_order_relaxed);
 				}
 			}
-			for (DataNode *data_node_ptr: data_node_ptr_array_) {
+			for (const DataNode *data_node_ptr: data_node_ptr_array_) {
 				data_send_count_array_[data_node_ptr->info.id].store(data_node_ptr->num_output(), std::memory_order_relaxed);
 			}
 		}
@@ -280,14 +286,14 @@ namespace spy {
 
 	class GraphView {
 	private:
-		std::vector<Graph *> graph_ptr_array_;
+		std::vector<const Graph *> graph_ptr_array_;
 
 	public:
 		GraphView() = default;
 
-		GraphView(Graph *graph_ptr): GraphView({graph_ptr}) {}
+		GraphView(const Graph *graph_ptr): GraphView({graph_ptr}) {}
 
-		GraphView(std::initializer_list<Graph *> graph_view_list): graph_ptr_array_(graph_view_list) {}
+		GraphView(std::initializer_list<const Graph *> &&graph_view_list): graph_ptr_array_(graph_view_list) {}
 
 		~GraphView() = default;
 
@@ -302,20 +308,30 @@ namespace spy {
 		GraphControlHeader get_control_header() const {
 			GraphControlHeader control_header;
 
-			for (Graph *graph_ptr: graph_ptr_array_) {
-				auto &array = control_header.data_node_ptr_array_;
-				array.reserve(array.size() + graph_ptr->data_nodes_.size());
-				for (auto &node_ptr: graph_ptr->data_nodes_) {
-					array.emplace_back(node_ptr.get());
-				}
+			/* Reserve enough space */
+			size_t total_data_node_num = 0;
+			size_t total_op_node_num   = 0;
+			for (const Graph *graph_ptr: graph_ptr_array_) { total_data_node_num += graph_ptr->num_data_node(); }
+			for (const Graph *graph_ptr: graph_ptr_array_) { total_op_node_num   += graph_ptr->num_op_node();   }
+			control_header.reserve(total_data_node_num, total_op_node_num);
+
+			/* Init header */
+			for (size_t cur_node_num = 0; const Graph *graph_ptr: graph_ptr_array_) {
+				auto &dst_array = control_header.data_node_ptr_array_;
+				auto &src_array = graph_ptr->data_nodes_;
+				std::transform(src_array.begin(), src_array.end(), dst_array.begin() + cur_node_num,
+							   [](auto &node_ptr){ return std::to_address(node_ptr); });
+				cur_node_num += src_array.size();
 			}
-			for (Graph *graph_ptr: graph_ptr_array_) {
-				auto &array = control_header.op_node_ptr_array_;
-				array.reserve(array.size() + graph_ptr->op_nodes_.size());
-				for (auto &node_ptr: graph_ptr->op_nodes_) {
-					array.emplace_back(node_ptr.get());
-				}
+			// The end node of graph should be merged as an identity
+			for (size_t cur_node_num = 0; const Graph *graph_ptr: graph_ptr_array_) {
+				auto &dst_array = control_header.op_node_ptr_array_;
+				auto &src_array = graph_ptr->op_nodes_;
+				std::transform(src_array.begin(), src_array.end(), dst_array.begin() + cur_node_num,
+				               [](auto &node_ptr){ return std::to_address(node_ptr); });
+				cur_node_num += src_array.size();
 			}
+
 			control_header.init_node_id();
 			control_header.init_dep_count();
 			return control_header;

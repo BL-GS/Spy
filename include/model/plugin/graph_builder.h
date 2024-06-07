@@ -90,8 +90,6 @@ namespace spy {
                 .expert_id   = expert_id
             };
 	        DataNode *node_ptr = graph.alloc_node<DataNode>(property, shape, data_ptr);
-
-			graph.set_end(node_ptr);
 			return node_ptr;
         }
 
