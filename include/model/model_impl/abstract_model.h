@@ -156,7 +156,9 @@ namespace spy {
         virtual void init_tokenizer() = 0;
 
     public: /* Graph building */
-        virtual std::unique_ptr<Graph>      build_graph(ModelIO &model_io) = 0;
+        virtual GraphView build_graph(ModelIO &model_io) = 0;
+
+		// virtual std::unique_ptr<Graph>     &update_graph(ModelIO &model_io) = 0;
 
         const auto &                        get_tensor_info_map()   const { return context_ptr_->infos; }
 

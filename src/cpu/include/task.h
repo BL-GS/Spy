@@ -170,6 +170,8 @@ namespace spy::cpu {
 		ControlHeader(int num_task): num_task(num_task) {}
 
 		virtual ~ControlHeader() { if (callback) { callback(); } }
+
+		virtual void init(const OperatorEnvParam &param) { }
 	};
 
 	struct MuxtexControlHeader: ControlHeader {
@@ -178,14 +180,6 @@ namespace spy::cpu {
 		MuxtexControlHeader() = default;
 		MuxtexControlHeader(int num_task): ControlHeader(num_task) {}
 		~MuxtexControlHeader() override = default;
-	};
-
-	struct LatchControlHeader: ControlHeader {
-		std::latch latch;
-
-		LatchControlHeader(std::ptrdiff_t expect): latch(expect) {}
-		LatchControlHeader(int num_task, std::ptrdiff_t expect): ControlHeader(num_task), latch(expect) {}
-		~LatchControlHeader() override = default;
 	};
 
 	struct BufferControlHeader: ControlHeader {

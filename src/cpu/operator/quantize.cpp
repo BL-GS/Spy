@@ -10,15 +10,15 @@
 namespace spy::cpu {
 
 	std::shared_ptr<ControlHeader> OperatorQuantizeImpl::get_control_header([[maybe_unused]] CPUBackend *backend_ptr, const OperatorNode *op_node) {
-        const auto &operand  = op_node->get_input<DataNode>(0).tensor;
+        const auto &operand  = op_node->input(0).tensor;
         const auto &shape_operand = operand.get_shape();
         const int num_task = shape_operand.num_row();
         return std::make_shared<ControlHeader>(num_task);
     }
 
 	OperatorResult OperatorQuantizeImpl::execute([[maybe_unused]] CPUBackend *backend_ptr, const OperatorEnvParam &param, OperatorNode *op_node) {
-		const auto &operand = op_node->get_input<DataNode>(0).tensor;
-		const auto &result  = op_node->get_output<DataNode>(0).tensor;
+		const auto &operand = op_node->input(0).tensor;
+		const auto &result  = op_node->output(0).tensor;
 
         const NumberType from_type = operand.get_number_type();
         const NumberType to_type   = result.get_number_type();

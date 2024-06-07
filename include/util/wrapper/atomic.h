@@ -74,14 +74,17 @@ namespace spy {
 
         RelaxedAtomWrapper &operator=(const RelaxedAtomWrapper &other) {
             value.store(other.value.load(std::memory_order_relaxed), std::memory_order_relaxed);
+			return *this;
         }
 
         RelaxedAtomWrapper &operator=(const std::atomic<T> &other) {
             value.store(other.load(std::memory_order_relaxed), std::memory_order_relaxed);
+			return *this;
         }
 
         RelaxedAtomWrapper &operator=(const T &other) {
             value.store(other, std::memory_order_relaxed);
+			return *this;
         }
 
         T load(std::memory_order order = std::memory_order_acq_rel) { return value.load(order); }

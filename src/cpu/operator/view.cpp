@@ -25,7 +25,7 @@ namespace spy::cpu {
     }
 
 	std::shared_ptr<ControlHeader> OperatorGetRowImpl::get_control_header([[maybe_unused]] CPUBackend *backend_ptr, const OperatorNode *op_node) {
-        const auto &operand_1  = op_node->get_input<DataNode>(1).tensor;
+        const auto &operand_1  = op_node->input(1).tensor;
         const auto &shape_1 = operand_1.get_shape();
 		const auto [ne10, ne11, ne12, ne13] = shape_1.elements;
         const int num_task = ne12 * ne11 * ne10;
@@ -33,9 +33,9 @@ namespace spy::cpu {
     }
 
 	OperatorResult OperatorGetRowImpl::execute([[maybe_unused]] CPUBackend *backend_ptr, const OperatorEnvParam &param, OperatorNode *op_node) {
-		const auto &operand_0 = op_node->get_input<DataNode>(0).tensor;
-		const auto &operand_1 = op_node->get_input<DataNode>(1).tensor;
-		const auto &result    = op_node->get_output<DataNode>(0).tensor;
+		const auto &operand_0 = op_node->input(0).tensor;
+		const auto &operand_1 = op_node->input(1).tensor;
+		const auto &result    = op_node->output(0).tensor;
 
         const auto &shape_0     = operand_0.get_shape();
         const auto &shape_1     = operand_1.get_shape();
@@ -191,15 +191,15 @@ namespace spy::cpu {
     }
 
 	std::shared_ptr<ControlHeader> OperatorDupImpl::get_control_header([[maybe_unused]] CPUBackend *backend_ptr, const OperatorNode *op_node) {
-        const auto &operand  = op_node->get_input<DataNode>(0).tensor;
+        const auto &operand  = op_node->input(0).tensor;
         const auto &shape_operand = operand.get_shape();
         const int num_task = shape_operand.num_row();
         return std::make_shared<ControlHeader>(num_task);
     }
 
 	OperatorResult OperatorDupImpl::execute([[maybe_unused]] CPUBackend *backend_ptr, const OperatorEnvParam &param, OperatorNode *op_node) {
-		const auto &operand = op_node->get_input<DataNode>(0).tensor;
-		      auto &result  = op_node->get_output<DataNode>(0).tensor;
+		const auto &operand = op_node->input(0).tensor;
+		      auto &result  = op_node->output(0).tensor;
 
         return dup_execute(backend_ptr, param, result, operand);
 	}
@@ -210,9 +210,9 @@ namespace spy::cpu {
     }
 
 	OperatorResult OperatorCopyImpl::execute(CPUBackend *backend_ptr, const OperatorEnvParam &param, OperatorNode *op_node) {
-		const auto &operand_0 = op_node->get_input<DataNode>(0).tensor;
-		      auto &operand_1  = op_node->get_input<DataNode>(1).tensor;
-			  auto &result  = op_node->get_output<DataNode>(0).tensor;
+		const auto &operand_0 = op_node->input(0).tensor;
+		      auto &operand_1  = op_node->input(1).tensor;
+			  auto &result  = op_node->output(0).tensor;
 
         const OperatorResult ret = dup_execute(backend_ptr, param, operand_1, operand_0);
 		if (ret.status == OperatorStatus::Success) { result.set_data_ptr(operand_1.get()); }
@@ -224,8 +224,8 @@ namespace spy::cpu {
     }
 
 	OperatorResult OperatorReshapeImpl::execute([[maybe_unused]] CPUBackend *backend_ptr, const OperatorEnvParam &param, OperatorNode *op_node) {
-		const auto &operand = op_node->get_input<DataNode>(0).tensor;
-		auto &result  = op_node->get_output<DataNode>(0).tensor;
+		const auto &operand = op_node->input(0).tensor;
+		auto &result  = op_node->output(0).tensor;
 
         result.set_data_ptr(operand.get());
         return { 0_op_end };
@@ -236,8 +236,8 @@ namespace spy::cpu {
     }
 
 	OperatorResult OperatorViewImpl::execute([[maybe_unused]] CPUBackend *backend_ptr, const OperatorEnvParam &param, OperatorNode *op_node) {
-        const auto &operand  = op_node->get_input<DataNode>(0).tensor;
-        auto  &result        = op_node->get_output<DataNode>(0).tensor;
+        const auto &operand  = op_node->input(0).tensor;
+        auto  &result        = op_node->output(0).tensor;
         const int64_t offset = static_cast<OperatorDefinition<OperatorType::View> *>(op_node)->offset;
 
         result.set_data_ptr(operand.get<uint8_t>() + offset);
@@ -249,8 +249,8 @@ namespace spy::cpu {
     }
 
     OperatorResult OperatorTransposeImpl::execute([[maybe_unused]] CPUBackend *backend_ptr, const OperatorEnvParam &param, OperatorNode *op_node) {
-		const auto &operand = op_node->get_input<DataNode>(0).tensor;
-		auto &result  = op_node->get_output<DataNode>(0).tensor;
+		const auto &operand = op_node->input(0).tensor;
+		auto &result  = op_node->output(0).tensor;
 
         result.set_data_ptr(operand.get());
         return { 0_op_end };
@@ -261,23 +261,23 @@ namespace spy::cpu {
     }
 
 	OperatorResult OperatorPermuteImpl::execute([[maybe_unused]] CPUBackend *backend_ptr, const OperatorEnvParam &param, OperatorNode *op_node) {
-		const auto &operand = op_node->get_input<DataNode>(0).tensor;
-		auto &result  = op_node->get_output<DataNode>(0).tensor;
+		const auto &operand = op_node->input(0).tensor;
+		auto &result  = op_node->output(0).tensor;
 
         result.set_data_ptr(operand.get());
         return { 0_op_end };
     }
 
 	std::shared_ptr<ControlHeader> OperatorContiguousImpl::get_control_header([[maybe_unused]] CPUBackend *backend_ptr, const OperatorNode *op_node) {
-        const auto &operand  = op_node->get_input<DataNode>(0).tensor;
+        const auto &operand  = op_node->input(0).tensor;
         const auto &shape_operand = operand.get_shape();
         const int num_task = shape_operand.num_row();
         return std::make_shared<ControlHeader>(num_task);
     }
 
 	OperatorResult OperatorContiguousImpl::execute([[maybe_unused]] CPUBackend *backend_ptr, const OperatorEnvParam &param, OperatorNode *op_node) {
-        const auto &operand  = op_node->get_input<DataNode>(0).tensor;
-        auto  &result        = op_node->get_output<DataNode>(0).tensor;
+        const auto &operand  = op_node->input(0).tensor;
+        auto  &result        = op_node->output(0).tensor;
 
         const auto &shape_operand = operand.get_shape();
 

@@ -32,7 +32,7 @@ namespace spy {
     template<>
 	class GraphSchedulerImpl<SchedulerType::Default> final: public GraphScheduler {
 	public:
-		using TopoNodeQueue = moodycamel::BlockingConcurrentQueue<NodeCredit>;
+		using TopoNodeQueue = moodycamel::BlockingConcurrentQueue<OperatorNode *>;
 		
 	public:
 		GraphSchedulerImpl(const std::vector<AbstractBackend *> &backend_array): GraphScheduler(backend_array) {}
@@ -40,62 +40,48 @@ namespace spy {
 		~GraphSchedulerImpl() noexcept override = default;
 
 	public:
-		
-		void reserve(Graph *graph_ptr) override { 
-			// By default, do not reserve any space 
-		}
-
-		void execute(Graph *graph_ptr) override {
-			using CounterArrayType = std::vector<RelaxedAtomWrapper<size_t>>;
-			auto data_recv_counts    = graph_ptr->get_data_recv_count<CounterArrayType>();
-			auto data_send_counts    = graph_ptr->get_data_send_count<CounterArrayType>();
-			auto op_recv_counts 	 = graph_ptr->get_op_recv_count<CounterArrayType>();
-
+		void execute(GraphView &graph_view) override {
+			GraphControlHeader graph_control_header = graph_view.get_control_header();
 			TopoNodeQueue node_queue;
 
-			for (size_t i = 0; i < data_recv_counts.size(); ++i) {
-				if (data_recv_counts[i].load(std::memory_order::relaxed) == 0) {
-					const auto &data_node = graph_ptr->get_data_node(i);
-					const auto &op_nodes  = data_node->get_output();
+			for (size_t i = 0; i < graph_control_header.num_data_node(); ++i) {
+				if (graph_control_header.data_recv(i).load(std::memory_order_relaxed) == 0) {
+					const auto &data_node = graph_control_header.data_node(i);
+					const auto &op_nodes   = data_node->output();
 
-					for (const auto &op_node: op_nodes) {
-						const auto op_credit  = op_node->credit;
-						const auto op_node_id = op_credit.node_id;
-						const auto res_count  = --op_recv_counts[op_node_id];
+					for (auto *op_node_ptr: op_nodes) {
+						auto &op_recv_count = graph_control_header.op_recv(op_node_ptr);
+						const auto res_count  = --op_recv_count;
 
-						if (res_count == 0) { node_queue.enqueue(op_credit); }
+						if (res_count == 0) { node_queue.enqueue(op_node_ptr); }
 					}
 				}
 			}
 
 			const auto op_step = [&] (OperatorNode *cur_node_ptr,  AbstractBackend *backend_ptr) {
 				// Deallocate outdated input
-				try_deallocate_inputs(backend_ptr, cur_node_ptr, data_send_counts);
+				try_deallocate_inputs(backend_ptr, cur_node_ptr, graph_control_header);
 				// Step forward
-				const NodeCredit cur_credit = cur_node_ptr->credit;
-
-				step_op_node(graph_ptr, node_queue, data_recv_counts, op_recv_counts, cur_credit);
+				step_op_node(node_queue, cur_node_ptr, graph_control_header);
 			};
 
 			while (true) {
 				// TODO: select backend adaptively
 				AbstractBackend *backend_ptr = backend_array_[0];
 
-				NodeCredit cur_credit = Graph::INVALID_NODE_CREDIT;
-				node_queue.wait_dequeue(cur_credit);
+				OperatorNode *cur_node_ptr = nullptr;
+				node_queue.wait_dequeue(cur_node_ptr);
 
 				// We reach the end of the graph
-				if (cur_credit == Graph::OUTPUT_NODE_CREDIT) [[unlikely]] { break; }
-
-				OperatorNode *cur_node_ptr = graph_ptr->get_node_content<OperatorNode>(cur_credit);
+				if (cur_node_ptr->id() == Graph::OUTPUT_NODE_ID) [[unlikely]] { break; }
 
 				// Allocate to-be-use output
-				 try_allocate_outputs(backend_ptr, cur_node_ptr, data_send_counts);
+				try_allocate_outputs(backend_ptr, cur_node_ptr, graph_control_header);
 
 				// Allocate buffer
 				spy_debug(DebugFlag::Execute, "Execute {:8} -> {:32}", 
 					cur_node_ptr->op_type,
-					cur_node_ptr->get_input<DataNode>(0).property.to_string()
+					cur_node_ptr->input(0).property.to_string()
 				);
 
 				backend_ptr->submit(cur_node_ptr, 
@@ -107,31 +93,26 @@ namespace spy {
 		}
 
 	private:
-		static void step_op_node(const Graph *graph_ptr, TopoNodeQueue &node_queue,
-								 auto &data_dep_count, auto &op_dep_count, NodeCredit cur_node_credit) {
-			const OperatorNode *input_node_ptr = graph_ptr->get_node_content<OperatorNode>(cur_node_credit);
-			const auto &data_nodes = input_node_ptr->get_output();
+		static void step_op_node(TopoNodeQueue &node_queue,
+								 OperatorNode *input_node_ptr, GraphControlHeader &header) {
+			const auto &data_nodes = input_node_ptr->output();
 			for (const DataNode *data_node_ptr: data_nodes) {
-				const NodeCredit data_credit = data_node_ptr->credit;
-
-				const size_t cur_data_dep_count = --data_dep_count[data_credit.node_id];
+				const size_t cur_data_dep_count = --header.data_recv(data_node_ptr);
 
 				if (cur_data_dep_count == 0) {
-					const auto &start_op_nodes = data_node_ptr->get_output();
-					for (const OperatorNode *start_op_node_ptr: start_op_nodes) {
-						const NodeCredit start_node_credit = start_op_node_ptr->credit;
-
-						const size_t cur_dep_count = --op_dep_count[start_node_credit.node_id];
-						if (cur_dep_count == 0) { node_queue.enqueue(start_node_credit); }
+					const auto &start_op_nodes = data_node_ptr->output();
+					for (OperatorNode *start_op_node_ptr: start_op_nodes) {
+						const size_t cur_dep_count = --header.op_recv(start_op_node_ptr);
+						if (cur_dep_count == 0) { node_queue.enqueue(start_op_node_ptr); }
 					}
 				}
 			}
 		}
 
 	private:
-		static void try_allocate_outputs(AbstractBackend *backend_ptr, const OperatorNode *cur_node_ptr, auto &data_dep_count) {
-			const auto &inputs = cur_node_ptr->get_input();
-			const auto &outputs = cur_node_ptr->get_output();
+		static void try_allocate_outputs(AbstractBackend *backend_ptr, const OperatorNode *cur_node_ptr, GraphControlHeader &header) {
+			const auto &inputs = cur_node_ptr->input();
+			const auto &outputs = cur_node_ptr->output();
 
 			if (!is_view(cur_node_ptr->op_type)) {
 				for (DataNode *data_node_ptr: outputs) {
@@ -147,21 +128,19 @@ namespace spy {
 				DataNode *view_src = (input_node_ptr->view_src == nullptr) ? input_node_ptr : input_node_ptr->view_src;
 				output_node_ptr->view_src = view_src;
 				// Count up the dependency of the source because we fork a new view
-				const NodeCredit src_credit = view_src->credit;
-				++data_dep_count[src_credit.node_id];
+				++header.data_send(view_src);
 			}
 		}
 
 		
-		static void try_deallocate_inputs(AbstractBackend *backend_ptr, const OperatorNode *cur_node_ptr, auto &data_dep_count) {
-			const auto &inputs = cur_node_ptr->get_input();
+		static void try_deallocate_inputs(AbstractBackend *backend_ptr, const OperatorNode *cur_node_ptr, GraphControlHeader &header) {
+			const auto &inputs = cur_node_ptr->input();
 
 			for (DataNode *data_node_ptr: inputs) {
-				const NodeCredit 	node_credit = data_node_ptr->credit;
-				const DataNodeType	node_type	= data_node_ptr->property.node_type; 
+				const DataNodeType	node_type	= data_node_ptr->property.node_type;
 
 				if (node_type == DataNodeType::Variable) {
-					const size_t cur_data_dep_count = --data_dep_count[node_credit.node_id];
+					const size_t cur_data_dep_count = --header.data_send(data_node_ptr);
 					spy_assert(data_node_ptr->view_src == nullptr);
 					if (cur_data_dep_count == 0) {
 						Tensor &tensor = data_node_ptr->tensor;
@@ -172,12 +151,11 @@ namespace spy {
 						tensor.set_data_ptr(nullptr);
 					}
 				} else if (node_type == DataNodeType::View) {
-					const    NodeCredit src_node_credit      = data_node_ptr->view_src->credit;
 					DataNode *src_data_node_ptr              = data_node_ptr->view_src;
 					const    DataNodeType src_data_node_type = src_data_node_ptr->property.node_type;
 					Tensor   &src_tensor                     = src_data_node_ptr->tensor;
 					// We need to count down the dependency of the source, and release it if needed.
-					const size_t cur_data_dep_count = --data_dep_count[src_node_credit.node_id];
+					const size_t cur_data_dep_count = --header.data_send(src_data_node_ptr);
 					switch (src_data_node_type) {
 
 					case DataNodeType::Constant:

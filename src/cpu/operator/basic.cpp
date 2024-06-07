@@ -5,7 +5,7 @@
 namespace spy::cpu {
 
 	inline static std::shared_ptr<ControlHeader> binary_control_header(const OperatorNode *op_node) {
-		const auto &operand_0	= op_node->get_input<DataNode>(0).tensor;
+		const auto &operand_0	= op_node->input(0).tensor;
 		const auto &shape_0  = operand_0.get_shape();
 
 		const int num_task = shape_0.num_row();
@@ -14,9 +14,9 @@ namespace spy::cpu {
 
 	template<class T_OpFunc>
 	inline static OperatorResult binary_execution(const OperatorEnvParam &param, OperatorNode *op_node) {
-		const auto &operand_0 = op_node->get_input<DataNode>(0).tensor;
-		const auto &operand_1 = op_node->get_input<DataNode>(1).tensor;
-		const auto &result    = op_node->get_output<DataNode>(0).tensor;
+		const auto &operand_0 = op_node->input(0).tensor;
+		const auto &operand_1 = op_node->input(1).tensor;
+		const auto &result    = op_node->output(0).tensor;
 
 		const auto &shape_0     = operand_0.get_shape();
 		const auto &shape_1     = operand_1.get_shape();

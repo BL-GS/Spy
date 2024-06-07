@@ -15,9 +15,7 @@ namespace spy {
         virtual ~GraphScheduler() noexcept = default;
 
     public:
-        virtual void reserve(Graph *graph_ptr) = 0;
-
-        virtual void execute(Graph *graph_ptr) = 0;
+        virtual void execute(GraphView &graph_view) = 0;
 
     };
 

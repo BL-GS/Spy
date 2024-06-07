@@ -21,15 +21,15 @@ namespace spy::cpu {
 	};
 
 	std::shared_ptr<ControlHeader> OperatorReluImpl::get_control_header([[maybe_unused]] CPUBackend *backend_ptr, const OperatorNode *op_node) {
-        const auto &operand  = op_node->get_input<DataNode>(0).tensor;
+        const auto &operand  = op_node->input(0).tensor;
         const auto &shape_operand = operand.get_shape();
         const int num_task = shape_operand.num_row();
         return std::make_shared<ControlHeader>(num_task);
     }
 
 	OperatorResult OperatorReluImpl::execute([[maybe_unused]] CPUBackend *backend_ptr, const OperatorEnvParam &param, OperatorNode *op_node) {
-		const auto &operand = op_node->get_input<DataNode>(0).tensor;
-		const auto &result  = op_node->get_output<DataNode>(0).tensor;
+		const auto &operand = op_node->input(0).tensor;
+		const auto &result  = op_node->output(0).tensor;
 
         const auto &shape_operand = operand.get_shape();
         const auto &shape_res     = result.get_shape();
@@ -51,15 +51,15 @@ namespace spy::cpu {
     }
 
 	std::shared_ptr<ControlHeader> OperatorSiluImpl::get_control_header([[maybe_unused]] CPUBackend *backend_ptr, const OperatorNode *op_node) {
-        const auto &operand  = op_node->get_input<DataNode>(0).tensor;
+        const auto &operand  = op_node->input(0).tensor;
         const auto &shape_operand = operand.get_shape();
         const int num_task = shape_operand.num_row();
         return std::make_shared<ControlHeader>(num_task);
     }
 
 	OperatorResult OperatorSiluImpl::execute([[maybe_unused]] CPUBackend *backend_ptr, const OperatorEnvParam &param, OperatorNode *op_node) {
-		const auto &operand = op_node->get_input<DataNode>(0).tensor;
-		const auto &result  = op_node->get_output<DataNode>(0).tensor;
+		const auto &operand = op_node->input(0).tensor;
+		const auto &result  = op_node->output(0).tensor;
 
         const auto &shape_operand = operand.get_shape();
 
@@ -80,15 +80,15 @@ namespace spy::cpu {
     }
 
 	std::shared_ptr<ControlHeader> OperatorSoftmaxImpl::get_control_header([[maybe_unused]] CPUBackend *backend_ptr, const OperatorNode *op_node) {
-        const auto &operand  = op_node->get_input<DataNode>(0).tensor;
+        const auto &operand  = op_node->input(0).tensor;
         const auto &shape_operand = operand.get_shape();
         const int num_task = shape_operand.num_row();
         return std::make_shared<ControlHeader>(num_task);
     }
 
 	OperatorResult operator_softmax_execute([[maybe_unused]] CPUBackend *backend_ptr, const OperatorEnvParam &param, OperatorNode *op_node) {
-        const auto &operand = op_node->get_input<DataNode>(0).tensor;
-        const auto &result  = op_node->get_output<DataNode>(0).tensor;
+        const auto &operand = op_node->input(0).tensor;
+        const auto &result  = op_node->output(0).tensor;
         const float scale  = static_cast<OperatorDefinition<OperatorType::Softmax> *>(op_node)->scale;
 
         const auto &shape_res     = result.get_shape();
@@ -130,9 +130,9 @@ namespace spy::cpu {
     }
 
     static OperatorResult operator_masked_softmax_execute([[maybe_unused]] CPUBackend *backend_ptr, const OperatorEnvParam &param, OperatorNode *op_node) {
-        const auto &operand = op_node->get_input<DataNode>(0).tensor;
-        const auto mask    = op_node->get_input<DataNode>(1).tensor;
-        const auto &result  = op_node->get_output<DataNode>(0).tensor;
+        const auto &operand = op_node->input(0).tensor;
+        const auto mask    = op_node->input(1).tensor;
+        const auto &result  = op_node->output(0).tensor;
         const float scale  = static_cast<OperatorDefinition<OperatorType::Softmax> *>(op_node)->scale;
 
         const auto &shape_res     = result.get_shape();
@@ -183,20 +183,20 @@ namespace spy::cpu {
     }
 
     OperatorResult OperatorSoftmaxImpl::execute([[maybe_unused]] CPUBackend *backend_ptr, const OperatorEnvParam &param, OperatorNode *op_node) {
-        if (op_node->get_input().size() == 1) { return operator_softmax_execute(backend_ptr, param, op_node); }
+        if (op_node->num_input() == 1) { return operator_softmax_execute(backend_ptr, param, op_node); }
         return operator_masked_softmax_execute(backend_ptr, param, op_node);
     }
 
 	std::shared_ptr<ControlHeader> OperatorNormRMSImpl::get_control_header([[maybe_unused]] CPUBackend *backend_ptr, const OperatorNode *op_node) {
-        const auto &operand  = op_node->get_input<DataNode>(0).tensor;
+        const auto &operand  = op_node->input(0).tensor;
         const auto &shape_operand = operand.get_shape();
         const int num_task = shape_operand.num_row();
         return std::make_shared<ControlHeader>(num_task);
     }
 
 	OperatorResult OperatorNormRMSImpl::execute([[maybe_unused]] CPUBackend *backend_ptr, const OperatorEnvParam &param, OperatorNode *op_node) {
-		const auto &operand = op_node->get_input<DataNode>(0).tensor;
-		const auto &result  = op_node->get_output<DataNode>(0).tensor;
+		const auto &operand = op_node->input(0).tensor;
+		const auto &result  = op_node->output(0).tensor;
         const float eps = static_cast<OperatorDefinition<OperatorType::NormRMS> *>(op_node)->eps;
 
         const auto &shape_res = result.get_shape();
@@ -260,7 +260,7 @@ namespace spy::cpu {
     }
 
 	std::shared_ptr<ControlHeader> OperatorRopeImpl::get_control_header([[maybe_unused]] CPUBackend *backend_ptr, const OperatorNode *op_node) {
-        const auto &operand_0 = op_node->get_input<DataNode>(0).tensor;
+        const auto &operand_0 = op_node->input(0).tensor;
         const auto &shape_0 = operand_0.get_shape();
         const auto [ne00, ne01, ne02, ne03] = shape_0.elements;
         const int num_task = ne03 * ne02; 
@@ -268,9 +268,9 @@ namespace spy::cpu {
     }
 
 	OperatorResult OperatorRopeImpl::execute([[maybe_unused]] CPUBackend *backend_ptr, const OperatorEnvParam &param, OperatorNode *op_node) {
-        const auto &operand_0    = op_node->get_input<DataNode>(0).tensor;
-        const auto &operand_1    = op_node->get_input<DataNode>(1).tensor;
-        const auto &result       = op_node->get_output<DataNode>(0).tensor;
+        const auto &operand_0    = op_node->input(0).tensor;
+        const auto &operand_1    = op_node->input(1).tensor;
+        const auto &result       = op_node->output(0).tensor;
         const auto rope_context = static_cast<OperatorDefinition<OperatorType::Rope> *>(op_node)->rope_context;
 
         const auto [mode, num_past, num_dim, num_context, num_origin_context,

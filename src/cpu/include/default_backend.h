@@ -87,9 +87,11 @@ namespace spy::cpu {
 			if (num_task == 1) {
 				task_info.concurrency = 1;
 				task_info.tid 		  = 0;
+				header_ptr->init(task_info);
 				task_queue_.enqueue(std::forward<TaskInfo>(task_info));
 			} else {
 				const int concurrency = task_info.concurrency = std::min<int>(max_concurrency(), num_task);
+				header_ptr->init(task_info);
 				std::vector<TaskInfo> func_bulk;
 				func_bulk.reserve(concurrency);
 				for (int i = 0; i < concurrency; ++i) { 
@@ -174,7 +176,7 @@ namespace spy::cpu {
 				callback();
 			} else {
 				info.header_ptr->callback = std::forward<std::function<void()>>(callback);
-				thread_pool_.submit(std::move(info));	
+				thread_pool_.submit(std::move(info));
 			}
 		}
 

@@ -30,13 +30,13 @@ auto make_model_from_file(const std::string &model_filename, const HyperParam &h
 }
 
 void decode(std::unique_ptr<AbstractModel> &model_ptr, ModelIO &model_io, AbstractBackend *cpu_backend_ptr) {
-	auto graph_ptr = model_ptr->build_graph(model_io);
+	auto graph_view = model_ptr->build_graph(model_io);
 	/* Build up a scheduler for graph execution */
 	DefaultGraphScheduler schedule({cpu_backend_ptr});
 	/* Allocate space for tensors */
-	schedule.reserve(graph_ptr.get());
+	// schedule.reserve(graph_ptr.get());
 	/* Execute operations of the graph */
-	schedule.execute(graph_ptr.get());
+	schedule.execute(graph_view);
 }
 
 int main(int argc, char **argv) {

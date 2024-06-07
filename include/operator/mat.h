@@ -15,14 +15,8 @@ namespace spy {
 	public:
 		static constexpr OperatorType TYPE = OperatorType::MatMul;
 
-	public: /* Synchronization Utilities */
-		std::atomic<int> buffer_init_counter{0};
-		std::atomic<int> buffer_done_counter{0};
-
 	public:
-		OperatorDefinition() = default;
-
-		OperatorDefinition(NodeCredit credit): OperatorNode(credit, TYPE) {}
+	    OperatorDefinition(): OperatorNode(TYPE) {}
 
 
 	public: /* Interface for graph deduction */
@@ -30,11 +24,11 @@ namespace spy {
 		 * @brief Deduce the result tensor with proper shape
 		 * @return The tensor with the expected shape
 		 */
-		Tensor deduce_result() const { 
-            spy_assert(input.size() == 2, "Expect the number of operands to be 2 (cur: {})", input.size());
+		Tensor deduce_result() const {
+			spy_assert(num_input() == 2, "Expect the number of operands to be 2 (cur: {})", num_input());
 
-			const Tensor &operand_0 = input[0]->tensor;
-			const Tensor &operand_1 = input[1]->tensor;
+			const Tensor &operand_0 = input(0).tensor;
+			const Tensor &operand_1 = input(1).tensor;
 
 			const auto &shape_0     = operand_0.get_shape();
 			const auto &shape_1     = operand_1.get_shape();

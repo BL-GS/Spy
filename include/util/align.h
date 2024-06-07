@@ -17,7 +17,7 @@ namespace spy {
 	inline constexpr T div_floor(T val, T div) { return val / div; }
 
 	template<class T>
-	inline constexpr T div_ceil(T val, T div) { return (val + div) / div; }
+	inline constexpr T div_ceil(T val, T div) { return (val + div - 1) / div; }
 
 	template<class T>
 	inline constexpr T div_floor_pow2(T val, T bit) { return val >> bit; }

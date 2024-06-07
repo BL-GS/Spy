@@ -17,19 +17,17 @@
 namespace spy {
 
 	struct LLAMALayer: MultiHeadAttentionWeight, FFNWeight {
-		/* Normalization */
-		NodeCredit layer_out_norm		= Graph::INVALID_NODE_CREDIT;
 		/* KV Cache */
-		NodeCredit k_cache				= Graph::INVALID_NODE_CREDIT;
-		NodeCredit v_cache				= Graph::INVALID_NODE_CREDIT;
+		DataNode *k_cache				= nullptr;
+		DataNode *v_cache				= nullptr;
 	};
 
 	struct LLAMAGraph final: public Graph {
 		/* Input */
-		NodeCredit 					token_embedding	= Graph::INVALID_NODE_CREDIT;
+		DataNode *					token_embedding	= nullptr;
 		/* Output */
-		NodeCredit 					output_norm		= Graph::INVALID_NODE_CREDIT;
-		NodeCredit 					output			= Graph::INVALID_NODE_CREDIT;
+		DataNode *					output_norm		= nullptr;
+		DataNode *					output			= nullptr;
 		/* Attention & FFN */
 		std::vector<LLAMALayer> 	layers;
 
@@ -44,11 +42,11 @@ namespace spy {
 		using Layer = LLAMALayer;
 
 	private: /* Graph structure */
-		std::unique_ptr<LLAMAGraph> graph_ptr_;
+		std::unique_ptr<Graph>      graph_ptr_;
 
-		std::vector<float> kq_mask_;
+		std::vector<float>          kq_mask_;
 
-		std::unique_ptr<KVCache> kv_cache_ptr_;
+		std::unique_ptr<KVCache>    kv_cache_ptr_;
 
 	public:
 		LLAMAModel(std::unique_ptr<GGUFContext> &&context_ptr, const HyperParam &hyper_param):
@@ -80,7 +78,7 @@ namespace spy {
 		}
 
 	public: /* Graph building */
-		std::unique_ptr<Graph> build_graph(ModelIO &model_io) override {
+		GraphView build_graph(ModelIO &model_io) override {
 			const uint32_t num_layer 		 = metadata_.num_layer;
 
 			const size_t num_token 			 = model_io.num_token();
@@ -113,7 +111,7 @@ namespace spy {
 
 
 			graph_ptr_ = std::make_unique<LLAMAGraph>("LLaMa", num_layer);
-			LLAMAGraph &graph = *graph_ptr_;
+			LLAMAGraph &graph = *static_cast<LLAMAGraph *>(graph_ptr_.get());
 
 			/*
 				Build all constant tensors、input tensors and buffered tensors.
@@ -152,9 +150,9 @@ namespace spy {
 			}
 
 			/* Set input */
-			NodeCredit input_embedding = LLAMAGraph::INVALID_NODE_CREDIT;
+			DataNode *input_embedding = nullptr;
 			if (!model_io.token_id_array.empty()) {
-				NodeCredit input_token_id = create_input_tensor(graph,
+				DataNode *input_token_id = create_input_tensor(graph,
 					NumberType::INT32, 1, { num_token }, model_io.token_id_array.data(),
 					TensorType::InputTokenId
 				);
@@ -168,12 +166,12 @@ namespace spy {
 					TensorType::InputTokenEmbedding
 				);
 			}
-			const NodeCredit input_pos = create_input_tensor(graph,
+			DataNode *input_pos = create_input_tensor(graph,
 				NumberType::INT32, 1, { num_token }, model_io.positions.data(),
 				TensorType::InputPosition
 			);
 
-			const NodeCredit KQ_mask = create_input_tensor(graph,
+			DataNode *KQ_mask = create_input_tensor(graph,
 				NumberType::INT32, 2, { num_context, num_token }, kq_mask_.data(),
 				TensorType::InputKQMask
 			);
@@ -181,7 +179,7 @@ namespace spy {
 			
 			/* Set output */
 			model_io.logits.resize(num_token * num_vocab, 0.0F);
-			const NodeCredit output = create_output_tensor(graph,
+			DataNode *output = create_output_tensor(graph,
 				NumberType::FP32, 2, {num_vocab, num_token}, model_io.logits.data(),
 				TensorType::OutputLogits
 			);
@@ -191,7 +189,7 @@ namespace spy {
 				for (int layer_id = 0; layer_id < num_layer; ++layer_id) {
 					LLAMALayer &layer = graph.layers[layer_id];
 
-					const NodeCredit attn_out = MultiHeadAttentionBlock {
+					DataNode *attn_out = MultiHeadAttentionBlock {
 						/* Hyper param */
 						.ffn_norm_rms_eps    = metadata_.ffn_norm_rms_eps,
 						.num_embedding_head  = num_embedding_head,
@@ -215,18 +213,18 @@ namespace spy {
 					}.connect_attention<USE_KV_CACHE>(graph, layer_id);
 
 					/* Feed-forward network */
-					const NodeCredit ffn_inp  = make_stream<OperatorType::Add>(graph, 
+					DataNode *ffn_inp  = make_stream<OperatorType::Add>(graph, 
 						TensorType::V_FFNInput, layer_id, -1, 
 						{ attn_out, input_embedding }
 					);
-					const NodeCredit ffn_out  = FFNBlock {
+					DataNode *ffn_out  = FFNBlock {
 						.ffn_norm_rms_eps = metadata_.ffn_norm_rms_eps,
 						.weight			  = layer,
 						.ffn_input 		  = ffn_inp,
 					}.connect_ffn(graph, layer_id);
 
 					/* Output */
-					const NodeCredit logit_out = make_stream<OperatorType::Add>(graph, 
+					DataNode *logit_out = make_stream<OperatorType::Add>(graph, 
 						TensorType::V_FFNOutput, layer_id, -1,
 						{ ffn_inp, ffn_out }
 					);
@@ -234,11 +232,11 @@ namespace spy {
 					input_embedding = logit_out;
 				}
 
-				const NodeCredit result_norm = make_stream<OperatorType::NormRMS>(graph, 
+				DataNode *result_norm = make_stream<OperatorType::NormRMS>(graph, 
 					TensorType::V_ResultNorm, -1, -1, 
 					{ input_embedding }, metadata_.ffn_norm_rms_eps
 				);
-				const NodeCredit result_norm_weighted = make_stream<OperatorType::Mul>(graph, 
+				DataNode *result_norm_weighted = make_stream<OperatorType::Mul>(graph, 
 					TensorType::V_ResultNormWeighted, -1, -1,
 					{ result_norm, graph.output_norm }
 				);
@@ -253,7 +251,7 @@ namespace spy {
 				kv_cache_ptr_->step(num_token);
 			}			
 
-			return std::move(graph_ptr_);
+			return { graph_ptr_.get() };
 		}
 
 	private: /* Graph component */
@@ -273,7 +271,7 @@ namespace spy {
 			graph.output = create_weight_tensor(context, graph,
 					2, { metadata_.num_embedding, metadata_.num_vocab }, 
 					TensorType::Output);
-			if (graph.output == Graph::INVALID_NODE_CREDIT) {
+			if (graph.output == nullptr) {
 				graph.output = create_weight_tensor(context, graph,
 					2, { metadata_.num_embedding, metadata_.num_vocab }, 
 					TensorType::TokenEmbedding);

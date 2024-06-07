@@ -13,9 +13,7 @@ namespace spy {
 		static constexpr OperatorType TYPE = OperatorType::Relu;
 
 	public:
-		OperatorDefinition() = default;
-
-		OperatorDefinition(NodeCredit credit): OperatorNode(credit, TYPE) {}
+		OperatorDefinition(): OperatorNode(TYPE) {}
 
 	public: /* Interface for graph deduction */
 		/*! 
@@ -23,9 +21,9 @@ namespace spy {
 		 * @return The tensor with the expected shape
 		 */
 		Tensor deduce_result() const { 
-            spy_assert(input.size() == 1, "Expect the number of operands to be 1 (cur: {})", input.size());
+            spy_assert(num_input() == 1, "Expect the number of operands to be 1 (cur: {})", num_input());
 
-			const Tensor &operand_0 = input[0]->tensor;
+			const Tensor &operand_0 = input(0).tensor;
 
 			spy_assert(operand_0.get_number_type() == NumberType::FP32);
 
@@ -42,9 +40,7 @@ namespace spy {
 		static constexpr OperatorType TYPE = OperatorType::Silu;
 
 	public:
-		OperatorDefinition() = default;
-
-		OperatorDefinition(NodeCredit credit): OperatorNode(credit, TYPE) {}
+	    OperatorDefinition(): OperatorNode(TYPE) {}
 
 	public: /* Interface for graph deduction */
 		/*! 
@@ -52,9 +48,9 @@ namespace spy {
 		 * @return The tensor with the expected shape
 		 */
 		Tensor deduce_result() const { 
-            spy_assert(input.size() == 1, "Expect the number of operands to be 1 (cur: {})", input.size());
+            spy_assert(num_input() == 1, "Expect the number of operands to be 1 (cur: {})", num_input());
 
-			const Tensor &operand_0 = input[0]->tensor;
+			const Tensor &operand_0 = input(0).tensor;
 
 			spy_assert(operand_0.get_number_type() == NumberType::FP32);
 
@@ -74,9 +70,9 @@ namespace spy {
 		float scale;
 
 	public:
-		OperatorDefinition() = default;
+	    OperatorDefinition(): OperatorNode(TYPE) {}
 
-		OperatorDefinition(NodeCredit credit, const float scale): OperatorNode(credit, TYPE), scale(scale) {}
+		OperatorDefinition(const float scale): OperatorNode(TYPE), scale(scale) {}
 
 	public: /* Interface for graph deduction */
 		/*! 
@@ -84,9 +80,9 @@ namespace spy {
 		 * @return The tensor with the expected shape
 		 */
 		Tensor deduce_result() const { 
-			spy_assert(input.size() == 1 || input.size() == 2, "Expect the number of operands to be 1 or 2 (cur: {})", input.size());	
+			spy_assert(num_input() == 1 || num_input() == 2, "Expect the number of operands to be 1 or 2 (cur: {})", num_input());
 
-			const Tensor &operand_0 = input[0]->tensor;
+			const Tensor &operand_0 = input(0).tensor;
 			const auto &shape_0     = operand_0.get_shape();
 			const Shape shape_res   = shape_0;
 			return { shape_res, nullptr };
@@ -103,9 +99,9 @@ namespace spy {
         float eps;
 
 	public:
-		OperatorDefinition() = default;
+	    OperatorDefinition(): OperatorNode(TYPE) {}
 
-		OperatorDefinition(NodeCredit credit, float eps): OperatorNode(credit, TYPE), eps(eps) {}
+		OperatorDefinition(float eps): OperatorNode(TYPE), eps(eps) {}
 
 	public: /* Interface for graph deduction */
 		/*! 
@@ -113,10 +109,10 @@ namespace spy {
 		 * @return The tensor with the expected shape
 		 */
 		Tensor deduce_result() const { 
-			spy_assert(input.size() == 1, "Expect the number of operands to be 1 (cur: {})", input.size());	
+			spy_assert(num_input() == 1, "Expect the number of operands to be 1 (cur: {})", num_input());
 			spy_assert(eps > 0.0F, "Expect the eps > 0.0 (cur: {})", eps);
 
-			const Tensor &operand_0 = input[0]->tensor;
+			const Tensor &operand_0 = input(0).tensor;
 			const auto &shape_0     = operand_0.get_shape();
 			const Shape shape_res   = shape_0;
 			return { shape_res, nullptr };
@@ -132,10 +128,10 @@ namespace spy {
 		RopeContext rope_context;
 
 	public:
-		OperatorDefinition() = default;
+	    OperatorDefinition(): OperatorNode(TYPE) {}
 
-		OperatorDefinition(NodeCredit credit, const RopeContext &rope_context): 
-				OperatorNode(credit, TYPE), rope_context(rope_context) {}
+		OperatorDefinition(const RopeContext &rope_context): 
+				OperatorNode(TYPE), rope_context(rope_context) {}
 
 	public: /* Interface for graph deduction */
 		/*! 
@@ -143,9 +139,9 @@ namespace spy {
 		 * @return The tensor with the expected shape
 		 */
 		Tensor deduce_result() const { 
-			spy_assert(input.size() == 2, "Expect the number of operands to be 2 (cur: {})", input.size());	
+			spy_assert(num_input() == 2, "Expect the number of operands to be 2 (cur: {})", num_input());
 
-			const Tensor &operand_0 = input[0]->tensor;
+			const Tensor &operand_0 = input(0).tensor;
 
 			const auto &shape_0     = operand_0.get_shape();
 			spy_assert(shape_0.dim == 3, 
