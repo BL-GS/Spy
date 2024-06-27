@@ -17,7 +17,7 @@ target("spy_gpu")
     add_files("operator/**.cu")
 
     add_deps("spy_interface")
-    add_packages("fmt", "spdlog", "magic_enum", "argparse")
+    add_packages("spy_util", "magic_enum")
     add_links("cublas", "cudart", "cublasLt", "culibos", "cuda")
     add_linkdirs("/usr/local/cuda/lib64/stubs")
     -- add_syslinks()

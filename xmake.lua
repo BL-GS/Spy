@@ -15,10 +15,12 @@ add_vectorexts("all")
 set_languages("c17", "c++20")
 set_warnings("all")
 
--- Library 
+-- External library 
 add_requires("liburing")
 add_requires("fmt", "spdlog", "argparse", "magic_enum", "concurrentqueue")
 add_requires("gtest")
+
+-- Internal library
 
 -- Interface
 target("spy_interface")
@@ -58,7 +60,7 @@ target("spy")
     end    
 
     add_packages("liburing")
-    add_packages("fmt", "spdlog", "magic_enum", "argparse", "concurrentqueue")
+    add_packages("spy_util", "magic_enum", "concurrentqueue")
 target_end()
 
 target("test")
@@ -68,6 +70,6 @@ target("test")
     add_files("test.cpp")
 
     add_packages("liburing")
-    add_packages("fmt", "spdlog", "magic_enum", "argparse", "concurrentqueue")
+    add_packages("spy_util", "magic_enum", "concurrentqueue")
 target_end()
 

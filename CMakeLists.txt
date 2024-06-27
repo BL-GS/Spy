@@ -1,5 +1,5 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.20)
-set(CMAKE_POLICY_DEFAULT_CMP0126 NEW)
+SET(CMAKE_POLICY_DEFAULT_CMP0126 NEW)
 
 PROJECT(spy)
 
@@ -29,16 +29,19 @@ FIND_PACKAGE(unofficial-concurrentqueue CONFIG REQUIRED)
 
 ADD_DEFINITIONS(-DUNOFFICIAL_CONCURRENTQUEUE)
 
+# Submodules -------------------------------------------------------------
+
+ADD_SUBDIRECTORY(util)
+
 # Internal libraries -----------------------------------------------------
 
 SET(spy_include_dir ${PROJECT_SOURCE_DIR}/include)
 ADD_LIBRARY(spy_interface INTERFACE)
 TARGET_INCLUDE_DIRECTORIES(spy_interface INTERFACE ${spy_include_dir})
 TARGET_LINK_LIBRARIES(spy_interface INTERFACE
+		# Internal library
+		SpyUtil
 		# External library
-		fmt::fmt-header-only
-		spdlog::spdlog_header_only
-		argparse::argparse
 		magic_enum::magic_enum
 		unofficial::concurrentqueue::concurrentqueue
 )
@@ -67,10 +70,9 @@ TARGET_INCLUDE_DIRECTORIES(spy PRIVATE ${spy_include_dir})
 TARGET_LINK_LIBRARIES(spy PRIVATE
 	# System library
 	${spy_system_libraries}
+	# Internal library
+	SpyUtil
 	# External library
-	fmt::fmt-header-only
-	spdlog::spdlog_header_only
-	argparse::argparse
 	magic_enum::magic_enum
 	unofficial::concurrentqueue::concurrentqueue
 	# Internal library
@@ -82,10 +84,9 @@ TARGET_INCLUDE_DIRECTORIES(spytest PRIVATE ${spy_include_dir})
 TARGET_LINK_LIBRARIES(spytest PRIVATE
 	# System library
 	${spy_system_libraries}
+	# Internal library
+	SpyUtil
 	# External library
-	fmt::fmt-header-only
-	spdlog::spdlog_header_only
-	argparse::argparse
 	magic_enum::magic_enum
 	unofficial::concurrentqueue::concurrentqueue
 	# Internal library

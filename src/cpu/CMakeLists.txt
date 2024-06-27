@@ -7,10 +7,7 @@ IF (NOT ${spy_interface})
 ENDIF ()
 
 # Libraries --------------------------------------------------------------
-FIND_PACKAGE(fmt	 	CONFIG REQUIRED)
-FIND_PACKAGE(spdlog		CONFIG REQUIRED)
 FIND_PACKAGE(magic_enum CONFIG REQUIRED)
-FIND_PACKAGE(argparse 	CONFIG REQUIRED)
 FIND_PACKAGE(unofficial-concurrentqueue CONFIG REQUIRED)
 
 ADD_DEFINITIONS(-DUNOFFICIAL_CONCURRENTQUEUE)
@@ -27,10 +24,9 @@ TARGET_INCLUDE_DIRECTORIES(${PROJECT_NAME} PRIVATE
         ${PROJECT_SOURCE_DIR}/include
 )
 TARGET_LINK_LIBRARIES(${PROJECT_NAME} PRIVATE
+    # Internal library
+    SpyUtil
     # External library
-    fmt::fmt-header-only
-    spdlog::spdlog_header_only
-    argparse::argparse
     magic_enum::magic_enum
     unofficial::concurrentqueue::concurrentqueue
     # Internal library
