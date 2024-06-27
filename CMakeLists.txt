@@ -33,6 +33,8 @@ ADD_DEFINITIONS(-DUNOFFICIAL_CONCURRENTQUEUE)
 
 ADD_SUBDIRECTORY(util)
 
+ADD_SUBDIRECTORY(perf)
+
 # Internal libraries -----------------------------------------------------
 
 SET(spy_include_dir ${PROJECT_SOURCE_DIR}/include)
@@ -41,6 +43,7 @@ TARGET_INCLUDE_DIRECTORIES(spy_interface INTERFACE ${spy_include_dir})
 TARGET_LINK_LIBRARIES(spy_interface INTERFACE
 		# Internal library
 		SpyUtil
+		SpyPerf
 		# External library
 		magic_enum::magic_enum
 		unofficial::concurrentqueue::concurrentqueue
