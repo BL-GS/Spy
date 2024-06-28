@@ -29,18 +29,11 @@ target("spy_interface")
     add_includedirs("include", {public = true})
 target_end()
 
--- Backends
-includes("src/cpu")
-includes("src/gpu")
+-- Submodules
+includes(util)
+includes(perf)
 
-option("enable-cpu")
-    set_default(true)
-    set_showmenu(true)
-option_end()
-option("enable-gpu")
-    set_default(false)
-    set_showmenu(true)
-option_end()
+includes(backend)
 
 -- Main Project
 target("spy")
@@ -50,26 +43,8 @@ target("spy")
     add_includedirs("include")
     add_files("spy.cpp")
 
-    if has_config("enable-cpu") then 
-        add_defines("SPY_BACKEND_CPU")
-        add_deps("spy_cpu")
-    end
-    if has_config("enable-gpu") then
-        add_defines("SPY_BACKEND_CPU")
-        add_deps("spy_gpu")
-    end    
+    add_deps("spy_util", "spy_perf", "spy_backend")
 
     add_packages("liburing")
     add_packages("spy_util", "magic_enum", "concurrentqueue")
 target_end()
-
-target("test")
-    set_kind("binary")
-
-    add_includedirs("include")
-    add_files("test.cpp")
-
-    add_packages("liburing")
-    add_packages("spy_util", "magic_enum", "concurrentqueue")
-target_end()
-

@@ -14,13 +14,6 @@ namespace spy {
 		WordPiece        = 3
 	};
 
-	enum class ModelRopeType : int {
-		None = -1,
-		Norm = 0,
-		Neox = 2,
-		GLM  = 4,
-	};
-
 	enum class ModelTokenType: int {
 		Undefined   = 0,
 		Normal      = 1,
@@ -34,6 +27,5 @@ namespace spy {
 } // namespace spy
 
 SPY_ENUM_FORMATTER(spy::ModelVocabType);
-SPY_ENUM_FORMATTER(spy::ModelRopeType);
 SPY_ENUM_FORMATTER(spy::ModelTokenType);
 

@@ -7,7 +7,7 @@
 
 namespace spy {
 
-    struct PerformanceProfilerUnit {
+    struct PerformanceProfilerRecord {
     private:
         enum class Status { Init, Start, End };
 
@@ -19,7 +19,7 @@ namespace spy {
         std::chrono::steady_clock::time_point   end_point_;
 
     public:
-        PerformanceProfilerUnit(std::string_view name): 
+        PerformanceProfilerRecord(std::string_view name): 
             status_(Status::Init), name_(name) {}
 
     public:
@@ -50,14 +50,14 @@ namespace spy {
             csv_file_(name, {"idx", "name", "start", "end"}), counter_(0) {}
         
     public:
-        void add_row(const PerformanceProfilerUnit &unit) {
-            spy_assert(unit.complete(), 
-                "Expect unit {} to be an completed profiler unit", unit.name_
+        void add_record(const PerformanceProfilerRecord &record) {
+            spy_assert(record.complete(), 
+                "Expect record {} to be an completed profiler record", record.name_
             );
 
-            csv_file_.add_row({std::to_string(counter_), unit.name_, 
-                std::to_string(unit.start_point_.time_since_epoch().count()), 
-                std::to_string(unit.end_point_.time_since_epoch().count())
+            csv_file_.add_row({std::to_string(counter_), record.name_, 
+                std::to_string(record.start_point_.time_since_epoch().count()), 
+                std::to_string(record.end_point_.time_since_epoch().count())
             });
             ++counter_;
         }

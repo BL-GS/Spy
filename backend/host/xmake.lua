@@ -1,4 +1,4 @@
-target("spy_cpu")
+target("spy_backend_host")
     set_kind("static")
     set_default(false)
 
@@ -8,6 +8,6 @@ target("spy_cpu")
     add_includedirs("include")
     add_files("operator/*.cpp", "backend/*.cpp")
 
-    add_deps("spy_interface")
-    add_packages("spy_util", "magic_enum", "concurrentqueue")
+    add_deps("spy_util", "spy_backend_interface")
+    add_packages("magic_enum", "concurrentqueue")
 target_end()

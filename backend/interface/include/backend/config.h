@@ -129,11 +129,9 @@ namespace spy {
 		}
 	};
 
-#ifdef SPY_BACKEND_CPU
 	namespace cpu { void init_backend(BackendFactory &); }
-#endif
 
-#ifdef SPY_BACKEND_GPU
+#ifdef SPY_BACKEND_CUDA
 	namespace gpu { void init_backend(BackendFactory &); }
 #endif
 
@@ -142,7 +140,7 @@ namespace spy {
 		cpu::init_backend(*this);
 #endif
 
-#ifdef SPY_BACKEND_GPU
+#ifdef SPY_BACKEND_CUDA
 		gpu::init_backend(*this);
 #endif
 	}

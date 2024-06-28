@@ -1,0 +1,22 @@
+CMAKE_MINIMUM_REQUIRED(VERSION 3.20)
+PROJECT(SpyBackend)
+
+ADD_SUBDIRECTORY(interface)
+ADD_SUBDIRECTORY(host)
+
+SET(spy_backend_deps SpyBackendInterface SpyBackendHost)
+
+OPTION(SPY_BACKEND_CUDA "Enable backend: GPU"  OFF)
+IF (${SPY_BACKEND_CUDA})
+	ADD_DEFINITIONS(-DSPY_BACKEND_CUDA)
+	ADD_SUBDIRECTORY(cuda)
+    SET(spy_backend_deps ${spy_backend_deps} SpyBackendCUDA)
+ENDIF ()
+
+# Project setup
+ADD_LIBRARY(${PROJECT_NAME} INTERFACE)
+TARGET_INCLUDE_DIRECTORIES(${PROJECT_NAME} INTERFACE ${PROJECT_SOURCE_DIR}/include)
+TARGET_LINK_LIBRARIES(${PROJECT_NAME} INTERFACE
+    # Internal libraries
+    ${spy_backend_deps}
+)

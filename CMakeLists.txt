@@ -31,9 +31,12 @@ ADD_DEFINITIONS(-DUNOFFICIAL_CONCURRENTQUEUE)
 
 # Submodules -------------------------------------------------------------
 
+# -- utilities
 ADD_SUBDIRECTORY(util)
-
 ADD_SUBDIRECTORY(perf)
+
+# -- backend
+ADD_SUBDIRECTORY(backend)
 
 # Internal libraries -----------------------------------------------------
 
@@ -51,22 +54,6 @@ TARGET_LINK_LIBRARIES(spy_interface INTERFACE
 
 SET(spy_internal_libraries ${spy_internal_libraries} spy_interface)
 
-# Backends ---------------------------------------------------------------
-OPTION(SPY_BACKEND_CPU "Enable backend: CPU"  ON)
-OPTION(SPY_BACKEND_GPU "Enable backend: GPU"  OFF)
-
-IF (${SPY_BACKEND_CPU})
-	ADD_DEFINITIONS(-DSPY_BACKEND_CPU)
-	ADD_SUBDIRECTORY(src/cpu)
-	SET(spy_internal_libraries ${spy_internal_libraries} spy_cpu)
-ENDIF ()
-
-IF (${SPY_BACKEND_GPU})
-	ADD_DEFINITIONS(-DSPY_BACKEND_GPU)
-	ADD_SUBDIRECTORY(src/gpu)
-	SET(spy_internal_libraries ${spy_internal_libraries} spy_gpu)
-ENDIF ()
-
 # Main project ----------------------------------------------------------
 ADD_EXECUTABLE(spy spy.cpp)
 TARGET_INCLUDE_DIRECTORIES(spy PRIVATE ${spy_include_dir})
@@ -75,20 +62,8 @@ TARGET_LINK_LIBRARIES(spy PRIVATE
 	${spy_system_libraries}
 	# Internal library
 	SpyUtil
-	# External library
-	magic_enum::magic_enum
-	unofficial::concurrentqueue::concurrentqueue
-	# Internal library
-	${spy_internal_libraries}
-)
-
-ADD_EXECUTABLE(spytest test.cpp)
-TARGET_INCLUDE_DIRECTORIES(spytest PRIVATE ${spy_include_dir})
-TARGET_LINK_LIBRARIES(spytest PRIVATE
-	# System library
-	${spy_system_libraries}
-	# Internal library
 	SpyUtil
+	SpyBackend
 	# External library
 	magic_enum::magic_enum
 	unofficial::concurrentqueue::concurrentqueue

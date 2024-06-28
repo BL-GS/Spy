@@ -1,6 +1,6 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.20)
 
-PROJECT(spy_cpu)
+PROJECT(SpyBackendHost)
 
 IF (NOT ${spy_interface})
     MESSAGE(FATAL_ERROR "Variable spy_interface hasn't been set")
@@ -26,6 +26,7 @@ TARGET_INCLUDE_DIRECTORIES(${PROJECT_NAME} PRIVATE
 TARGET_LINK_LIBRARIES(${PROJECT_NAME} PRIVATE
     # Internal library
     SpyUtil
+    SpyBackendInterface
     # External library
     magic_enum::magic_enum
     unofficial::concurrentqueue::concurrentqueue

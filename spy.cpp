@@ -56,14 +56,12 @@ int main(int argc, char **argv) {
 
 	/* Initialize backend */
 	BackendFactory backend_factory;
-#ifdef SPY_BACKEND_CPU
 	ConfigTable cpu_backend_config;
 	const uint32_t num_thread = cmdline_argument.get_arg<uint32_t>("--num-thread");
 	cpu_backend_config.add("num_thread", std::to_string(num_thread));
-
 	auto cpu_backend_ptr = backend_factory.init_backend("cpu:default", cpu_backend_config);
-#endif
-#ifdef SPY_BACKEND_GPU
+
+#ifdef SPY_BACKEND_CUDA
 	ConfigTable gpu_backend_config;
 	auto gpu_backend_ptr = backend_factory.init_backend("gpu:default", gpu_backend_config);
 #endif

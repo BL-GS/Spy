@@ -8,6 +8,8 @@
 #include <cstring>
 #include <cerrno>
 #include <variant>
+#include <vector>
+#include <string>
 #include <source_location>
 #include <spdlog/spdlog.h>
 #include <utility>
@@ -157,72 +159,72 @@ namespace spy {
 	}
 
 
-	class SpyProperty {
-	public:
-		struct PropertyElement {
-			std::string key;
-			std::variant<char, int32_t, uint32_t, int64_t, uint64_t,
-				float_t, double_t, std::string, void *, std::vector<PropertyElement>
-			> value;
+	// class SpyProperty {
+	// public:
+	// 	struct PropertyElement {
+	// 		std::string key;
+	// 		std::variant<char, int32_t, uint32_t, int64_t, uint64_t,
+	// 			float_t, double_t, std::string, void *, std::vector<PropertyElement>
+	// 		> value;
 
-			PropertyElement() = default;
+	// 		PropertyElement() = default;
 
-			template<class T>
-			PropertyElement(std::string &&key, const T &value): key(std::forward<std::string>(key)), value(value) {}
-		};
+	// 		template<class T>
+	// 		PropertyElement(std::string &&key, const T &value): key(std::forward<std::string>(key)), value(value) {}
+	// 	};
 
-	private:
-		std::string                  property_name_;
-		std::vector<PropertyElement> property_array_;
+	// private:
+	// 	std::string                  property_name_;
+	// 	std::vector<PropertyElement> property_array_;
 
-	public:
-		SpyProperty(std::string &&name): property_name_(std::forward<std::string>(name)) {}
+	// public:
+	// 	SpyProperty(std::string &&name): property_name_(std::forward<std::string>(name)) {}
 
-	public:
-		template<class T>
-		void add(std::string &&key, const T &value) {
-			property_array_.emplace_back(std::forward<std::string>(key), value);
-		}
+	// public:
+	// 	template<class T>
+	// 	void add(std::string &&key, const T &value) {
+	// 		property_array_.emplace_back(std::forward<std::string>(key), value);
+	// 	}
 
-	public:
-		std::string to_string() const { return property_to_string(property_array_); }
+	// public:
+	// 	std::string to_string() const { return property_to_string(property_array_); }
 
-	private:
-		static std::string property_to_string(const std::vector<PropertyElement> &property_array) {
-			std::string res;
-			for (const PropertyElement &prop: property_array) {
-				switch (prop.value.index()) {
-					case 0: res += fmt::format("{:32}: {}\n", prop.key, std::get<0>(prop.value));
-						break;
-					case 1: res += fmt::format("{:32}: {}\n", prop.key, std::get<1>(prop.value));
-						break;
-					case 2: res += fmt::format("{:32}: {}\n", prop.key, std::get<2>(prop.value));
-						break;
-					case 3: res += fmt::format("{:32}: {}\n", prop.key, std::get<3>(prop.value));
-						break;
-					case 4: res += fmt::format("{:32}: {}\n", prop.key, std::get<4>(prop.value));
-						break;
-					case 5: res += fmt::format("{:32}: {}\n", prop.key, std::get<5>(prop.value));
-						break;
-					case 6: res += fmt::format("{:32}: {}\n", prop.key, std::get<6>(prop.value));
-						break;
-					case 7: res += fmt::format("{:32}: {}\n", prop.key, std::get<7>(prop.value));
-						break;
-					case 8: res += fmt::format("{:32}: {}\n", prop.key, std::get<8>(prop.value));
-						break;
-					case 9: {
-						std::string sub_prop = property_to_string(std::get<9>(prop.value));
-						for (size_t pos = 0; pos < sub_prop.size(); pos = sub_prop.find('\n', pos + 5)) {
-							sub_prop.insert(pos, "---- ");
-						}
-						res += fmt::format("{:32}: \n", prop.key, sub_prop);
-					} break;
-					default: spy_unreachable();
-				}
-			}
-			return res;
-		}
-	};
+	// private:
+	// 	static std::string property_to_string(const std::vector<PropertyElement> &property_array) {
+	// 		std::string res;
+	// 		for (const PropertyElement &prop: property_array) {
+	// 			switch (prop.value.index()) {
+	// 				case 0: res += fmt::format("{:32}: {}\n", prop.key, std::get<0>(prop.value));
+	// 					break;
+	// 				case 1: res += fmt::format("{:32}: {}\n", prop.key, std::get<1>(prop.value));
+	// 					break;
+	// 				case 2: res += fmt::format("{:32}: {}\n", prop.key, std::get<2>(prop.value));
+	// 					break;
+	// 				case 3: res += fmt::format("{:32}: {}\n", prop.key, std::get<3>(prop.value));
+	// 					break;
+	// 				case 4: res += fmt::format("{:32}: {}\n", prop.key, std::get<4>(prop.value));
+	// 					break;
+	// 				case 5: res += fmt::format("{:32}: {}\n", prop.key, std::get<5>(prop.value));
+	// 					break;
+	// 				case 6: res += fmt::format("{:32}: {}\n", prop.key, std::get<6>(prop.value));
+	// 					break;
+	// 				case 7: res += fmt::format("{:32}: {}\n", prop.key, std::get<7>(prop.value));
+	// 					break;
+	// 				case 8: res += fmt::format("{:32}: {}\n", prop.key, std::get<8>(prop.value));
+	// 					break;
+	// 				case 9: {
+	// 					std::string sub_prop = property_to_string(std::get<9>(prop.value));
+	// 					for (size_t pos = 0; pos < sub_prop.size(); pos = sub_prop.find('\n', pos + 5)) {
+	// 						sub_prop.insert(pos, "---- ");
+	// 					}
+	// 					res += fmt::format("{:32}: \n", prop.key, sub_prop);
+	// 				} break;
+	// 				default: spy_unreachable();
+	// 			}
+	// 		}
+	// 		return res;
+	// 	}
+	// };
 
 };  // namespace spy
 

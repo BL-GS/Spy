@@ -4,10 +4,16 @@
 #include <span>
 
 #include "number/tensor.h"
-#include "model/vocab/type.h"
 #include "operator/type.h"
 
 namespace spy {
+	
+	enum class ModelRopeType : int {
+		None = -1,
+		Norm = 0,
+		Neox = 2,
+		GLM  = 4,
+	};
 
     struct RopeContext {
 		ModelRopeType 	mode; 
@@ -46,3 +52,5 @@ namespace spy {
 	};
 
 }  // namespace spy
+
+SPY_ENUM_FORMATTER(spy::ModelRopeType);
