@@ -22,18 +22,11 @@ add_requires("gtest")
 
 -- Internal library
 
--- Interface
-target("spy_interface")
-    set_kind("headeronly")
-    add_headerfiles("include/**.h")
-    add_includedirs("include", {public = true})
-target_end()
-
 -- Submodules
-includes(util)
-includes(perf)
+includes("util")
+includes("perf")
 
-includes(backend)
+includes("backend")
 
 -- Main Project
 target("spy")
@@ -46,5 +39,5 @@ target("spy")
     add_deps("spy_util", "spy_perf", "spy_backend")
 
     add_packages("liburing")
-    add_packages("spy_util", "magic_enum", "concurrentqueue")
+    add_packages("fmt", "spdlog", "argparse", "magic_enum", "concurrentqueue")
 target_end()

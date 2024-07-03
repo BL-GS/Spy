@@ -5,12 +5,9 @@
 
 #pragma once
 
-#include <cstdint>
-#include <spdlog/common.h>
+#include <iostream>
 #include <string_view>
-#include <stdexcept>
 #include <argparse/argparse.hpp>
-#include <sys/types.h>
 
 #include "util/shell/logger.h"
 

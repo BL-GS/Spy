@@ -38,37 +38,18 @@ ADD_SUBDIRECTORY(perf)
 # -- backend
 ADD_SUBDIRECTORY(backend)
 
-# Internal libraries -----------------------------------------------------
-
-SET(spy_include_dir ${PROJECT_SOURCE_DIR}/include)
-ADD_LIBRARY(spy_interface INTERFACE)
-TARGET_INCLUDE_DIRECTORIES(spy_interface INTERFACE ${spy_include_dir})
-TARGET_LINK_LIBRARIES(spy_interface INTERFACE
-		# Internal library
-		SpyUtil
-		SpyPerf
-		# External library
-		magic_enum::magic_enum
-		unofficial::concurrentqueue::concurrentqueue
-)
-
-SET(spy_internal_libraries ${spy_internal_libraries} spy_interface)
-
 # Main project ----------------------------------------------------------
 ADD_EXECUTABLE(spy spy.cpp)
-TARGET_INCLUDE_DIRECTORIES(spy PRIVATE ${spy_include_dir})
+TARGET_INCLUDE_DIRECTORIES(spy PRIVATE ${PROJECT_SOURCE_DIR}/include)
 TARGET_LINK_LIBRARIES(spy PRIVATE
 	# System library
 	${spy_system_libraries}
 	# Internal library
 	SpyUtil
-	SpyUtil
 	SpyBackend
 	# External library
 	magic_enum::magic_enum
 	unofficial::concurrentqueue::concurrentqueue
-	# Internal library
-	${spy_internal_libraries}
 )
 
 # Test -----------------------------------------------------------------

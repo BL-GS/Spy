@@ -1,7 +1,6 @@
 #include <cstdint>
 #include <iostream>
 #include <magic_enum.hpp>
-#include <spdlog/common.h>
 #include <string>
 #include <memory>
 #include <span>

@@ -13,11 +13,10 @@ target("spy_backend_cuda")
     add_cugencodes("compute_75")
 
     add_includedirs("include")
-    add_files("backend/*.cu") 
     add_files("operator/**.cu")
 
     add_deps("spy_util", "spy_backend_interface")
-    add_packages("magic_enum")
+    add_packages("fmt", "spdlog", "magic_enum")
     add_links("cublas", "cudart", "cublasLt", "culibos", "cuda")
     add_linkdirs("/usr/local/cuda/lib64/stubs")
     -- add_syslinks()
