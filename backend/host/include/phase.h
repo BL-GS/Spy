@@ -2,6 +2,8 @@
 
 #include <cstdint>
 
+#include "util/type/enum.h"
+
 namespace spy::cpu {
 
         /// 
