@@ -1,15 +1,40 @@
 #pragma once
 
-#include <immintrin.h>
+#include <cstring>
 
-#include "util/shell/logger.h"
+#include "number/lookup_table.h"
 #include "number/number.h"
-#include "number/compute/util.h"
-#include "number/quantization_impl/type.h"
+#include "simd/vec_util.h"
 
-namespace spy {
-	
-	template<>
+namespace spy::cpu {
+
+    template<NumberType From_type, NumberType To_type>
+	struct Quantizator { 
+	public:
+		static constexpr NumberType FromType = From_type;
+		static constexpr NumberType ToType	 = To_type;
+
+		using FromMetadata              = NumberMetadata<FromType>;
+		using ToMetadata                = NumberMetadata<ToType>;
+		using FromBlock             	= BlockType<FromType>;
+		using ToBlock               	= BlockType<ToType>;
+
+		static constexpr size_t FROM_BLOCK_SIZE = FromMetadata::BLOCK_SIZE;
+		static constexpr size_t TO_BLOCK_SIZE   = ToMetadata::BLOCK_SIZE;
+		static constexpr size_t FROM_TYPE_SIZE  = FromMetadata::TYPE_SIZE;
+		static constexpr size_t TO_TYPE_SIZE    = ToMetadata::TYPE_SIZE;
+
+	public:
+		static void transform(const FromBlock * __restrict from_ptr, ToBlock * __restrict to_ptr, size_t num_from) {
+			if constexpr (FromType == ToType) {
+				std::memcpy(to_ptr, from_ptr, num_from);
+			} else {
+				throw SpyUnimplementedException("Unimplemented quantization");
+			}
+		}
+	};
+
+    template<>
 	struct Quantizator<NumberType::FP32, NumberType::FP16> {
 	public:
 		static constexpr NumberType FromType = NumberType::FP32;
@@ -260,6 +285,8 @@ namespace spy {
 
 	public:
 		static void transform(const FromBlock * __restrict from_ptr, ToBlock * __restrict to_ptr, size_t num_from) {
+            using namespace simd;
+
 			const size_t num_from_block = num_from / NUM_FROM_UNIT;
 			const size_t num_left 		= num_from % NUM_FROM_UNIT;
 			spy_assert(num_left == 0, "Expect the quantization source ({}) to be aligned with the target block ({}).", num_from, NUM_FROM_UNIT);
@@ -328,4 +355,121 @@ namespace spy {
 		}
 	};
 
-} // namespace spy
+
+   	template<>
+	struct Quantizator<NumberType::Q4_0, NumberType::FP32> {
+		using FromMetadata              = NumberMetadata<NumberType::Q4_0>;
+		using ToMetadata                = NumberMetadata<NumberType::FP32>;
+		using FromType                  = BlockType<NumberType::Q4_0>;
+		using ToType                    = BlockType<NumberType::FP32>;
+
+		static constexpr size_t FROM_BLOCK_SIZE = FromMetadata::BLOCK_SIZE;
+		static constexpr size_t TO_BLOCK_SIZE   = ToMetadata::BLOCK_SIZE;
+		static constexpr size_t FROM_TYPE_SIZE  = FromMetadata::TYPE_SIZE;
+		static constexpr size_t TO_TYPE_SIZE    = ToMetadata::TYPE_SIZE;
+
+		static constexpr int FROM_NUM = FromMetadata::NUM_BEFORE_DEQUANTIZATION;
+		static constexpr int TO_NUM   = FromMetadata::NUM_AFTER_DEQUANTIZATION;
+
+		static constexpr void transform(const FromType *from_ptr, ToType *to_ptr) {
+			for (int i = 0; i < FROM_NUM; ++i) {
+				const int x0 = (from_ptr->quants[i] & 0x0FU) - 8;
+				const int x1 = (from_ptr->quants[i] >>   4U) - 8;
+
+				const float delta           = LOOK_UP_TABLE.fp32(from_ptr->delta);
+				to_ptr[i]                   = static_cast<float>(x0) * delta;
+				to_ptr[i + FromMetadata::K] = static_cast<float>(x1) * delta;
+			}
+		}
+
+		static constexpr void transform(const FromType *from_ptr, ToType *to_ptr, size_t num) {
+			for (size_t i = 0; i < num; ++i) {
+				transform(from_ptr + i, to_ptr + i * TO_NUM);
+			}
+		}
+	};
+
+    template<>
+	struct Quantizator<NumberType::Q4_1, NumberType::FP32> {
+		using FromMetadata              = NumberMetadata<NumberType::Q4_1>;
+		using ToMetadata                = NumberMetadata<NumberType::FP32>;
+		using FromType                  = BlockType<NumberType::Q4_1>;
+		using ToType                    = BlockType<NumberType::FP32>;
+
+		static constexpr size_t FROM_BLOCK_SIZE = FromMetadata::BLOCK_SIZE;
+		static constexpr size_t TO_BLOCK_SIZE   = ToMetadata::BLOCK_SIZE;
+		static constexpr size_t FROM_TYPE_SIZE  = FromMetadata::TYPE_SIZE;
+		static constexpr size_t TO_TYPE_SIZE    = ToMetadata::TYPE_SIZE;
+
+		static constexpr int FROM_NUM = FromMetadata::NUM_BEFORE_DEQUANTIZATION;
+		static constexpr int TO_NUM   = FromMetadata::NUM_AFTER_DEQUANTIZATION;
+
+		static constexpr void transform(const FromType *from_ptr, ToType *to_ptr) {
+			for (int i = 0; i < FROM_NUM; ++i) {
+				const int x0 = (from_ptr->quants[i] & 0x0FU) - 8;
+				const int x1 = (from_ptr->quants[i] >>   4U) - 8;
+
+				const float delta        	= LOOK_UP_TABLE.fp32(from_ptr->delta);
+				const float min		     	= LOOK_UP_TABLE.fp32(from_ptr->min);
+				to_ptr[i]                   = static_cast<float>(x0) * delta + min;
+				to_ptr[i + FROM_NUM] 		= static_cast<float>(x1) * delta + min;
+			}
+		}
+
+		static constexpr void transform(const FromType *from_ptr, ToType *to_ptr, size_t num) {
+			for (size_t i = 0; i < num; ++i) {
+				transform(from_ptr + i, to_ptr + i * TO_NUM);
+			}
+		}
+	};
+        
+    template<>
+	struct Quantizator<NumberType::Q8_0, NumberType::FP32> {
+		using FromMetadata              = NumberMetadata<NumberType::Q8_0>;
+		using ToMetadata                = NumberMetadata<NumberType::FP32>;
+		using FromType                  = BlockType<NumberType::Q8_0>;
+		using ToType                    = BlockType<NumberType::FP32>;
+
+		static constexpr size_t FROM_BLOCK_SIZE = FromMetadata::BLOCK_SIZE;
+		static constexpr size_t TO_BLOCK_SIZE   = ToMetadata::BLOCK_SIZE;
+		static constexpr size_t FROM_TYPE_SIZE  = FromMetadata::TYPE_SIZE;
+		static constexpr size_t TO_TYPE_SIZE    = ToMetadata::TYPE_SIZE;
+
+		static constexpr int FROM_NUM = FromMetadata::NUM_BEFORE_DEQUANTIZATION;
+		static constexpr int TO_NUM   = FromMetadata::NUM_AFTER_DEQUANTIZATION;
+
+		static constexpr void transform(const FromType *from_ptr, ToType *to_ptr) {
+			for (int i = 0; i < FROM_NUM; ++i) {
+				const float delta = LOOK_UP_TABLE.fp32(from_ptr->delta);
+				const float quant = static_cast<float>(from_ptr->quants[i]); 
+				to_ptr[i]         = quant * delta;
+			}
+		}
+
+		static constexpr void transform(const FromType *from_ptr, ToType *to_ptr, size_t num) {
+			for (size_t i = 0; i < num; ++i) {
+				transform(from_ptr + i, to_ptr + i * TO_NUM);
+			}
+		}
+	};
+
+	template<NumberType T_from, NumberType T_to>
+	inline void quantize_inner(const void *src, void *dst, size_t num) {
+		using FromType = NumberMetadata<T_from>::BlockType;
+		using ToType   = NumberMetadata<T_to>::BlockType;
+
+		Quantizator<T_from, T_to>::transform(
+				static_cast<const FromType *>(src),
+				static_cast<ToType *>(dst),
+				num
+		);
+	}
+
+	inline static void auto_quantize_inner(NumberType type_0, const void *src, NumberType type_1, void *dst, size_t num) {
+		const auto transform_func = NumberTypeMapper::product_map([](const auto T_type_0, const auto T_type_1){
+			return quantize_inner<T_type_0, T_type_1>;
+		}, type_0, type_1);
+		transform_func(src, dst, num);
+	}
+    
+} // namepsace spy

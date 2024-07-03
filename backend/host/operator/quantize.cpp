@@ -2,10 +2,10 @@
 #include <magic_enum.hpp>
 
 #include "number/tensor.h"
-#include "number/quantization.h"
 #include "graph/graph.h"
 #include "operator/config.h"
 #include "operator_impl.h"
+#include "simd/vec_convert.h"
 
 namespace spy::cpu {
 

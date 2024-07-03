@@ -1,13 +1,11 @@
-#include <latch>
 #include <memory>
 
 #include "util/shell/logger.h"
-#include "util/align.h"
 #include "number/tensor.h"
-#include "number/compute/dot.h"
-#include "number/quantization.h"
 #include "graph/graph.h"
 #include "operator_impl.h"
+#include "simd/vec_dot.h"
+#include "simd/vec_convert.h"
 
 namespace spy::cpu {
 
