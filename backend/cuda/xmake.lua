@@ -13,7 +13,7 @@ target("spy_backend_cuda")
     add_cugencodes("compute_75")
 
     add_includedirs("include")
-    add_files("operator/**.cu")
+    add_files("backend/**.cu", "operator/**.cu")
 
     add_deps("spy_util", "spy_backend_interface")
     add_packages("fmt", "spdlog", "magic_enum")

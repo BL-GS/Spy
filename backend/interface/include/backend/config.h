@@ -136,10 +136,7 @@ namespace spy {
 #endif
 
 	inline BackendFactory::BackendFactory() {
-#ifdef SPY_BACKEND_CPU
 		cpu::init_backend(*this);
-#endif
-
 #ifdef SPY_BACKEND_CUDA
 		gpu::init_backend(*this);
 #endif

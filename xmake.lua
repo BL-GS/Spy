@@ -39,5 +39,5 @@ target("spy")
     add_deps("spy_util", "spy_perf", "spy_backend")
 
     add_packages("liburing")
-    add_packages("fmt", "spdlog", "argparse", "magic_enum", "concurrentqueue")
+    add_packages("fmt", "spdlog", "magic_enum", "concurrentqueue")
 target_end()
