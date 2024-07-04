@@ -10,19 +10,19 @@
 #include "util/timer.h"
 #include "backend/config.h"
 #include "graph/scheduler.h"
-#include "model/file/loader.h"
-#include "model/file/mapper.h"
-#include "model/sample/config.h"
-#include "model/model_impl/model.h"
-#include "model/model_impl/config.h"
-#include "model/sample/sampler.h"
+#include "llm/file/loader.h"
+#include "llm/file/mapper.h"
+#include "llm/sampler/config.h"
+#include "llm/model_impl/model.h"
+#include "llm/model_impl/config.h"
+#include "llm/sampler/sampler.h"
 
 
 using namespace spy;
 
 auto make_model_from_file(const std::string &model_filename, const HyperParam &hyper_param) {
 	/* Load model */
-	auto [context_ptr, model_type] = GGUFLoader::init_from_file(model_filename);
+	auto [context_ptr, model_type] = ModelMetaLoader::init_from_file(model_filename);
 	/* Build model */
 	auto model_ptr = ModelBuilder::build_model(model_type, std::move(context_ptr), hyper_param);
 	return model_ptr;
@@ -86,7 +86,7 @@ int main(int argc, char **argv) {
 	const auto model_filename = cmdline_argument.get_arg<std::string>("--model");
 	auto model_ptr   = make_model_from_file(model_filename, hyper_param);
 	auto &tokenizer  = model_ptr->get_tokenizer();
-	auto sampler = SamplerFactory::build_sampler<SamplerType::Greedy>();
+	auto sampler_ptr = SamplerFactory::build_sampler(SamplerType::Greedy);
 	const auto &model_metadata = model_ptr->get_info();
 
 	ModelLoader model_loader(model_filename);
@@ -138,7 +138,7 @@ int main(int argc, char **argv) {
 				.logit    = logits[token_id]
 			};
 		}
-		const TokenID new_token_id = sampler.sample(candidates);
+		const TokenID new_token_id = sampler_ptr->sample(candidates);
 
 		++perf_timer.num_sample;
 		sample_timer.end();

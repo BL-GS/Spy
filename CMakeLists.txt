@@ -35,6 +35,12 @@ ADD_DEFINITIONS(-DUNOFFICIAL_CONCURRENTQUEUE)
 ADD_SUBDIRECTORY(util)
 ADD_SUBDIRECTORY(perf)
 
+# -- orchestration
+ADD_SUBDIRECTORY(orchestration)
+
+# -- model
+ADD_SUBDIRECTORY(model)
+
 # -- backend
 ADD_SUBDIRECTORY(backend)
 
@@ -46,7 +52,10 @@ TARGET_LINK_LIBRARIES(spy PRIVATE
 	${spy_system_libraries}
 	# Internal library
 	SpyUtil
+	SpyOrchestration
 	SpyBackend
+	SpyModel
+
 	# External library
 	magic_enum::magic_enum
 	unofficial::concurrentqueue::concurrentqueue
