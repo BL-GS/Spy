@@ -4,9 +4,6 @@
 #include <map>
 #include <stdexcept>
 
-#include "util/file/file_view.h"
-#include "util/file/mapper.h"
-
 namespace spy {
 
 	struct ViewMap {

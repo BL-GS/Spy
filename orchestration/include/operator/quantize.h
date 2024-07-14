@@ -3,7 +3,8 @@
 #include "util/shell/logger.h"
 #include "operator/type.h"
 #include "operator/config.h"
-#include "graph/graph.h"
+#include "graph/data_node.h"
+#include "graph/op_node.h"
 
 namespace spy {
 
@@ -31,9 +32,9 @@ namespace spy {
 		Tensor deduce_result() const { 
 			spy_assert(num_input() == 1, "Expect the number of operands to be 1 (cur: {})", num_input());
 
-			const Tensor &operand        = input(0).tensor;
-			const size_t target_dim      = operand.get_dim();
-			const auto   target_elements = operand.element_array();
+			const Tensor &operand 			= input<DataNode>(0)->tensor;
+			const size_t target_dim      	= operand.get_dim();
+			const auto   target_elements 	= operand.element_array();
 			const Shape  target_shape(target_dim, target_elements, target_type);
 			return { target_shape, nullptr };
 		}

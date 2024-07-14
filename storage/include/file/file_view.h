@@ -30,11 +30,10 @@
 	#include <io.h>
 #else
 	#include <aio.h>
-	#include "async/loop.h"
 #endif
 
 #include "util/shell/logger.h"
-#include "util/file/type.h"
+#include "file/exception.h"
 
 namespace spy {
 

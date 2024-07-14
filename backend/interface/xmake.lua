@@ -7,6 +7,6 @@ target("spy_backend_interface")
     
     add_includedirs("include", {public = true})
 
-    add_deps("spy_util")
+    add_deps("spy_util", "spy_orchestration")
     add_packages("fmt", "spdlog", "magic_enum")
 target_end()

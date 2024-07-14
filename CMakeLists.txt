@@ -35,6 +35,9 @@ ADD_DEFINITIONS(-DUNOFFICIAL_CONCURRENTQUEUE)
 ADD_SUBDIRECTORY(util)
 ADD_SUBDIRECTORY(perf)
 
+# -- storage
+ADD_SUBDIRECTORY(storage)
+
 # -- orchestration
 ADD_SUBDIRECTORY(orchestration)
 
@@ -63,3 +66,19 @@ TARGET_LINK_LIBRARIES(spy PRIVATE
 
 # Test -----------------------------------------------------------------
 # ADD_SUBDIRECTORY(test)
+
+ADD_EXECUTABLE(temp temp.cpp)
+TARGET_INCLUDE_DIRECTORIES(temp PRIVATE ${PROJECT_SOURCE_DIR}/include)
+TARGET_LINK_LIBRARIES(temp PRIVATE
+	# System library
+	${spy_system_libraries}
+	# Internal library
+	SpyUtil
+	SpyOrchestration
+	SpyStorage
+
+	# External library
+	fmt::fmt-header-only
+	magic_enum::magic_enum
+	unofficial::concurrentqueue::concurrentqueue
+)

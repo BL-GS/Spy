@@ -6,6 +6,8 @@
 #pragma once
 
 #include <string>
+#include <string_view>
+#include <map>
 #include <fmt/core.h>
 #include <fmt/format.h>
 
@@ -19,3 +21,24 @@
 		}                                                                       \
 	}
 #endif // SPY_PRINTABLE_FORMATTER
+
+namespace spy {
+
+	struct PrintableInterface {
+		virtual std::string to_string() const = 0;
+	};
+
+	struct PropertyInterface: PrintableInterface {
+		virtual std::map<std::string_view, std::string> property() const = 0;
+
+		std::string to_string() const override {
+			std::string str;
+			const auto prop = property();
+			for (auto [key, value]: prop) {
+				str += fmt::format("{:8}: {}\n", key, value);
+			}
+			return str;
+		}
+	};
+
+} // namespace

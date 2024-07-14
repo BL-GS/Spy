@@ -1,72 +1,13 @@
-#pragma once
-
 #include <string>
-#include <fmt/format.h>
+#include <string_view>
+#include <fmt/core.h>
+#include <magic_enum.hpp>
 
-#include "util/shell/logger.h"
+#include "graph/data_node.h"
 
 namespace spy {
 
-    /// The type of data node. Which assist the allocation and schedule of Graph Scheduler.
-    /// TODO: It should be determined by the schedule policy.
-    enum class DataNodeType: int {
-        /// The location and the size remains fixed during the runtime.
-        /// It cannot be the output node.
-        /// The scheduler SHOULD NOT allocate or deallocate it.
-        Constant = 0, 
-        /// The content remain fixed, but it wasn't built as a constant node.
-        /// Compared to Constant node, it can be the output node, which means its content can be changed during runtime.
-        /// The scheduler SHOULD NOT allocate or deallocate it.
-        Buffered = 1,
-        /// The location and the size may change during the runtime.
-        /// The scheduler CAN determine the allocation and deallocation.
-        Variable = 2,
-        /// The data is owned by another tensor.
-        /// The scheduler SHOULD NOT allocate or deallocate it+
-        View     = 3,
-        /// By default, we set node as variable, scheduler conventionally allocate it every time.
-        Default  = Variable,
-
-        Unknwon
-    };
-
-    enum class TensorType: uint32_t {
-        Unknown,
-        /* Model parameter */
-        // embedding
-		TokenEmbedding,
-        // output
-		Output, OutputNorm, RopeFrequency,
-        // attention
-		AttentionNorm, AttentionQ, AttentionK, AttentionV, AttentionOutput, 
-        // ffn
-		FFNGateInp, FFNNorm, FFNDown, FFNGate, FFNUp,
-
-        /* Buffer tensor */
-        KCache, VCache,
-
-        /* Variable tensor */
-        InputTokenId, InputTokenEmbedding, InputPosition, InputKQMask,
-
-        OutputLogits,
-
-        V_AttentionNorm, V_AttentionNormWeighted, 
-        V_QWeighted, V_KWeighted, V_VWeighted, V_QWeightedBiased, V_KWeightedBiased, V_VWeightedBiased,
-        V_QRope, V_KRope,
-        V_AttentionScore, V_AttentionContext,
-        V_KQV, V_KQVMerged, V_KQVWeighted,
-        V_AttentionOutput,
-        // KVCache
-
-        V_FFNInput, V_FFNOutput,
-        V_FFNNorm, V_FFNNormWeighted, V_FFNUp, V_FFNUpUnary, V_FFNGate, V_FFNGateUnary, 
-        V_FFNPar, V_FFNDown,
-
-        V_ResultNorm, V_ResultNormWeighted, V_ResultOutput,
-        
-    };
-
-    inline std::string get_tensor_base_name(TensorType type, int layer_id = -1, int expert_id = -1) {
+    static std::string get_tensor_base_name(TensorType type, int layer_id = -1, int expert_id = -1) {
         const auto layer_format = [layer_id](std::string_view base){ 
             return fmt::vformat(base, fmt::make_format_args(layer_id)); 
         };
@@ -144,45 +85,40 @@ namespace spy {
         case TensorType::Unknown:                   return "unknown";
         }
         spy_unreachable();
+    }    
+
+    std::string DataNode::get_tensor_name() const {
+        std::string res = get_tensor_base_name(tensor_type, layer_id, expert_id);
+        switch (weight_type) {
+        case WeightType::Weight:    res += ".weight";   break;
+        case WeightType::Bias:      res += ".bias";     break;
+        case WeightType::Input:     res += ".in";       break;
+        case WeightType::Output:    res += ".out";      break;
+        case WeightType::View:      res += ".view";     break;
+        case WeightType::None:                          break;
+        }
+        return res;
     }
 
-    enum class WeightType: int {
-        None,
-        // Constant
-        Weight,
-        Bias,
-        Input,
-        Output,
-        // Variable
-        View
-    };
+    std::map<std::string_view, std::string> DataNode::property() const {
+        using magic_enum::enum_name;
 
-    struct DataNodeProperty {
-    public:
-        DataNodeType    node_type       = DataNodeType::Unknwon;
-        TensorType      tensor_type     = TensorType::Unknown;
-        WeightType      weight_type     = WeightType::None;
-        int             layer_id        = -1;
-        int             expert_id       = -1;
-
-    public:
-        std::string to_string() const {
-            std::string res = get_tensor_base_name(tensor_type, layer_id, expert_id);
-
-            switch (weight_type) {
-            case WeightType::Weight:    res += ".weight";   break;
-            case WeightType::Bias:      res += ".bias";     break;
-            case WeightType::Input:     res += ".in";       break;
-            case WeightType::Output:    res += ".out";      break;
-            case WeightType::View:      res += ".view";     break;
-            case WeightType::None:                          break;
-            }
-            return res;
+        std::map<std::string_view, std::string> basic = BasicNode::property();
+        basic["node_type"]      = enum_name(node_type);
+        basic["tensor_type"]    = enum_name(tensor_type);
+        basic["weight_type"]    = enum_name(weight_type);
+        if (layer_id != -1) {
+            basic["layer_id"] = std::to_string(layer_id);
         }
-    };
+        if (expert_id != -1) {
+            basic["expert_id"] = std::to_string(expert_id);
+        }
 
-    enum class SchedulerType {
-        Default
-    };
+        std::map<std::string_view, std::string> tensor_property = tensor.property();
+        for (const auto &prop: tensor_property) { basic[prop.first] = prop.second; }
+
+        return basic;
+    }
 
 } // namespace spy
+

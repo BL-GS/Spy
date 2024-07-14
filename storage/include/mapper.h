@@ -6,8 +6,9 @@
 
 #include "util/unit.h"
 #include "util/shell/logger.h"
-#include "util/file/file.h"
-#include "metadata.h"
+#include "file/file_view.h"
+#include "file/mapper.h"
+#include "adapter/type.h"
 
 namespace spy {
     

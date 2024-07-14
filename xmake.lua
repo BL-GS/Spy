@@ -25,7 +25,7 @@ add_requires("gtest")
 -- Submodules
 includes("util")
 includes("perf")
-
+includes("orchestration")
 includes("backend")
 
 -- Main Project
@@ -36,7 +36,7 @@ target("spy")
     add_includedirs("include")
     add_files("spy.cpp")
 
-    add_deps("spy_util", "spy_perf", "spy_backend")
+    add_deps("spy_util", "spy_perf", "spy_orchestration", "spy_backend")
 
     add_packages("liburing")
     add_packages("fmt", "spdlog", "magic_enum", "concurrentqueue")

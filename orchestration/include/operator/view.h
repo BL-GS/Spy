@@ -4,7 +4,8 @@
 #include "operator/type.h"
 #include "operator/config.h"
 #include "operator/operator.h"
-#include "graph/graph.h"
+#include "graph/op_node.h"
+#include "graph/data_node.h"
 
 namespace spy {
 
@@ -26,7 +27,7 @@ namespace spy {
 		Tensor deduce_result() const { 
 			spy_assert(num_input() == 1, "Expect the number of operands to be 1 (cur: {})", num_input());
 
-			const Tensor &operand = input(0).tensor;
+			const Tensor &operand = input<DataNode>(0)->tensor;
 			return { operand.get_shape(), nullptr };
 		}
     };
@@ -53,8 +54,8 @@ namespace spy {
 		Tensor deduce_result() const { 
 			spy_assert(num_input() == 2, "Expect the number of operands to be 2 (cur: {})", num_input());
 
-			const Tensor &operand_0 = input(0).tensor;
-			const Tensor &operand_1 = input(1).tensor;
+			const Tensor &operand_0 = input<DataNode>(0)->tensor;
+			const Tensor &operand_1 = input<DataNode>(1)->tensor;
 
 			const auto &shape_0 = operand_0.get_shape();
 			const auto &shape_1 = operand_1.get_shape();
@@ -90,7 +91,7 @@ namespace spy {
 		 */
 		Tensor deduce_result() const { 
 			spy_assert(num_input() == 1, "Expect the number of operands to be 1 (cur: {})", num_input());	
-			const Tensor &operand_0 = input(0).tensor;
+			const Tensor &operand_0 = input<DataNode>(0)->tensor;
 			const auto &shape_0     = operand_0.get_shape();
 
 			const Shape shape_res     = shape_0;
@@ -116,8 +117,8 @@ namespace spy {
 		Tensor deduce_result() const { 
 			spy_assert(num_input() == 2, "Expect the number of operands to be 2 (cur: {})", num_input());	
 
-			const Tensor &operand_0 = input(0).tensor;
-			const Tensor &operand_1 = input(1).tensor;
+			const Tensor &operand_0 = input<DataNode>(0)->tensor;
+			const Tensor &operand_1 = input<DataNode>(1)->tensor;
 
 			const Shape &shape_0 = operand_0.get_shape();
 			const Shape &shape_1 = operand_1.get_shape();
@@ -155,7 +156,7 @@ namespace spy {
 		Tensor deduce_result() const { 
             spy_assert(num_input() == 1, "Expect the number of operands to be 1 (cur: {})", num_input());
 
-			const Tensor &operand_0 = input(0).tensor;
+			const Tensor &operand_0 = input<DataNode>(0)->tensor;
 
             const Shape &shape_0  = operand_0.get_shape();
             const Shape shape_res = new_shape;
@@ -195,7 +196,7 @@ namespace spy {
 		Tensor deduce_result() const { 
             spy_assert(num_input() == 1, "Expect the number of operands to be 1 (cur: {})", num_input());
 
-            const Tensor &operand_0 = input(0).tensor;
+			const Tensor &operand_0 = input<DataNode>(0)->tensor;
             const Shape &shape_0    = operand_0.get_shape();
             const Shape shape_res   = new_shape;
 
@@ -224,7 +225,7 @@ namespace spy {
 		 */
 		Tensor deduce_result() const { 
 			spy_assert(num_input() == 1, "Expect the number of operands to be 1 (cur: {})", num_input());	
-			const Tensor &operand_0 = input(0).tensor;
+			const Tensor &operand_0 = input<DataNode>(0)->tensor;
 			const auto &shape_0     = operand_0.get_shape();
 
 			Shape shape_res = shape_0;
@@ -240,12 +241,12 @@ namespace spy {
 		static constexpr OperatorType TYPE = OperatorType::Permute;
 
 	public:
-		std::array<size_t, MAX_DIM> axis;
+		std::array<int64_t, MAX_DIM> axis;
 
 	public:
 	    OperatorDefinition(): OperatorNode(TYPE) {}
 
-		OperatorDefinition(const std::array<size_t, MAX_DIM> &axis): OperatorNode(TYPE), axis(axis) {}
+		OperatorDefinition(const std::array<int64_t, MAX_DIM> &axis): OperatorNode(TYPE), axis(axis) {}
 
 		template<class T>
 		OperatorDefinition(const std::initializer_list<T> &new_axis): OperatorNode(TYPE), axis{0} {
@@ -266,7 +267,7 @@ namespace spy {
 		 */
 		Tensor deduce_result() const { 
 			spy_assert(num_input() == 1, "Expect the number of operands to be 1 (cur: {})", num_input());	
-			const Tensor &operand_0 = input(0).tensor;
+			const Tensor &operand_0 = input<DataNode>(0)->tensor;
 			const auto &shape_0     = operand_0.get_shape();
 
 			Shape shape_res = shape_0;
@@ -304,7 +305,7 @@ namespace spy {
 		Tensor deduce_result() const { 
             spy_assert(num_input() == 1, "Expect the number of operands to be 1 (cur: {})", num_input());
 
-			const Tensor &operand_0 = input(0).tensor;
+			const Tensor &operand_0 = input<DataNode>(0)->tensor;
 
             const Shape &shape_0  = operand_0.get_shape();
             const Shape shape_res = new_shape;

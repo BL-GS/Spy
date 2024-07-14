@@ -27,9 +27,8 @@
     #include <io.h>
 #endif
 
-#include "util/shell/logger.h"
-#include "util/file/file_handler.h"
-#include "util/file/file_view.h"
+#include "file/file_handler.h"
+#include "file/file_view.h"
 
 namespace spy {
 

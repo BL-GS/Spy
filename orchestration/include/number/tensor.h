@@ -22,7 +22,7 @@ namespace spy {
 
 	struct Shape {
 	public:
-		using DimensionArray = std::array<size_t, MAX_DIM>;
+		using DimensionArray = std::array<int64_t, MAX_DIM>;
 
 	public:
 		/// The type of underlying number type
@@ -199,20 +199,9 @@ namespace spy {
 			return can_repeat;
 		}
 
-		std::string to_string() const {
-			std::string res("(");
-			for (size_t i = 0; i < dim; ++i) {
-				if (i != 0) { res += ", "; }
-				res += std::to_string(elements[i]);
-			}
-			res += ") (";
-			for (size_t i = 0; i < dim; ++i) {
-				if (i != 0) { res += ", "; }
-				res += std::to_string(bytes[i]);
-			}
-			res += ')';
-			return res;
-		}
+		std::string to_string() const;
+
+		std::map<std::string_view, std::string> property() const;
 	};
 
 	class Tensor {
@@ -261,6 +250,8 @@ namespace spy {
 		bool			is_transposed()   const { return shape_.is_transposed();	}
 		bool			is_permuted()	  const { return shape_.is_permuted();		}
 
+	public:
+		std::map<std::string_view, std::string> property() const;
 	};
 
 }  // namespace spy

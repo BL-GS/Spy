@@ -24,7 +24,7 @@
 
 #include "util/shell/logger.h"
 #include "util/exception.h"
-#include "util/file/type.h"
+#include "file/exception.h"
 
 namespace spy {
 

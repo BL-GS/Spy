@@ -18,6 +18,7 @@
 #include "util/shell/logger.h"
 #include "task.h"
 #include "abstract_backend.h"
+#include "graph/op_node.h"
 #include "operator_impl.h"
 
 namespace spy::cpu {

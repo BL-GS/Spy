@@ -52,6 +52,6 @@ namespace spy {
 		float exp(uint16_t val)  const { return exp_table(val);     }
 	};
 	
-	inline static const FP16LookupTable LOOK_UP_TABLE {};
+	extern const FP16LookupTable LOOK_UP_TABLE;
     
 } // namespace spy
