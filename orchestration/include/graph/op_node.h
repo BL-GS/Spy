@@ -8,8 +8,6 @@
 
 namespace spy {
 
-	struct DataNode;
-
 	struct OperatorNode: BasicNode {
 	public: /* Content */
 		/// The type of operation
@@ -51,6 +49,9 @@ namespace spy {
 		DataNode *output_data(size_t idx) const {
 			return output<DataNode>(idx);
 		}
+
+	public:
+		virtual void propagate() = 0;
 
 	public:
 		std::map<std::string_view, std::string> property() const override;

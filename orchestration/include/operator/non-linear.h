@@ -1,7 +1,5 @@
 #pragma once
 
-#include <optional>
-
 #include "util/shell/logger.h"
 #include "operator/type.h"
 #include "operator/config.h"
@@ -9,6 +7,10 @@
 #include "graph/op_node.h"
 #include "operator/common.h"
 #include "operator/parameter.h"
+
+#ifndef OPERATOR_HEADER_MACRO
+	#warning "Do not include non-linear.h manually, please use operator/operator.h instead."
+#endif // OPERATOR_HEADER_MACRO
 
 namespace spy {
 
@@ -22,6 +24,7 @@ namespace spy {
 
 	    ~OperatorDefinition() noexcept = default;
     };
+	using ReluOpDef = OperatorDefinition<OperatorType::Relu>;
 
 
     template<>
@@ -34,6 +37,7 @@ namespace spy {
 
 	    ~OperatorDefinition() noexcept = default;
     };
+	using SiluOpDef = OperatorDefinition<OperatorType::Silu>;
 
 
     template<>
@@ -88,7 +92,7 @@ namespace spy {
 		 * @brief Validate the metadata of inputs and propagate to generate the metadata of the output nodes
 		 * @return Output nodes
 		 */
-		DataNode *propagate() {
+		void propagate() override {
 			assert_num_input(2);
 			assert_num_output(1);
 			params.track_ref_if_needed();
@@ -100,11 +104,10 @@ namespace spy {
 
 			Tensor &out = out_node->tensor;
 			out.shape = in.shape;
-
-			return out_node;
 		}
-
     };
+	using SoftmaxOpDef = OperatorDefinition<OperatorType::Softmax>;
+	using SoftmaxParam = SoftmaxOpDef::Param;
 
 
     template<>
@@ -146,7 +149,7 @@ namespace spy {
 		 * @brief Validate the metadata of inputs and propagate to generate the metadata of the output nodes
 		 * @return Output nodes
 		 */
-		DataNode *propagate() {
+		void propagate() override {
 			assert_num_input(1);
 			assert_num_output(1);
 			params.track_ref_if_needed();
@@ -158,10 +161,11 @@ namespace spy {
 
 			Tensor &out = out_node->tensor;
 			out.shape = in.shape;
-
-			return out_node;
 		}
     };
+	using NormRMSOpDef = OperatorDefinition<OperatorType::NormRMS>;
+	using NormRMSParam = NormRMSOpDef::Param;
+
 
     template<>
     struct OperatorDefinition<OperatorType::Rope> final: OperatorNode {
@@ -226,7 +230,7 @@ namespace spy {
 		 * @brief Validate the metadata of inputs and propagate to generate the metadata of the output nodes
 		 * @return Output nodes
 		 */
-		DataNode *propagate() {
+		void propagate() override {
 			assert_num_input(2);
 			assert_num_output(1);
 			params.track_ref_if_needed();
@@ -241,8 +245,6 @@ namespace spy {
 
 			Tensor &out = out_node->tensor;
 			out.shape = in.shape;
-
-			return out_node;
 		}
     };
 

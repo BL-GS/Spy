@@ -8,6 +8,10 @@
 #include "graph/data_node.h"
 #include "graph/op_node.h"
 
+#ifndef OPERATOR_HEADER_MACRO
+	#warning "Do not include quantize.h manually, please use operator/operator.h instead."
+#endif // OPERATOR_HEADER_MACRO
+
 namespace spy {
 
     template<>
@@ -49,7 +53,7 @@ namespace spy {
 		 * @brief Validate the metadata of inputs and propagate to generate the metadata of the output nodes
 		 * @return Output nodes
 		 */
-		DataNode *propagate() {
+		void propagate() override {
 			assert_num_input(1);
 			assert_num_output(1);
 			params.track_ref_if_needed();
@@ -65,9 +69,9 @@ namespace spy {
 
 			Tensor &out = out_node->tensor;
 			out.shape = target_shape;
-
-			return out_node;
 		}
     };
+	using QuantizeOpDef = OperatorDefinition<OperatorType::Quantize>;
+	using QuantizeParam = QuantizeOpDef::Param;
 
 } // namespace spy

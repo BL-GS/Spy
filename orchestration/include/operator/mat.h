@@ -9,6 +9,10 @@
 #include "graph/op_node.h"
 #include "graph/graph.h"
 
+#ifndef OPERATOR_HEADER_MACRO
+	#warning "Do not include mat.h manually, please use operator/operator.h instead."
+#endif // OPERATOR_HEADER_MACRO
+
 namespace spy {
 
     template<>
@@ -29,7 +33,7 @@ namespace spy {
 			return output_node_ptr;
 		}
 
-		DataNode * propagate() {
+		void propagate() override {
 			assert_num_input(2);
 			assert_num_output(1);
 
@@ -49,10 +53,8 @@ namespace spy {
 
 			Tensor &out = out_node->tensor;
 			out.shape = Shape({ ne01, ne11, ne12, ne13 }, NumberType::FP32);
-
-			return out_node;
 		}
     };
-
+	using MatMulOpDef = OperatorDefinition<OperatorType::MatMul>;
 
 } // namespace spy

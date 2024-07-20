@@ -9,6 +9,10 @@
 #include "graph/op_node.h"
 #include "graph/data_node.h"
 
+#ifndef OPERATOR_HEADER_MACRO
+	#warning "Do not include view.h manually, please use operator/operator.h instead."
+#endif // OPERATOR_HEADER_MACRO
+
 namespace spy {
 
     template<>
@@ -38,7 +42,7 @@ namespace spy {
 		 * @brief Validate the metadata of inputs and propagate to generate the metadata of the output nodes
 		 * @return Output nodes
 		 */
-		DataNode *propagate() {
+		void propagate() override {
 			assert_num_input(1);
 			assert_num_output(1);
 
@@ -48,10 +52,9 @@ namespace spy {
 
 			Tensor &out = out_node->tensor;
 			out.shape = in.shape;
-
-			return out_node;
 		}
     };
+	using NopOpDef = OperatorDefinition<OperatorType::Nop>;
 
 
     template<>
@@ -81,7 +84,7 @@ namespace spy {
 		 * @brief Validate the metadata of inputs and propagate to generate the metadata of the output nodes
 		 * @return Output nodes
 		 */
-		DataNode *propagate() {
+		void propagate() override {
 			assert_num_input(1);
 			assert_num_output(1);
 
@@ -114,10 +117,9 @@ namespace spy {
 
 			const Shape target_shape(in_dim, target_elements, in.type());
 			out.shape = target_shape;
-
-			return out_node;
 		}      
     };
+	using GetRowOpDef = OperatorDefinition<OperatorType::GetRow>;
 
 
     template<>
@@ -147,7 +149,7 @@ namespace spy {
 		 * @brief Validate the metadata of inputs and propagate to generate the metadata of the output nodes
 		 * @return Output nodes
 		 */
-		DataNode *propagate() {
+		void propagate() override {
 			assert_num_input(1);
 			assert_num_output(1);
 
@@ -157,10 +159,10 @@ namespace spy {
 
 			Tensor &out = out_node->tensor;
 			out.shape = in.shape;
-
-			return out_node;
 		}
     };
+	using DupOpDef = OperatorDefinition<OperatorType::Dup>;
+
 
     template<>
     struct OperatorDefinition<OperatorType::Copy> final: OperatorNode {
@@ -189,7 +191,7 @@ namespace spy {
 		 * @brief Validate the metadata of inputs and propagate to generate the metadata of the output nodes
 		 * @return Output nodes
 		 */
-		DataNode *propagate() {
+		void propagate() override {
 			assert_num_input(2);
 			assert_num_output(1);
 
@@ -205,10 +207,9 @@ namespace spy {
 
 			Tensor &out = out_node->tensor;
 			out.shape = src.shape;
-
-			return out_node;
 		}
     };
+	using CopyOpDef = OperatorDefinition<OperatorType::Copy>;
 
 
     template<>
@@ -250,7 +251,7 @@ namespace spy {
 		 * @brief Validate the metadata of inputs and propagate to generate the metadata of the output nodes
 		 * @return Output nodes
 		 */
-		DataNode *propagate() {
+		void propagate() override {
 			assert_num_input(1);
 			assert_num_output(1);
 
@@ -265,10 +266,10 @@ namespace spy {
 				target_shape, in.shape
 			);
 			out.shape = target_shape;
-
-			return out_node;
 		}
     };
+	using ReshapeOpDef = OperatorDefinition<OperatorType::Reshape>;
+	using ReshapeParam = ReshapeOpDef::Param;
 
 
     template<>
@@ -314,7 +315,7 @@ namespace spy {
 		 * @brief Validate the metadata of inputs and propagate to generate the metadata of the output nodes
 		 * @return Output nodes
 		 */
-		DataNode *propagate() {
+		void propagate() override {
 			assert_num_input(1);
 			assert_num_output(1);
 
@@ -326,10 +327,10 @@ namespace spy {
 			const Shape &target_shape = params.get_val().new_shape;
 			// TODO: assert
 			out.shape = target_shape;
-
-			return out_node;
 		}
     };
+	using ViewOpDef = OperatorDefinition<OperatorType::View>;
+	using ViewParam = ViewOpDef::Param;
 
 
     template<>
@@ -359,7 +360,7 @@ namespace spy {
 		 * @brief Validate the metadata of inputs and propagate to generate the metadata of the output nodes
 		 * @return Output nodes
 		 */
-		DataNode *propagate() {
+		void propagate() override {
 			assert_num_input(1);
 			assert_num_output(1);
 
@@ -373,10 +374,9 @@ namespace spy {
 
 			Tensor &out = out_node->tensor;
 			out.shape = target_shape;
-
-			return out_node;
 		}
     };
+	using TransposeOpDef = OperatorDefinition<OperatorType::Transpose>;
 
     
     template<>
@@ -420,7 +420,7 @@ namespace spy {
 		 * @brief Validate the metadata of inputs and propagate to generate the metadata of the output nodes
 		 * @return Output nodes
 		 */
-		DataNode *propagate() {
+		void propagate() override {
 			assert_num_input(1);
 			assert_num_output(1);
 
@@ -438,10 +438,10 @@ namespace spy {
 
 			Tensor &out = out_node->tensor;
 			out.shape = target_shape;
-
-			return out_node;
 		}
     };
+	using PermuteOpDef = OperatorDefinition<OperatorType::Permute>;
+	using PermuteParam = PermuteOpDef::Param;
 
 
     template<>
@@ -454,5 +454,6 @@ namespace spy {
 
 	    ~OperatorDefinition() noexcept = default;
     };
+	using ContiguousOpDef = OperatorDefinition<OperatorType::Contiguous>;
 
 } // namespace spy

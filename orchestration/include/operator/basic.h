@@ -2,8 +2,11 @@
 
 #include "operator/type.h"
 #include "operator/config.h"
-#include "graph/op_node.h"
 #include "operator/common.h"
+
+#ifndef OPERATOR_HEADER_MACRO
+	#warning "Do not include basic.h manually, please use operator/operator.h instead."
+#endif // OPERATOR_HEADER_MACRO
 
 namespace spy {
 
@@ -17,6 +20,7 @@ namespace spy {
 
 		~OperatorDefinition() noexcept = default;
     };
+	using AddOpDef = OperatorDefinition<OperatorType::Add>;
 
 
     template<>
@@ -29,6 +33,7 @@ namespace spy {
 
 	    ~OperatorDefinition() noexcept = default;
     };
+	using SubOpDef = OperatorDefinition<OperatorType::Sub>;
 
 
     template<>
@@ -41,6 +46,7 @@ namespace spy {
 
 	    ~OperatorDefinition() noexcept = default;
     };
+	using MulOpDef = OperatorDefinition<OperatorType::Mul>;
 
 
     template<>
@@ -53,5 +59,6 @@ namespace spy {
 
 	    ~OperatorDefinition() noexcept = default;
     };
+	using DivOpDef = OperatorDefinition<OperatorType::Div>;
 
 } // namespace spy

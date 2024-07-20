@@ -18,7 +18,7 @@ namespace spy {
          * @brief Resolve input nodes and generate output nodes
          * @return Output nodes
          */
-		DataNode * deduce(Graph &graph, DataNode *in_node_ptr) {
+		DataNode *deduce(Graph &graph, DataNode *in_node_ptr) {
 			add_input(in_node_ptr);
 			DataNode *output_node_ptr = std::addressof(graph.alloc_node<DataNode>());
 			add_output(output_node_ptr);
@@ -28,9 +28,8 @@ namespace spy {
 
 		/*! 
 		 * @brief Validate the metadata of inputs and propagate to generate the metadata of the output nodes
-		 * @return Output nodes
 		 */
-		DataNode * propagate() {
+		void propagate() override {
 			assert_num_input(1);
 			assert_num_output(1);
 
@@ -41,8 +40,6 @@ namespace spy {
 
 			Tensor &out = out_node->tensor;
 			out.shape = in.shape;
-
-			return out_node;
 		}
 	};
 
@@ -57,7 +54,7 @@ namespace spy {
          * @brief Resolve input nodes and generate output nodes
          * @return Output nodes
          */
-		DataNode * deduce(Graph &graph, DataNode *lhs_ptr, DataNode *rhs_ptr) {
+		DataNode *deduce(Graph &graph, DataNode *lhs_ptr, DataNode *rhs_ptr) {
 			add_input(lhs_ptr, rhs_ptr);
 			DataNode *output_node_ptr = std::addressof(graph.alloc_node<DataNode>());
 			add_output(output_node_ptr);
@@ -68,7 +65,7 @@ namespace spy {
 		 * @brief Validate the metadata of inputs and propagate to generate the metadata of the output nodes
 		 * @return Ouput nodes
 		 */
-		DataNode * propagate() {
+		void propagate() override {
 			assert_num_input(2);
 			assert_num_output(1);
 
@@ -85,8 +82,6 @@ namespace spy {
 
 			Tensor &out = out_node->tensor;
 			out.shape = in_0.shape;
-
-			return out_node;
 		}
 	};
 
