@@ -153,7 +153,7 @@ namespace spy {
 				}				
 			});
 		} else {
-			DataNode *input_node_ptr  = cur_node_ptr->input<DataNode>(0);
+			DataNode *input_node_ptr  = cur_node_ptr->input_data(0);
 			DataNode *output_node_ptr = cur_node_ptr->output<DataNode>(0);
 			DataNode *view_src = (input_node_ptr->view_src == nullptr) ? input_node_ptr : input_node_ptr->view_src;
 			output_node_ptr->view_src = view_src;

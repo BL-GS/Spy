@@ -7,6 +7,7 @@
 #include "operator/config.h"
 #include "graph/data_node.h"
 #include "graph/op_node.h"
+#include "graph/graph.h"
 
 namespace spy {
 
@@ -20,35 +21,36 @@ namespace spy {
 
 	    ~OperatorDefinition() noexcept = default;
 
-	public: /* Interface for graph deduction */
-		/*! 
-		 * @brief Deduce the result tensor with proper shape
-		 * @return The tensor with the expected shape
-		 */
-		Tensor deduce_result() const {
-			spy_assert(num_input() == 2, "Expect the number of operands to be 2 (cur: {})", num_input());
+	public: /* Interface for graph deduction and data propogation */
+		DataNode * deduce(Graph &graph, DataNode *lhs_ptr, DataNode *rhs_ptr) {
+			add_input(lhs_ptr, rhs_ptr);
+			DataNode *output_node_ptr = std::addressof(graph.alloc_node<DataNode>());
+			add_output(output_node_ptr);
+			return output_node_ptr;
+		}
 
-			const Tensor &operand_0 = input<DataNode>(0)->tensor;
-			const Tensor &operand_1 = input<DataNode>(1)->tensor;
+		DataNode * propagate() {
+			assert_num_input(2);
+			assert_num_output(1);
 
-			const auto &shape_0     = operand_0.get_shape();
-			const auto &shape_1     = operand_1.get_shape();
-			
-			const auto [ne00, ne01, ne02, ne03] = shape_0.elements;
-			const auto [ne10, ne11, ne12, ne13] = shape_1.elements;
+			const Tensor &in_0 = input_data(0)->tensor;
+			const Tensor &in_1 = input_data(1)->tensor;
+
+			const auto [ne00, ne01, ne02, ne03] = in_0.elements();
+			const auto [ne10, ne11, ne12, ne13] = in_1.elements();
 
 			spy_assert(ne00 == ne10 && ne02 == ne12 && ne03 == ne13, 
-					"Operands should be of the same shape (operand1: {}, operand2: {})", shape_0, shape_1);
-			spy_assert(shape_1.number_type == NumberType::FP32, 
-						"Expect the type of operand 1 to be fp32 (cur: {})", shape_1.number_type);
+					"Operands should be of the same shape (operand1: {}, operand2: {})", 
+					in_0.shape, in_1.shape
+			);
 
-			auto num_element = shape_1.elements;
-			num_element[0] = shape_0.elements[1];
+			auto *out_node = output<DataNode>(0);
+			out_node->view_src = nullptr;
 
-            constexpr NumberType type_res = NumberType::FP32;
-			const Shape shape_res(shape_0.dim, num_element, type_res);	
-            
-			return { shape_res, nullptr };
+			Tensor &out = out_node->tensor;
+			out.shape = Shape({ ne01, ne11, ne12, ne13 }, NumberType::FP32);
+
+			return out_node;
 		}
     };
 

@@ -1,166 +1,57 @@
 #pragma once
 
-#include "util/shell/logger.h"
 #include "operator/type.h"
 #include "operator/config.h"
 #include "graph/op_node.h"
-#include "graph/data_node.h"
+#include "operator/common.h"
 
 namespace spy {
 
     template<>
-    struct OperatorDefinition<OperatorType::Add> final: OperatorNode {
+    struct OperatorDefinition<OperatorType::Add> final: OperatorBinaryNode {
     public:
 		static constexpr OperatorType TYPE = OperatorType::Add;
 
 	public:
-	    OperatorDefinition(): OperatorNode(TYPE) {}
+	    OperatorDefinition(): OperatorBinaryNode(TYPE) {}
 
 		~OperatorDefinition() noexcept = default;
-
-	public: /* Interface for graph deduction */
-		/*! 
-		 * @brief Deduce the result tensor with proper shape
-		 * @return The tensor with the expected shape
-		 */
-		Tensor deduce_result() const { 
-            spy_assert(num_input() == 2, "Expect the number of operands to be 2 (cur: {})", num_input());
-
-			const Tensor &operand_0 = input<DataNode>(0)->tensor;
-			const Tensor &operand_1 = input<DataNode>(1)->tensor;
-			spy_assert(operand_0.get_number_type() == NumberType::FP32);
-			spy_assert(operand_1.get_number_type() == NumberType::FP32);
-
-			const auto &shape_0     = operand_0.get_shape();
-			const auto &shape_1     = operand_1.get_shape();
-			const auto  type_0   = operand_0.get_number_type();
-			const auto  type_1   = operand_1.get_number_type();
-			
-			spy_assert(shape_0 == shape_1 || Shape::can_repeat(shape_0, shape_1), 
-					"Operands should be of the same shape or repeatable shape (operand1: {}, operand2: {})", shape_0, shape_1);
-			spy_assert(type_0 == type_1, 
-					"Operands should be of the same type (operand1: {}, operand2: {})", type_0, type_1);
-
-			const Shape shape_res     = shape_0;
-			return { shape_res, nullptr };
-		}
     };
 
 
     template<>
-    struct OperatorDefinition<OperatorType::Sub> final: OperatorNode {
+    struct OperatorDefinition<OperatorType::Sub> final: OperatorBinaryNode {
 	public:
 		static constexpr OperatorType TYPE = OperatorType::Sub;
 
 	public:
-	    OperatorDefinition(): OperatorNode(TYPE) {}
+	    OperatorDefinition(): OperatorBinaryNode(TYPE) {}
 
 	    ~OperatorDefinition() noexcept = default;
-	
-	public: /* Interface for graph deduction */
-		/*! 
-		 * @brief Deduce the result tensor with proper shape
-		 * @return The tensor with the expected shape
-		 */
-		Tensor deduce_result() const {
-			spy_assert(num_input() == 2, "Expect the number of operands to be 2 (cur: {})", num_input());
-
-			const Tensor &operand_0 = input<DataNode>(0)->tensor;
-			const Tensor &operand_1 = input<DataNode>(1)->tensor;
-			spy_assert(operand_0.get_number_type() == NumberType::FP32);
-			spy_assert(operand_1.get_number_type() == NumberType::FP32);
-
-			const auto &shape_0     = operand_0.get_shape();
-			const auto &shape_1     = operand_1.get_shape();
-			const auto  type_0   = operand_0.get_number_type();
-			const auto  type_1   = operand_1.get_number_type();
-			
-			spy_assert(shape_0 == shape_1 || Shape::can_repeat(shape_0, shape_1), 
-					"Operands should be of the same shape or repeatable shape (operand1: {}, operand2: {})", shape_0, shape_1);
-			spy_assert(type_0 == type_1, 
-					"Operands should be of the same type (operand1: {}, operand2: {})", type_0, type_1);
-
-			const Shape shape_res     = shape_0;
-			return { shape_res, nullptr };
-		}
     };
 
 
     template<>
-    struct OperatorDefinition<OperatorType::Mul> final: OperatorNode {
+    struct OperatorDefinition<OperatorType::Mul> final: OperatorBinaryNode {
     public:
 		static constexpr OperatorType TYPE = OperatorType::Mul;
 
 	public:
-	    OperatorDefinition(): OperatorNode(TYPE) {}
+	    OperatorDefinition(): OperatorBinaryNode(TYPE) {}
 
 	    ~OperatorDefinition() noexcept = default;
-
-	public: /* Interface for graph deduction */
-		/*! 
-		 * @brief Deduce the result tensor with proper shape
-		 * @return The tensor with the expected shape
-		 */
-		Tensor deduce_result() const {
-			spy_assert(num_input() == 2, "Expect the number of operands to be 2 (cur: {})", num_input());
-
-			const Tensor &operand_0 = input<DataNode>(0)->tensor;
-			const Tensor &operand_1 = input<DataNode>(1)->tensor;
-			spy_assert(operand_0.get_number_type() == NumberType::FP32);
-			spy_assert(operand_1.get_number_type() == NumberType::FP32);
-
-			const auto &shape_0     = operand_0.get_shape();
-			const auto &shape_1     = operand_1.get_shape();
-			const auto  type_0   = operand_0.get_number_type();
-			const auto  type_1   = operand_1.get_number_type();
-			
-			spy_assert(shape_0 == shape_1 || Shape::can_repeat(shape_0, shape_1), 
-					"Operands should be of the same shape or repeatable shape (operand1: {}, operand2: {})", shape_0, shape_1);
-			spy_assert(type_0 == type_1, 
-					"Operands should be of the same type (operand1: {}, operand2: {})", type_0, type_1);
-
-			const Shape shape_res     = shape_0;
-			return { shape_res, nullptr };
-		}
     };
 
 
     template<>
-    struct OperatorDefinition<OperatorType::Div> final: OperatorNode {
+    struct OperatorDefinition<OperatorType::Div> final: OperatorBinaryNode {
     public:
 		static constexpr OperatorType TYPE = OperatorType::Div;
 
 	public:
-	    OperatorDefinition(): OperatorNode(TYPE) {}
+	    OperatorDefinition(): OperatorBinaryNode(TYPE) {}
 
 	    ~OperatorDefinition() noexcept = default;
-
-	public: /* Interface for graph deduction */
-		/*! 
-		 * @brief Deduce the result tensor with proper shape
-		 * @return The tensor with the expected shape
-		 */
-		Tensor deduce_result() const {
-			spy_assert(num_input() == 2, "Expect the number of operands to be 2 (cur: {})", num_input());
-
-			const Tensor &operand_0 = input<DataNode>(0)->tensor;
-			const Tensor &operand_1 = input<DataNode>(1)->tensor;
-			spy_assert(operand_0.get_number_type() == NumberType::FP32);
-			spy_assert(operand_1.get_number_type() == NumberType::FP32);
-
-			const auto &shape_0     = operand_0.get_shape();
-			const auto &shape_1     = operand_1.get_shape();
-			const auto  type_0   = operand_0.get_number_type();
-			const auto  type_1   = operand_1.get_number_type();
-			
-			spy_assert(shape_0 == shape_1 || Shape::can_repeat(shape_0, shape_1), 
-					"Operands should be of the same shape or repeatable shape (operand1: {}, operand2: {})", shape_0, shape_1);
-			spy_assert(type_0 == type_1, 
-					"Operands should be of the same type (operand1: {}, operand2: {})", type_0, type_1);
-
-			const Shape shape_res     = shape_0;
-			return { shape_res, nullptr };
-		}
     };
 
 } // namespace spy

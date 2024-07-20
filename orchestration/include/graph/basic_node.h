@@ -37,16 +37,36 @@ namespace spy {
 		virtual ~BasicNode() = default;
 
 	public:
-		size_t add_input(BasicNode *node_ptr) {
+		/*!
+		 * @brief Add nodes as the input of this node
+		 * @return The index of the last one
+		 */
+		template<class ...Args>
+		size_t add_input(BasicNode *node_ptr, Args &&...args) {
+			// Add node_ptr
 			const size_t idx = input_list.size();
 			input_list.push_back(node_ptr);
-			return idx;
+			// Add left input nodes
+			if constexpr (sizeof ...(args) != 0)  { 
+				return add_input(std::forward<Args>(args)...); 
+			}
+			return idx; 
 		}
-
-		size_t add_output(BasicNode *node_ptr) {
+  
+		/*!
+		 * @brief Add nodes as the output of this node
+		 * @return The index of the last one
+		 */
+		template<class ...Args>
+		size_t add_output(BasicNode *node_ptr, Args &&...args) {
+			// Add node_ptr
 			const size_t idx = output_list.size();
 			output_list.push_back(node_ptr);
-			return idx;
+			// Add left output nodes
+			if constexpr (sizeof ...(args) != 0)  { 
+				return add_input(std::forward<Args>(args)...); 
+			}
+			return idx; 
 		}
 
 	public:

@@ -1,166 +1,255 @@
 #pragma once
 
+#include <optional>
+
 #include "util/shell/logger.h"
 #include "operator/type.h"
 #include "operator/config.h"
 #include "graph/data_node.h"
 #include "graph/op_node.h"
+#include "operator/common.h"
+#include "operator/parameter.h"
 
 namespace spy {
 
     template<>
-    struct OperatorDefinition<OperatorType::Relu> final: OperatorNode {
+    struct OperatorDefinition<OperatorType::Relu> final: OperatorUnaryNode {
     public:
 		static constexpr OperatorType TYPE = OperatorType::Relu;
 
 	public:
-		OperatorDefinition(): OperatorNode(TYPE) {}
+		OperatorDefinition(): OperatorUnaryNode(TYPE) {}
 
 	    ~OperatorDefinition() noexcept = default;
-
-	public: /* Interface for graph deduction */
-		/*! 
-		 * @brief Deduce the result tensor with proper shape
-		 * @return The tensor with the expected shape
-		 */
-		Tensor deduce_result() const { 
-            spy_assert(num_input() == 1, "Expect the number of operands to be 1 (cur: {})", num_input());
-
-			const Tensor &operand_0 = input<DataNode>(0)->tensor;
-
-			spy_assert(operand_0.get_number_type() == NumberType::FP32);
-
-			const auto &shape_0   = operand_0.get_shape();
-			const Shape shape_res = shape_0;
-			return { shape_res, nullptr };
-		}
     };
 
 
     template<>
-    struct OperatorDefinition<OperatorType::Silu> final: OperatorNode {
+    struct OperatorDefinition<OperatorType::Silu> final: OperatorUnaryNode {
     public:
 		static constexpr OperatorType TYPE = OperatorType::Silu;
 
 	public:
-	    OperatorDefinition(): OperatorNode(TYPE) {}
+	    OperatorDefinition(): OperatorUnaryNode(TYPE) {}
 
 	    ~OperatorDefinition() noexcept = default;
-
-	public: /* Interface for graph deduction */
-		/*! 
-		 * @brief Deduce the result tensor with proper shape
-		 * @return The tensor with the expected shape
-		 */
-		Tensor deduce_result() const { 
-            spy_assert(num_input() == 1, "Expect the number of operands to be 1 (cur: {})", num_input());
-
-			const Tensor &operand_0 = input<DataNode>(0)->tensor;
-
-			spy_assert(operand_0.get_number_type() == NumberType::FP32);
-
-			const auto &shape_0   = operand_0.get_shape();
-			const Shape shape_res = shape_0;
-			return { shape_res, nullptr };
-		}
     };
 
 
     template<>
     struct OperatorDefinition<OperatorType::Softmax> final: OperatorNode {
-    public:
+	public:
+		struct Param { float scale; };
+
+		using ParameterWrapper    = OperatorParameter<Param>;
+		using ParameterRefPointer = ParameterWrapper::RefPointer;
+
 		static constexpr OperatorType TYPE = OperatorType::Softmax;
 
 	public:
-		float scale;
+		ParameterWrapper params;
 
 	public:
 	    OperatorDefinition(): OperatorNode(TYPE) {}
 
-		OperatorDefinition(const float scale): OperatorNode(TYPE), scale(scale) {}
+		OperatorDefinition(const Param &params): OperatorNode(TYPE), params(params) {}
+
+		OperatorDefinition(ParameterRefPointer ref_ptr): OperatorNode(TYPE), params(ref_ptr) {}
 
 	    ~OperatorDefinition() noexcept = default;
 
 	public: /* Interface for graph deduction */
-		/*! 
-		 * @brief Deduce the result tensor with proper shape
-		 * @return The tensor with the expected shape
-		 */
-		Tensor deduce_result() const { 
-			spy_assert(num_input() == 1 || num_input() == 2, "Expect the number of operands to be 1 or 2 (cur: {})", num_input());
-
-			const Tensor &operand_0 = input<DataNode>(0)->tensor;
-			const auto &shape_0     = operand_0.get_shape();
-			const Shape shape_res   = shape_0;
-			return { shape_res, nullptr };
+	    /*!
+         * @brief Resolve input nodes and generate output nodes
+		 * @param input_node_ptr The input tensor
+		 * @param pos_node_ptr The position for rotation
+         * @return Output nodes
+         */
+		DataNode *deduce(Graph &graph, DataNode *input_node_ptr, DataNode *mask_node_ptr) {
+			add_input(input_node_ptr, mask_node_ptr);
+			DataNode *output_node_ptr = std::addressof(graph.alloc_node<DataNode>());
+			add_output(output_node_ptr);
+			return output_node_ptr;
 		}
+
+	    /*!
+         * @brief Resolve input nodes and generate output nodes
+		 * @param input_node_ptr The input tensor
+         * @return Output nodes
+         */
+		DataNode *deduce(Graph &graph, DataNode *input_node_ptr) {
+			add_input(input_node_ptr);
+			DataNode *output_node_ptr = std::addressof(graph.alloc_node<DataNode>());
+			add_output(output_node_ptr);
+			return output_node_ptr;
+		}
+
+		/*! 
+		 * @brief Validate the metadata of inputs and propagate to generate the metadata of the output nodes
+		 * @return Output nodes
+		 */
+		DataNode *propagate() {
+			assert_num_input(2);
+			assert_num_output(1);
+			params.track_ref_if_needed();
+
+			const Tensor &in  = input_data(0)->tensor;
+
+			auto *out_node = output_data(0);
+			out_node->view_src = nullptr;
+
+			Tensor &out = out_node->tensor;
+			out.shape = in.shape;
+
+			return out_node;
+		}
+
     };
 
 
     template<>
     struct OperatorDefinition<OperatorType::NormRMS> final: OperatorNode {
-    public:
+	public:
+		struct Param { float eps; };
+
+		using ParameterWrapper    = OperatorParameter<Param>;
+		using ParameterRefPointer = ParameterWrapper::RefPointer;
+
 		static constexpr OperatorType TYPE = OperatorType::NormRMS;
 
     public:
-        float eps;
+		ParameterWrapper params;
 
 	public:
 	    OperatorDefinition(): OperatorNode(TYPE) {}
 
-		OperatorDefinition(float eps): OperatorNode(TYPE), eps(eps) {}
+		OperatorDefinition(const Param &params): OperatorNode(TYPE), params(params) {}
+
+		OperatorDefinition(ParameterRefPointer ref_ptr): OperatorNode(TYPE), params(ref_ptr) {}
 
 	    ~OperatorDefinition() noexcept = default;
 
-	public: /* Interface for graph deduction */
-		/*! 
-		 * @brief Deduce the result tensor with proper shape
-		 * @return The tensor with the expected shape
-		 */
-		Tensor deduce_result() const { 
-			spy_assert(num_input() == 1, "Expect the number of operands to be 1 (cur: {})", num_input());
-			spy_assert(eps > 0.0F, "Expect the eps > 0.0 (cur: {})", eps);
+	public:
+        /*!
+         * @brief Resolve input nodes and generate output nodes
+         * @return Output nodes
+         */
+		DataNode *deduce(Graph &graph, DataNode *in_node_ptr) {
+			add_input(in_node_ptr);
+			DataNode *output_node_ptr = std::addressof(graph.alloc_node<DataNode>());
+			add_output(output_node_ptr);
+			return output_node_ptr;
+		}
 
-			const Tensor &operand_0 = input<DataNode>(0)->tensor;
-			const auto &shape_0     = operand_0.get_shape();
-			const Shape shape_res   = shape_0;
-			return { shape_res, nullptr };
+
+		/*! 
+		 * @brief Validate the metadata of inputs and propagate to generate the metadata of the output nodes
+		 * @return Output nodes
+		 */
+		DataNode *propagate() {
+			assert_num_input(1);
+			assert_num_output(1);
+			params.track_ref_if_needed();
+
+			const Tensor &in = input_data(0)->tensor;
+
+			auto *out_node = output<DataNode>(0);
+			out_node->view_src = nullptr;
+
+			Tensor &out = out_node->tensor;
+			out.shape = in.shape;
+
+			return out_node;
 		}
     };
 
     template<>
     struct OperatorDefinition<OperatorType::Rope> final: OperatorNode {
     public:
+		enum class RopeType : int {
+			None = -1,
+			Norm = 0,
+			Neox = 2,
+			GLM  = 4,
+		};
+
+		struct Param {
+			RopeType 		mode; 
+
+			int32_t 		num_past;
+			int32_t 		num_dim; 
+			int32_t 		num_context; 
+			int32_t 		num_origin_context;
+
+			float 			freq_base; 
+			float 			freq_scale; 
+			float 			extend_factor; 
+			float 			attention_factor;
+			float 			beta_fast; 
+			float 			beta_slow; 
+			float 			xpos_base; 
+			bool 			xpos_down;
+		};
+
+		using ParameterWrapper    = OperatorParameter<Param>;
+		using ParameterRefPointer = ParameterWrapper::RefPointer;
+
 		static constexpr OperatorType TYPE = OperatorType::Rope;
 
     public:
-		RopeContext rope_context;
+		ParameterWrapper params;
 
 	public:
 	    OperatorDefinition(): OperatorNode(TYPE) {}
 
-		OperatorDefinition(const RopeContext &rope_context): 
-				OperatorNode(TYPE), rope_context(rope_context) {}
+		OperatorDefinition(const Param &params): OperatorNode(TYPE), params(params) {}
+
+		OperatorDefinition(ParameterRefPointer ref_ptr): OperatorNode(TYPE), params(ref_ptr) {}
 
 	    ~OperatorDefinition() noexcept = default;
 
 	public: /* Interface for graph deduction */
+	    /*!
+         * @brief Resolve input nodes and generate output nodes
+		 * @param input_node_ptr The input tensor
+		 * @param pos_node_ptr The position for rotation
+         * @return Output nodes
+         */
+		DataNode *deduce(Graph &graph, DataNode *input_node_ptr, DataNode *pos_node_ptr) {
+			add_input(input_node_ptr, pos_node_ptr);
+			DataNode *output_node_ptr = std::addressof(graph.alloc_node<DataNode>());
+			add_output(output_node_ptr);
+			return output_node_ptr;
+		}
+
 		/*! 
-		 * @brief Deduce the result tensor with proper shape
-		 * @return The tensor with the expected shape
+		 * @brief Validate the metadata of inputs and propagate to generate the metadata of the output nodes
+		 * @return Output nodes
 		 */
-		Tensor deduce_result() const { 
-			spy_assert(num_input() == 2, "Expect the number of operands to be 2 (cur: {})", num_input());
+		DataNode *propagate() {
+			assert_num_input(2);
+			assert_num_output(1);
+			params.track_ref_if_needed();
 
-			const Tensor &operand_0 = input<DataNode>(0)->tensor;
+			const Tensor &in  = input_data(0)->tensor;
+			const Tensor &pos = input_data(1)->tensor;
 
-			const auto &shape_0     = operand_0.get_shape();
-			spy_assert(shape_0.dim == 3, 
-						"Expect the dimension of operand 0 to be larger than 3 (operand: {})",
-						shape_0.dim);
-			const Shape shape_res     = shape_0;
-			return { shape_res, nullptr };
+			spy_assert(in.dim() >= 3, "invalid dimension of input tensor: {}(expect: >=3)", in.dim());
+
+			auto *out_node = output_data(0);
+			out_node->view_src = nullptr;
+
+			Tensor &out = out_node->tensor;
+			out.shape = in.shape;
+
+			return out_node;
 		}
     };
 
+	using RopeOpDef = OperatorDefinition<OperatorType::Rope>;
+	using RopeType  = RopeOpDef::RopeType;
+	using RopeParam = RopeOpDef::Param;
+
 } // namespace spy
+
+SPY_ENUM_FORMATTER(spy::RopeType);

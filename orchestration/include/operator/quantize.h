@@ -3,6 +3,8 @@
 #include "util/shell/logger.h"
 #include "operator/type.h"
 #include "operator/config.h"
+#include "operator/parameter.h"
+#include "graph/graph.h"
 #include "graph/data_node.h"
 #include "graph/op_node.h"
 
@@ -11,32 +13,60 @@ namespace spy {
     template<>
     struct OperatorDefinition<OperatorType::Quantize> final: OperatorNode {
     public:
+		struct Param { NumberType target_type; };
+
+		using ParameterWrapper    = OperatorParameter<Param>;
+		using ParameterRefPointer = ParameterWrapper::RefPointer;
+
 		static constexpr OperatorType TYPE = OperatorType::Quantize;
 
 	public:
-		NumberType target_type = NumberType::FP32;
+		ParameterWrapper params;
 
 	public:
 	    OperatorDefinition(): OperatorNode(TYPE) {}
 
-		OperatorDefinition(NumberType target_type):
-				OperatorNode(TYPE), target_type(target_type) {}
+		OperatorDefinition(const Param &params): OperatorNode(TYPE), params(params) {}
+
+		OperatorDefinition(ParameterRefPointer ref_ptr): OperatorNode(TYPE), params(ref_ptr) {}
 
 	    ~OperatorDefinition() noexcept = default;
 
 	public: /* Interface for graph deduction */
-		/*! 
-		 * @brief Deduce the result tensor with proper shape
-		 * @return The tensor with the expected shape
-		 */
-		Tensor deduce_result() const { 
-			spy_assert(num_input() == 1, "Expect the number of operands to be 1 (cur: {})", num_input());
+        /*!
+         * @brief Resolve input nodes and generate output nodes
+         * @return Output nodes
+         */
+		DataNode *deduce(Graph &graph, DataNode *in_node_ptr) {
+			add_input(in_node_ptr);
+			DataNode *output_node_ptr = std::addressof(graph.alloc_node<DataNode>());
+			add_output(output_node_ptr);
+			return output_node_ptr;
+		}
 
-			const Tensor &operand 			= input<DataNode>(0)->tensor;
-			const size_t target_dim      	= operand.get_dim();
-			const auto   target_elements 	= operand.element_array();
+
+		/*! 
+		 * @brief Validate the metadata of inputs and propagate to generate the metadata of the output nodes
+		 * @return Output nodes
+		 */
+		DataNode *propagate() {
+			assert_num_input(1);
+			assert_num_output(1);
+			params.track_ref_if_needed();
+
+			const Tensor &in = input_data(0)->tensor;
+			const size_t target_dim      = in.dim();
+			const auto   target_elements = in.elements();
+			const NumberType target_type = params.get_val().target_type;
 			const Shape  target_shape(target_dim, target_elements, target_type);
-			return { target_shape, nullptr };
+
+			auto *out_node = output<DataNode>(0);
+			out_node->view_src = nullptr;
+
+			Tensor &out = out_node->tensor;
+			out.shape = target_shape;
+
+			return out_node;
 		}
     };
 

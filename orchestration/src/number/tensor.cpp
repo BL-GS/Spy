@@ -33,7 +33,7 @@ namespace spy {
     }
 
     std::map<std::string_view, std::string> Tensor::property() const {
-        return shape_.property();
+        return shape.property();
     }
 
 } // namespace spy

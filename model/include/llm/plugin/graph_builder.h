@@ -116,7 +116,7 @@ namespace spy {
 
             DataNode *node_ptr = graph.alloc_node<DataNode>(
                 property,
-                op_node_ptr->deduce_result()
+                op_node_ptr->deduce()
             );
 
             return node_ptr;

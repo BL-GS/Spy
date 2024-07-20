@@ -6,6 +6,9 @@
 
 namespace spy {
 
+	/// 
+	/// @brief An file adapter for gguf files
+	/// 
 	class GGUFAdapter final: public AbstractFileAdapter {
 	public:
 		GGUFAdapter() = default;
@@ -13,7 +16,7 @@ namespace spy {
 		virtual ~GGUFAdapter() = default;
 
 	public:
-		void init_from_file(const std::string_view filename) override;
+		void init_from_file(std::string_view filename) override;
 	};
 
 }  // namespace spy

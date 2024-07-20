@@ -59,7 +59,7 @@ namespace spy {
 		/*!
 		 * @brief By default, we generate a shape for contiguous structure
 		 */
-		Shape(const std::initializer_list<size_t> &num_element, const NumberType number_type):
+		Shape(const std::initializer_list<int64_t> &num_element, const NumberType number_type):
 				number_type(number_type), dim(num_element.size()), elements{0}, bytes{0} {
 			spy_assert(dim <= MAX_DIM, "The dimension should be within the range (0, {}] (cur: {})", MAX_DIM, dim);
 
@@ -87,7 +87,7 @@ namespace spy {
 			std::fill(bytes.begin() + dim, bytes.end(), elements[dim - 1] * num_byte[dim - 1]);
 		}
 
-		Shape(const std::initializer_list<size_t> &num_element, const std::initializer_list<size_t> &num_byte, const NumberType number_type):
+		Shape(const std::initializer_list<int64_t> &num_element, const std::initializer_list<size_t> &num_byte, const NumberType number_type):
 				number_type(number_type), dim(num_element.size()), elements{0}, bytes{0} {
 			spy_assert(dim <= MAX_DIM, "The dimension should be within the range (0, {}] (cur: {})", MAX_DIM, dim);
 
@@ -204,51 +204,54 @@ namespace spy {
 		std::map<std::string_view, std::string> property() const;
 	};
 
-	class Tensor {
+	struct Tensor {
 	public:
 		using DimensionArray = Shape::DimensionArray;
 
-	protected:
+	public:
 		/// The shape of tensor
-		Shape   	shape_;
+		Shape   	shape;
 		/// The pointer to the start address of data
-		void *  	data_ptr_;
+		void *  	data_ptr;
 
 	public:
-		Tensor(): data_ptr_(nullptr) {}
+		Tensor(): data_ptr(nullptr) {}
 
-		Tensor(const Shape &shape, void *data_ptr): shape_(shape), data_ptr_(data_ptr) { }
+		Tensor(const Shape &shape, void *data_ptr): shape(shape), data_ptr(data_ptr) { }
 
 		Tensor(const Tensor &other) = default;
 
 	public:
 		template<class T = void>
-		T *get(const DimensionArray &index_array = {0}) const {
+		T *get() const { return static_cast<T *>(data_ptr); }
+
+		template<class T = void>
+		T *get(const DimensionArray &index_array) const {
 			DimensionArray offset_array;
-			std::transform( index_array.begin(), index_array.end(), shape_.bytes.begin(), 
+			std::transform( index_array.begin(), index_array.end(), shape.bytes.begin(), 
 				offset_array.begin(), std::multiplies<size_t>()
 			);
 			const size_t offset = std::reduce(offset_array.begin(), offset_array.end());
-			void *res_ptr = static_cast<uint8_t *>(data_ptr_) + offset;
+			void *res_ptr = static_cast<uint8_t *>(data_ptr) + offset;
 			return static_cast<T *>(res_ptr);
 		}
 
-		void set_data_ptr(void *data_ptr) { data_ptr_ = data_ptr; }
+		void set_data_ptr(void *data_ptr) { data_ptr = data_ptr; }
 
 	public: /* Shape Information */
-		const Shape &	get_shape()       const { return shape_; 					}
-		NumberType  	get_number_type() const { return shape_.number_type; 		}
-		size_t      	get_dim()         const { return shape_.dim; 				}
-		DimensionArray  element_array()	  const { return shape_.elements; 			}
-		DimensionArray  size_array()	  const { return shape_.bytes; 				}
-		size_t			total_size()	  const { return shape_.total_size(); 		}
-		size_t			total_element()	  const { return shape_.total_element(); 	}
-		size_t          total_block()     const { return shape_.total_block(); 		}
+		const Shape &	get_shape()       const { return shape; 					}
+		NumberType  	type() 			  const { return shape.number_type; 		}
+		size_t      	dim()         	  const { return shape.dim; 				}
+		DimensionArray  elements()	  	  const { return shape.elements; 			}
+		DimensionArray  bytes()	  		  const { return shape.bytes; 				}
+		size_t			total_size()	  const { return shape.total_size(); 		}
+		size_t			total_element()	  const { return shape.total_element(); 	}
+		size_t          total_block()     const { return shape.total_block(); 		}
 
 	public: /* View Information */
-		bool			is_continuous()   const { return shape_.is_continuous();   }
-		bool			is_transposed()   const { return shape_.is_transposed();	}
-		bool			is_permuted()	  const { return shape_.is_permuted();		}
+		bool			is_continuous()   const { return shape.is_continuous();   }
+		bool			is_transposed()   const { return shape.is_transposed();	}
+		bool			is_permuted()	  const { return shape.is_permuted();		}
 
 	public:
 		std::map<std::string_view, std::string> property() const;
