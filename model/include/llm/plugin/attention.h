@@ -20,7 +20,7 @@ namespace spy {
         DataNode *bias_o          = nullptr;
     };
 
-    struct MultiHeadAttentionBlock: public GraphBuilder {
+    struct MultiHeadAttentionBlock final: public GraphBuilder {
         /* Hyper params */
         const NormRMSParam norm_rms_param;
         const RopeParam    rope_param;
@@ -94,7 +94,7 @@ namespace spy {
 	
 	struct KVCache {
 	public:
-		size_t head = 0;
+		int64_t head = 0;
 
 		std::vector<Tensor> k_cache;
 		std::vector<Tensor> v_cache;

@@ -156,7 +156,9 @@ namespace spy {
         virtual void init_tokenizer() = 0;
 
     public: /* Graph building */
-        virtual GraphView build_graph(ModelIO &model_io) = 0;
+        virtual void build_graph(Graph &graph, ModelIO &model_io) = 0;
+
+        virtual void propagate(ModelIO &model_io) = 0;
 
 		// virtual std::unique_ptr<Graph>     &update_graph(ModelIO &model_io) = 0;
 
@@ -165,7 +167,7 @@ namespace spy {
     public:
         const ModelMetadata &   get_info()      const { return metadata_;       }
 
-        ModelMetaContext &           get_context()   const { return *context_ptr_; }
+        ModelMetaContext &      get_context()   const { return *context_ptr_; }
 
         Tokenizer &             get_tokenizer() const { return *tokenizer_ptr;  }
 

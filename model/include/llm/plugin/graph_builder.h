@@ -3,6 +3,7 @@
 #include <memory>
 #include <vector>
 #include <forward_list>
+#include <any>
 #include <functional>
 #include <magic_enum.hpp>
 
@@ -22,13 +23,12 @@ namespace spy {
         /// Listeners for updating params, which should be called after the member variables have been updated
         std::vector<std::function<void()>> listener_list;
         /// Parameter storage
-        std::forward_list<std::unique_ptr<AbstractOperatorParameter>> param_list;
+        std::forward_list<std::any> param_list;
 
     public:
         template<class T, class ...Args>
-            requires std::is_base_of_v<AbstractOperatorParameter, T>
         T &alloc_param(Args &&...args) {
-            return param_list.emplace_front(std::forward<Args>(args)...);
+            return std::any_cast<T &>(param_list.emplace_front(T{std::forward<Args>(args)...}));
         }
 
         template<class T_Func>

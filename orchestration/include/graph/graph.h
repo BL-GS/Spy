@@ -54,8 +54,6 @@ namespace spy {
 
 	class GraphStorage: PropertyInterface {
 	private:
-		std::vector<Graph> graph_array_;
-
 		std::vector<std::unique_ptr<BasicNode>> node_array_;
 
 	public:
@@ -68,9 +66,9 @@ namespace spy {
 	public:
 		template<class T_Node, class ...Args> 
 			requires std::is_base_of_v<BasicNode, T_Node>
-		T_Node &alloc_node(Graph &graph, Args &&...args) {
+		T_Node &alloc_node(const Graph &graph, Args &&...args) {
 			const  NodeID new_id     = node_array_.size();
-			T_Node &new_node         = node_array_.emplace_back(std::forward<Args>(args)...);
+			T_Node &new_node         = *static_cast<T_Node *>(std::to_address(node_array_.emplace_back(std::make_unique<T_Node>(std::forward<Args>(args)...))));
 			       new_node.id       = new_id;
 			       new_node.graph_id = graph.id;
 			return new_node;
@@ -121,7 +119,7 @@ namespace spy {
 	template<class T_Node, class ...Args>
 		requires std::is_base_of_v<BasicNode, T_Node>
 	T_Node &Graph::alloc_node(Args &&...args) const {
-		return storage_ptr->alloc_node<T_Node>(this, std::forward<Args>(args)...);
+		return storage_ptr->alloc_node<T_Node>(*this, std::forward<Args>(args)...);
 	}
 
 }  // namespace spy

@@ -6,15 +6,8 @@
 
 namespace spy {
 
-    class AbstractOperatorParameter {
-    public:
-        AbstractOperatorParameter() = default;
-
-        virtual ~AbstractOperatorParameter() noexcept = default;
-    };
-
     template<class T>
-    class OperatorParameter final: AbstractOperatorParameter {
+    class OperatorParameter {
     public:
         using Value      = T;
         using RefPointer = const T*;
@@ -32,21 +25,20 @@ namespace spy {
 
         OperatorParameter(RefPointer ref_ptr): ref_ptr_(ref_ptr) {}
 
-        ~OperatorParameter() noexcept override = default;
-
     public:
         /*!
          * @brief Track the reference and update the value
          * @return The reference to the updated value
          */
-        Value &track_ref() {
+        const Value &track_ref() {
             spy_assert(is_ref());
             RefPointer ref_ptr = get_ref();
             spy_assert_debug(ref_ptr != nullptr, "trying to track an empty reference");
             val_ = *ref_ptr;
+            return val_.value();
         }
 
-        Value &track_ref_if_needed() {
+        const Value &track_ref_if_needed() {
             if (is_ref()) { return track_ref(); }
             spy_assert(is_val());
             return get_val();

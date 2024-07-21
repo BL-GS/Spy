@@ -28,8 +28,9 @@ namespace spy {
 			const size_t cur = num_input();
 			if constexpr (sizeof...(others) == 0) {
 				spy_assert(cur == expect, "invalid number of inputs {} (expect: {})", cur, expect);
+			} else {
+				if (cur != expect) { assert_num_input(others...); }
 			}
-			if (cur != expect) { assert_num_input(others...); }
 		}
 
 		template<class ...Args>
@@ -37,8 +38,9 @@ namespace spy {
 			const size_t cur = num_output();
 			if constexpr (sizeof...(others) == 0) {
 				spy_assert(cur == expect, "invalid number of outputs {} (expect: {})", cur, expect);
+			} else {
+				if (cur != expect) { assert_num_output(others...); }
 			}
-			if (cur != expect) { assert_num_output(others...); }
 		}
 
 	public:

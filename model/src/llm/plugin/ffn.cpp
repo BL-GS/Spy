@@ -10,7 +10,7 @@ namespace spy {
         };
 
         DataNode *ffn_norm          = make_augmented_stream<OperatorType::NormRMS>(graph, "ffn_norm",
-            default_prop, ffn_norm_rms_eps,
+            default_prop, norm_rms_param,
             ffn_input
         );
         DataNode *ffn_norm_weighted = make_stream<OperatorType::Mul>(graph, "ffn_norm_linear",

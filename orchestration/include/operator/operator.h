@@ -5,6 +5,7 @@
 #include "operator/type.h"
 #include "operator/config.h"
 
+#include "operator/input.h"
 #include "operator/basic.h"
 #include "operator/mat.h"
 #include "operator/non-linear.h"

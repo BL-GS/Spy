@@ -10,7 +10,7 @@
 
 #include "llm/type.h"
 #include "llm/vocab/config.h"
-#include "operator/non-linear.h"
+#include "operator/operator.h"
 
 namespace spy {
 

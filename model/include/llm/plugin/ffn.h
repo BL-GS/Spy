@@ -13,9 +13,9 @@ namespace spy {
         DataNode *ffn_down  = nullptr;
     };
 
-    struct FFNBlock: public GraphBuilder {
+    struct FFNBlock final: public GraphBuilder {
         /* Hyper param */
-        NormRMSParam     ffn_norm_rms_eps;
+        NormRMSParam     norm_rms_param;
 
         /* Weight */
         FFNWeight        weight;

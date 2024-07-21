@@ -36,6 +36,8 @@ namespace spy {
 
 
 	enum class OperatorType: int32_t {
+		/* input/output */
+		Input,
 		/* 1-operand operator */
 		Nop, Dup, Copy, View, Reshape, MaskedCopy, MaskedSelect, GetRow, Transpose, Permute, Contiguous,
 		Relu, Silu, Gelu, Max, Min, Softmax,
@@ -50,6 +52,7 @@ namespace spy {
 	};
 
 #define OPERATOR_TYPE_MAP(map)              \
+		map(OperatorType::Input)			\
 		map(OperatorType::Nop)              \
 		map(OperatorType::Dup)              \
 		map(OperatorType::Copy)             \

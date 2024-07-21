@@ -160,7 +160,7 @@ namespace spy {
                         { num_token * num_embedding_k_gqa },
                         std::initializer_list<size_t>{ get_type_size(k_type) },
                         k_type                        
-                    )}; 
+                )}; 
             },
             k_cache
         );
@@ -204,7 +204,7 @@ namespace spy {
                         { num_token, num_embedding_v_gqa },
                         std::initializer_list<size_t>{ get_type_size(v_type), num_context * get_type_size(v_type) },
                         v_type
-                    )};
+                )};
             },
             v_cache
         );
