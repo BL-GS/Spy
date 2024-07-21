@@ -22,19 +22,18 @@ namespace spy {
 
     struct MultiHeadAttentionBlock: public GraphBuilder {
         /* Hyper params */
-        const float   ffn_norm_rms_eps;
+        const NormRMSParam norm_rms_param;
+        const RopeParam    rope_param;
 
-        const size_t  num_embedding_head;
-        const size_t  num_embedding_k_gqa;
-        const size_t  num_embedding_v_gqa;
-        const size_t  num_head_kv;
-        const size_t  num_head;
+        const int64_t  num_embedding_head;
+        const int64_t  num_embedding_k_gqa;
+        const int64_t  num_embedding_v_gqa;
+        const int64_t  num_head_kv;
+        const int64_t  num_head;
 
-        const size_t  num_context;
-        const size_t  num_token;
-        const size_t  num_past_token;
-
-        const RopeContext rope_context;
+        int64_t  num_context;
+        int64_t  num_token;
+        int64_t  num_past_token;
 
         /* Weights */
         MultiHeadAttentionWeight weight;
@@ -49,143 +48,17 @@ namespace spy {
         DataNode * input_pos;
 
 
-        template<bool T_use_kv_cache>
-        DataNode *connect_attention(Graph &graph, int layer_id = -1, int expert_id = -1) const {
-
-            DataNode *attn_norm = make_stream<OperatorType::NormRMS>(graph,
-                TensorType::V_AttentionNorm, layer_id, expert_id, 
-                { input_embedding }, ffn_norm_rms_eps
-            );
-            DataNode *attn_norm_weighted = make_stream<OperatorType::Mul>(graph,
-                TensorType::V_AttentionNormWeighted, layer_id, expert_id, 
-                { attn_norm, weight.attention_norm }
-            );
-
-            /* Self-attention */
-            const auto [Q_cur_out, K_cur_out, V_cur_out] = input_linear_map(graph, layer_id, expert_id, attn_norm_weighted);
-            const auto [Q_rope, K_rope] = position_encode(graph, layer_id, expert_id, Q_cur_out, K_cur_out);
-
-            DataNode *Q_out = make_stream<OperatorType::Permute>(graph,
-                TensorType::V_QRope, layer_id, expert_id,
-                { Q_rope },
-                std::initializer_list<size_t>{0, 2, 1, 3}
-            );
-            
-            DataNode *V_t   = make_stream<OperatorType::Transpose>(graph,
-                TensorType::V_VWeightedBiased, layer_id, expert_id,
-                { V_cur_out }
-            );
-
-            const auto [K_out, V_out] = (T_use_kv_cache) ? connect_KVCache(graph, layer_id, expert_id, K_rope, V_t) : reshape_KV(graph, layer_id, expert_id, K_rope, V_t);
-
-            DataNode *attn_out = attention_projection(graph, layer_id, expert_id, Q_out, K_out, V_out);
-            return attn_out;
-        }
+        DataNode *connect_attention(Graph &graph, int layer_id = -1, int expert_id = -1, bool enable_kvcache = true);
 
     protected:
-        std::tuple<DataNode *, DataNode *, DataNode *> input_linear_map(Graph &graph,
-                int layer_id, int expert_id, 
-                DataNode *attn_norm) const {
+        std::tuple<DataNode *, DataNode *, DataNode *> input_linear_map(Graph &graph, const DataNodeProperty &default_prop, 
+                DataNode *attn_norm) const;
 
-            DataNode *Q_cur    = make_stream<OperatorType::MatMul>(graph,
-                TensorType::V_QWeighted, layer_id, expert_id, 
-                { weight.weight_q, attn_norm }
-            );
-            DataNode *K_cur    = make_stream<OperatorType::MatMul>(graph,
-                TensorType::V_KWeighted, layer_id, expert_id,
-                { weight.weight_k, attn_norm }
-            );
-            DataNode *V_cur    = make_stream<OperatorType::MatMul>(graph,
-                TensorType::V_VWeighted, layer_id, expert_id, 
-                { weight.weight_v, attn_norm }
-            );
+        std::pair<DataNode *, DataNode *> position_encode(Graph &graph, const DataNodeProperty &default_prop, 
+                DataNode *Q_cur, DataNode *K_cur);
 
-            DataNode *Q_cur_out = (weight.bias_q == nullptr) ? Q_cur :
-                make_stream<OperatorType::Add>(graph, 
-                    TensorType::V_QWeightedBiased, layer_id, expert_id, 
-                    { Q_cur, weight.bias_q }
-                );
-            DataNode *K_cur_out = (weight.bias_k == nullptr) ? K_cur :
-                make_stream<OperatorType::Add>(graph, 
-                    TensorType::V_KWeightedBiased, layer_id, expert_id, 
-                    { K_cur, weight.bias_k }
-                );
-            DataNode *V_cur_out = (weight.bias_v == nullptr) ? V_cur :
-                make_stream<OperatorType::Add>(graph, 
-                    TensorType::V_VWeightedBiased, layer_id, expert_id, 
-                    { V_cur, weight.bias_v }
-                );
-
-            return { Q_cur_out, K_cur_out, V_cur_out };
-        }
-
-        std::pair<DataNode *, DataNode *> position_encode(Graph &graph,
-                int layer_id, int expert_id, 
-                DataNode *Q_cur, DataNode *K_cur) const {
-            DataNode *Q_reshaped_cur = make_stream<OperatorType::Reshape>(graph,
-                TensorType::V_QWeightedBiased, layer_id, expert_id, 
-                { Q_cur }, 
-                std::initializer_list<size_t>{ num_embedding_head, num_head, num_token },
-                NumberType::FP32
-            );
-            DataNode *K_reshaped_cur = make_stream<OperatorType::Reshape>(graph,
-                TensorType::V_KWeightedBiased, layer_id, expert_id, 
-                { K_cur }, 
-                std::initializer_list<size_t>{ num_embedding_head, num_head, num_token },
-                NumberType::FP32
-            );
-
-            DataNode *Q_rope = make_stream<OperatorType::Rope>(graph,
-                TensorType::V_QRope, layer_id, expert_id, 
-                { Q_reshaped_cur, input_pos }, rope_context
-            );
-            DataNode *K_rope = make_stream<OperatorType::Rope>(graph,
-                TensorType::V_KRope, layer_id, expert_id, 
-                { K_reshaped_cur, input_pos }, rope_context
-            );
-
-            return { Q_rope, K_rope };
-        }
-
-        DataNode *attention_projection(Graph &graph,
-                int layer_id, int expert_id, 
-                DataNode *query, DataNode *key, DataNode *value) const {
-			DataNode *KQ_out         = make_stream<OperatorType::MatMul>(graph,
-                TensorType::V_AttentionScore, layer_id, expert_id, 
-                { key, query }
-            );
-			DataNode *KQ_softmax_out = make_stream<OperatorType::Softmax>(graph,
-                TensorType::V_AttentionContext, layer_id, expert_id, 
-                { KQ_out, KQ_mask },
-				1.0F / std::sqrt(static_cast<float>(static_cast<int>(num_embedding_head)))  // Scale
-			);
-			
-			DataNode *KQV       = make_stream<OperatorType::MatMul>(graph,
-                TensorType::V_KQV, layer_id, expert_id, 
-                { value, KQ_softmax_out }
-            );
-			DataNode *KQV_merge = make_stream<OperatorType::Permute>(graph,
-                TensorType::V_KQV, layer_id, expert_id, 
-                { KQV }, 
-				std::initializer_list<size_t>{0, 2, 1, 3}
-			);
-			DataNode *KQV_merged_cont = make_stream<OperatorType::Contiguous>(graph,
-                TensorType::V_KQV, layer_id, expert_id,
-                { KQV_merge },
-				std::initializer_list<size_t>{num_embedding_head * num_head, num_token}, NumberType::FP32
-			);
-			DataNode *KQV_w_out = make_stream<OperatorType::MatMul>(graph,
-                TensorType::V_KQVWeighted, layer_id, expert_id, 
-                { weight.weight_o, KQV_merged_cont }
-            );
-			DataNode *KQV_out              = (weight.bias_o == nullptr) ?  KQV_w_out :
-				make_stream<OperatorType::Add>(graph,
-                TensorType::V_AttentionOutput, layer_id, expert_id,
-                { KQV_w_out, weight.bias_o }
-            );
-
-			return KQV_out;
-        }
+        DataNode *attention_projection(Graph &graph, const DataNodeProperty &default_prop, 
+                DataNode *query, DataNode *key, DataNode *value);
 
     protected: /* Connection about KV cache */
 
@@ -193,28 +66,8 @@ namespace spy {
          * @brief If we don't use KV cache. then it is necessary for the consequent MatMul operator to make Value tensor contiguous.
          * Reshape Key and Value tensor for grouped head attention.
          */
-        std::pair<DataNode *, DataNode *> reshape_KV(Graph &graph,
-            int layer_id, int expert_id, 
-			DataNode *key, DataNode *value) const {
-            DataNode *K_out = make_stream<OperatorType::View>(graph,
-                TensorType::KCache, layer_id, expert_id, 
-                { key }, 
-                0, // offset
-                std::initializer_list<size_t>{ num_embedding_head, num_token, num_head_kv }, // New dimensions
-                std::initializer_list<size_t>{ get_type_size(NumberType::FP32),
-                                                get_row_size(NumberType::FP32, num_embedding_k_gqa),
-                                                get_row_size(NumberType::FP32, num_embedding_head) }, // New offsets
-                NumberType::FP32
-            );
-            // If we don't use KV cache, the value is incontiguous, which may incur performance degradation consequentially.
-            // Therefore, we reconstruct it.
-            DataNode *V_out = make_stream<OperatorType::Contiguous>(graph,
-                TensorType::VCache, layer_id, expert_id, 
-                { value },
-                std::initializer_list<size_t>{ num_token, num_embedding_head, num_head_kv }, NumberType::FP32
-            );	
-            return {K_out, V_out}; 
-        }
+        std::pair<DataNode *, DataNode *> reshape_KV(Graph &graph, const DataNodeProperty &default_prop,
+			    DataNode *key, DataNode *value);
 
         /*! 
          * @brief If KV Cache is applied, it is necessary to concat Key and Value tensor with the past results.
@@ -234,79 +87,8 @@ namespace spy {
          *      - Each time we store `num_token` columns of `num_embedding_v_gqa` elements
          *
          */
-		std::pair<DataNode *, DataNode *> connect_KVCache(Graph &graph,
-            int layer_id, int expert_id, 
-			DataNode *key, DataNode *value) const {
-
-			// TODO: Fix when implementing long context
-			const size_t num_kv = num_past_token + num_token;
-
-			// Update key cache
-			spy_assert(k_cache != nullptr, "Expect the k cache not to be invalid node");
-
-			const Tensor &k_cache_tensor    = k_cache->tensor;
-			const NumberType k_type         = k_cache_tensor.get_number_type();
-
-			const int64_t k_cache_update_offset = get_row_size(k_type, num_embedding_k_gqa) * num_past_token;
-			DataNode *k_cache_view = make_stream<OperatorType::View>(graph,
-                TensorType::KCache, layer_id, expert_id, 
-                {k_cache},
-				k_cache_update_offset,
-				std::initializer_list<size_t>{ num_token * num_embedding_k_gqa },
-				std::initializer_list<size_t>{ get_type_size(k_type) },
-				k_type
-			);
-			DataNode *k_cache_sync = make_stream<OperatorType::Copy>(graph,
-                TensorType::KCache, layer_id, expert_id, 
-                {key, k_cache_view}
-            );
-			// Concat K cache and output
-			DataNode *K_out = make_stream<OperatorType::View>(graph,
-                TensorType::KCache, layer_id, expert_id, 
-                { k_cache_sync },
-               -k_cache_update_offset, // offset
-               std::initializer_list<size_t>{ num_embedding_head, num_kv, num_head_kv }, // New dimensions
-               std::initializer_list<size_t>{ get_type_size(k_type),
-                                              get_row_size(k_type, num_embedding_k_gqa),
-                                              get_row_size(k_type, num_embedding_head) }, // New offsets
-               k_type
-			);
-
-			// Update value cache
-			spy_assert(v_cache != nullptr, "Expect the v cache not to be invalid node");
-
-			const Tensor &v_cache_tensor    = v_cache->tensor;
-			const NumberType v_type         = v_cache_tensor.get_number_type();
-
-			const int64_t v_cache_update_offset = get_type_size(v_type) * num_past_token;
-			DataNode *v_cache_view = make_stream<OperatorType::View>(graph,
-                TensorType::VCache, layer_id, expert_id, 
-                {v_cache},
-				v_cache_update_offset,
-				std::initializer_list<size_t>{ num_token, num_embedding_v_gqa },
-				std::initializer_list<size_t>{ get_type_size(v_type),
-											num_context * get_type_size(v_type) },
-				v_type
-			);
-			// A fake output for synchronization
-			DataNode *v_cache_sync = make_stream<OperatorType::Copy>(graph,
-                TensorType::VCache, layer_id, expert_id, 
-                {value, v_cache_view}
-            );
-			// Concat value cache and output
-			DataNode *V_out = make_stream<OperatorType::View>(graph,
-                TensorType::VCache, layer_id, expert_id, 
-                { v_cache_sync },
-	             -v_cache_update_offset, // offset
-	             std::initializer_list<size_t>{ num_kv, num_embedding_head, num_head_kv }, // New dimensions
-	             std::initializer_list<size_t>{ get_type_size(v_type),
-	                                            get_type_size(v_type) * num_context,
-	                                            get_type_size(v_type) * num_context * num_embedding_head }, // New offset
-	             v_type
-			);
-
-			return {K_out, V_out};
-		}
+		std::pair<DataNode *, DataNode *> connect_KVCache(Graph &graph, const DataNodeProperty &default_prop,
+			    DataNode *key, DataNode *value);
 
     };
 	
@@ -333,7 +115,7 @@ namespace spy {
 			pointer_storage.reserve(2 * num_layer);
 
 			for (uint32_t i = k_cache.size(); i < num_layer; ++i) {
-				const size_t k_num  = n_embd_k_gqa * kv_size;
+				const int64_t k_num  = n_embd_k_gqa * kv_size;
 				const Shape k_shape{{k_num}, NumberType::FP16};
 				const size_t k_size = k_shape.total_size();
 				uint8_t *k_data = new uint8_t[k_size];
@@ -342,7 +124,7 @@ namespace spy {
 			}
 
 			for (uint32_t i = v_cache.size(); i < num_layer; ++i) {
-				const size_t v_num  = n_embd_v_gqa * kv_size;
+				const int64_t v_num  = n_embd_v_gqa * kv_size;
 				const Shape v_shape{{v_num}, NumberType::FP16};
 				const size_t v_size = v_shape.total_size();
 				uint8_t *v_data = new uint8_t[v_size];

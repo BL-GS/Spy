@@ -10,7 +10,7 @@
 
 #include "graph/graph.h"
 #include "metadata.h"
-#include "llm/model_impl/abstract_model.h"
+#include "llm/model/abstract_model.h"
 #include "llm/plugin/graph_builder.h"
 #include "llm/plugin/attention.h"
 #include "llm/plugin/ffn.h"

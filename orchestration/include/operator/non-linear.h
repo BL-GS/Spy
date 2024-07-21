@@ -69,9 +69,11 @@ namespace spy {
 		 * @param pos_node_ptr The position for rotation
          * @return Output nodes
          */
-		DataNode *deduce(Graph &graph, DataNode *input_node_ptr, DataNode *mask_node_ptr) {
+		DataNode *deduce(Graph &graph, const DataNodeProperty &prop, DataNode *input_node_ptr, DataNode *mask_node_ptr) {
 			add_input(input_node_ptr, mask_node_ptr);
 			DataNode *output_node_ptr = std::addressof(graph.alloc_node<DataNode>());
+			output_node_ptr->name = name + "-out";
+			output_node_ptr->set_prop(prop);
 			add_output(output_node_ptr);
 			return output_node_ptr;
 		}
@@ -81,9 +83,11 @@ namespace spy {
 		 * @param input_node_ptr The input tensor
          * @return Output nodes
          */
-		DataNode *deduce(Graph &graph, DataNode *input_node_ptr) {
+		DataNode *deduce(Graph &graph, const DataNodeProperty &prop, DataNode *input_node_ptr) {
 			add_input(input_node_ptr);
 			DataNode *output_node_ptr = std::addressof(graph.alloc_node<DataNode>());
+			output_node_ptr->name = name + "-out";
+			output_node_ptr->set_prop(prop);
 			add_output(output_node_ptr);
 			return output_node_ptr;
 		}
@@ -137,9 +141,11 @@ namespace spy {
          * @brief Resolve input nodes and generate output nodes
          * @return Output nodes
          */
-		DataNode *deduce(Graph &graph, DataNode *in_node_ptr) {
+		DataNode *deduce(Graph &graph, const DataNodeProperty &prop, DataNode *in_node_ptr) {
 			add_input(in_node_ptr);
 			DataNode *output_node_ptr = std::addressof(graph.alloc_node<DataNode>());
+			output_node_ptr->name = name + "-out";
+			output_node_ptr->set_prop(prop);
 			add_output(output_node_ptr);
 			return output_node_ptr;
 		}
@@ -219,9 +225,11 @@ namespace spy {
 		 * @param pos_node_ptr The position for rotation
          * @return Output nodes
          */
-		DataNode *deduce(Graph &graph, DataNode *input_node_ptr, DataNode *pos_node_ptr) {
+		DataNode *deduce(Graph &graph, const DataNodeProperty &prop, DataNode *input_node_ptr, DataNode *pos_node_ptr) {
 			add_input(input_node_ptr, pos_node_ptr);
 			DataNode *output_node_ptr = std::addressof(graph.alloc_node<DataNode>());
+			output_node_ptr->name = name + "-out";
+			output_node_ptr->set_prop(prop);
 			add_output(output_node_ptr);
 			return output_node_ptr;
 		}

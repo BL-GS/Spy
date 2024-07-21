@@ -8,9 +8,9 @@
 #include <cstdint>
 #include <vector>
 
-#include "operator/config.h"
 #include "llm/type.h"
 #include "llm/vocab/config.h"
+#include "operator/non-linear.h"
 
 namespace spy {
 
@@ -63,7 +63,7 @@ namespace spy {
 	struct HyperParam {
 		uint32_t 				num_context;
 
-		ModelRopeType			rope_type;
+		RopeType				rope_type;
 		ModelRopeScalingType 	rope_scaling_type;
 		ModelPoolingType     	rope_pooling_type;
 		/// RoPE base frequency, 0 = from model

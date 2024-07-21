@@ -25,84 +25,42 @@ namespace spy {
         /// The metadata and the data of the node will be changed during the inference
         /// For example: top-k
         Dynamic         = 1 << 4,
-        /// The property of the node depends on the view source
-        View            = 1 << 5,
 
         Default         = Dynamic
     };
 
-    enum class TensorType: uint32_t {
-        Unknown,
-        /* Model parameter */
-        // embedding
-		TokenEmbedding,
-        // output
-		Output, OutputNorm, RopeFrequency,
-        // attention
-		AttentionNorm, AttentionQ, AttentionK, AttentionV, AttentionOutput, 
-        // ffn
-		FFNGateInp, FFNNorm, FFNDown, FFNGate, FFNUp,
-
-        /* Buffer tensor */
-        KCache, VCache,
-
-        /* Variable tensor */
-        InputTokenId, InputTokenEmbedding, InputPosition, InputKQMask,
-
-        OutputLogits,
-
-        V_AttentionNorm, V_AttentionNormWeighted, 
-        V_QWeighted, V_KWeighted, V_VWeighted, V_QWeightedBiased, V_KWeightedBiased, V_VWeightedBiased,
-        V_QRope, V_KRope,
-        V_AttentionScore, V_AttentionContext,
-        V_KQV, V_KQVMerged, V_KQVWeighted,
-        V_AttentionOutput,
-        // KVCache
-
-        V_FFNInput, V_FFNOutput,
-        V_FFNNorm, V_FFNNormWeighted, V_FFNUp, V_FFNUpUnary, V_FFNGate, V_FFNGateUnary, 
-        V_FFNPar, V_FFNDown,
-
-        V_ResultNorm, V_ResultNormWeighted, V_ResultOutput,
-        
-    };
-
-    enum class WeightType: int {
-        None,
-        // Constant
-        Weight,
-        Bias,
-        Input,
-        Output,
-        // Variable
-        View
-    };
-
     struct DataNodeProperty {
         DataNodeType	node_type	    = DataNodeType::Default;
-        TensorType      tensor_type     = TensorType::Unknown;
-        WeightType      weight_type     = WeightType::None;
         int             layer_id        = -1;
         int             expert_id       = -1;
     }; 
 
-	struct DataNode final: DataNodeProperty, BasicNode {
+	struct DataNode final: BasicNode {
 	public:
 		/// The source of view
 		DataNode *			view_src 		= nullptr;
 		/// The metadata of tensor
 		Tensor 				tensor;
+        /// Some properties gained from graph construction
+        DataNodeProperty    node_prop;
 
 	public:
 		DataNode() = default;
 
 		template<class ...Args>
-		DataNode(DataNodeProperty property, Args &&...args) :
-            DataNodeProperty(property), tensor(std::forward<Args>(args)...) {}
+		DataNode(const DataNodeProperty &prop, Args &&...args) :
+            tensor(std::forward<Args>(args)...), node_prop(prop) {}
 
 		DataNode(const DataNode &other) = default;
 
 		~DataNode() noexcept = default;
+
+    public:
+        void set_prop(const DataNodeProperty &new_prop) { node_prop = new_prop; }
+
+        void set_tensor(const Tensor &new_tensor) { tensor = new_tensor; }
+
+        void set_view_src(DataNode *node_ptr) { view_src = node_ptr; }
 
     public:
         std::string get_tensor_name() const;

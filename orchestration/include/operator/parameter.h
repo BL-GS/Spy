@@ -6,8 +6,15 @@
 
 namespace spy {
 
+    class AbstractOperatorParameter {
+    public:
+        AbstractOperatorParameter() = default;
+
+        virtual ~AbstractOperatorParameter() noexcept = default;
+    };
+
     template<class T>
-    class OperatorParameter {
+    class OperatorParameter final: AbstractOperatorParameter {
     public:
         using Value      = T;
         using RefPointer = const T*;
@@ -25,7 +32,7 @@ namespace spy {
 
         OperatorParameter(RefPointer ref_ptr): ref_ptr_(ref_ptr) {}
 
-        ~OperatorParameter() noexcept = default;
+        ~OperatorParameter() noexcept override = default;
 
     public:
         /*!

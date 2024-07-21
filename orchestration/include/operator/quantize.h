@@ -41,9 +41,11 @@ namespace spy {
          * @brief Resolve input nodes and generate output nodes
          * @return Output nodes
          */
-		DataNode *deduce(Graph &graph, DataNode *in_node_ptr) {
+		DataNode *deduce(Graph &graph, const DataNodeProperty &prop, DataNode *in_node_ptr) {
 			add_input(in_node_ptr);
 			DataNode *output_node_ptr = std::addressof(graph.alloc_node<DataNode>());
+			output_node_ptr->name = name + "-out";
+			output_node_ptr->set_prop(prop);
 			add_output(output_node_ptr);
 			return output_node_ptr;
 		}

@@ -26,7 +26,7 @@ namespace spy {
 	public:
 		Graph(GraphID id, GraphStorage &graph_storage): id(id), storage_ptr(std::addressof(graph_storage)) {}
 
-		~Graph() = default;
+		virtual ~Graph() = default;
 
 	public:
 		template<class T_Node = BasicNode>

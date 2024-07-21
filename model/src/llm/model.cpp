@@ -1,8 +1,8 @@
 #include <memory>
 
 #include "util/shell/logger.h"
-#include "llm/model_impl/llama.h"
-#include "llm/model_impl/model.h"
+#include "llm/model/llama.h"
+#include "llm/model/model.h"
 
 namespace spy {
 

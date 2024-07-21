@@ -213,7 +213,7 @@ namespace spy {
 		static constexpr size_t MAX_DIMS = 4;
 
 		uint32_t     						num_dim;
-		std::array<uint64_t, MAX_DIMS>     	num_element;
+		std::array<int64_t, MAX_DIMS>     	num_element;
 		NumberType   						type;
 		uint64_t     						offset;
 

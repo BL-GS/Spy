@@ -3,7 +3,7 @@
 #include <memory>
 #include <magic_enum.hpp>
 
-#include "llm/model_impl/abstract_model.h"
+#include "llm/model/abstract_model.h"
 
 namespace spy {
 

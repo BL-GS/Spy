@@ -13,7 +13,7 @@
 #include "number/tensor.h"
 #include "llm/vocab/vocab.h"
 #include "graph/graph.h"
-#include "llm/model_impl/config.h"
+#include "llm/model/config.h"
 
 // Operator header is necessary here for template initialization
 #include "operator/operator.h"
@@ -115,7 +115,7 @@ namespace spy {
                 hyper_param_.num_context = metadata_.len_context_train;
             }
 
-            hyper_param_.rope_type = ModelRopeType::None;
+            hyper_param_.rope_type = RopeType::None;
 
 			if (hyper_param_.rope_freq_base == 0.0F) {
 				hyper_param_.rope_freq_base = context.find_gguf_value_option<float>(LLMKey::ROPE_FREQ_BASE, 10000.0F);

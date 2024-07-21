@@ -13,8 +13,8 @@
 #include "llm/file/loader.h"
 #include "llm/file/mapper.h"
 #include "llm/sampler/config.h"
-#include "llm/model_impl/model.h"
-#include "llm/model_impl/config.h"
+#include "llm/model/model.h"
+#include "llm/model/config.h"
 #include "llm/sampler/sampler.h"
 
 
