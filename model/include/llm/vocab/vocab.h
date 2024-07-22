@@ -8,11 +8,12 @@
 #include <vector>
 #include <magic_enum.hpp>
 
-#include "metadata.h"
 #include "llm/vocab/type.h"
 #include "llm/vocab/abstract_vocab.h"
 
 namespace spy {
+
+    struct ModelMetaContext;
 
     class Tokenizer {
 

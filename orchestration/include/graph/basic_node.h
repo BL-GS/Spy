@@ -46,6 +46,7 @@ namespace spy {
 			// Add node_ptr
 			const size_t idx = input_list.size();
 			input_list.push_back(node_ptr);
+			node_ptr->output_list.push_back(this);
 			// Add left input nodes
 			if constexpr (sizeof ...(args) != 0)  { 
 				return add_input(std::forward<Args>(args)...); 
@@ -62,6 +63,7 @@ namespace spy {
 			// Add node_ptr
 			const size_t idx = output_list.size();
 			output_list.push_back(node_ptr);
+			node_ptr->input_list.push_back(this);
 			// Add left output nodes
 			if constexpr (sizeof ...(args) != 0)  { 
 				return add_input(std::forward<Args>(args)...); 

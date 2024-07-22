@@ -214,10 +214,10 @@ namespace spy {
 	};
 
 	struct ModelMetaTensorInfo: public PropertyInterface {
-		static constexpr size_t MAX_DIMS = 4;
+		static constexpr uint32_t MAX_DIMS = 4;
 
 		uint32_t     						num_dim;
-		std::array<uint64_t, MAX_DIMS>     	num_element;
+		std::array<int64_t, MAX_DIMS>     	num_element;
 		NumberType   						type;
 		uint64_t     						offset;
 
@@ -299,6 +299,15 @@ namespace spy {
 			prop["arch"] 	  = arch_name;
 			prop["alignment"] = std::to_string(alignment);
 			return prop;
+		}
+
+		template<class T_Stream>
+		void print_tensor(T_Stream &stream) const {
+			for (auto &[name, info]: infos) {
+				stream << name << ":\n";
+				stream << info.to_string();
+				stream << '\n';
+			}
 		}
 	};
 

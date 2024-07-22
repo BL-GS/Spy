@@ -1,8 +1,8 @@
-#include "metadata.h"
 #include "llm/vocab/byte_pair_encoding_vocab.h"
 #include "llm/vocab/sentence_piece_vocab.h"
 #include "llm/vocab/word_piece_vocab.h"
 #include "llm/vocab/vocab.h"
+#include "adapter/type.h"
 
 namespace spy {
 

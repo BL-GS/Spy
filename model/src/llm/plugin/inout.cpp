@@ -12,27 +12,28 @@ namespace spy {
         };
 
         res.input_token_id = make_dynamic_stream<OperatorType::Input>(graph, "input_token_id", input_prop, 
-            add_param_listener<InputParam>([this]{  
+            [this]{  
                 return InputParam{ Shape(1, {num_token}, NumberType::INT32) };
-            })
+            }
         );
         res.input_embedding = make_stream<OperatorType::GetRow>(graph, "input_embedding",
             input_prop, 
             weight.token_embedding, res.input_token_id
         );
 
-        DataNode *input_pos = make_dynamic_stream<OperatorType::Input>(graph, "input_position", input_prop,
-            add_param_listener<InputParam>([this]{ return InputParam{
+        res.input_pos = make_dynamic_stream<OperatorType::Input>(graph, "input_position", input_prop,
+            [this]{ return InputParam{
                 .shape = Shape(1, { num_token }, NumberType::INT32 )
-            }; })
+            }; }
         );
 
-        DataNode *KQ_mask = make_dynamic_stream<OperatorType::Input>(graph, "KQ_mask", input_prop,
-            add_param_listener<InputParam>([this]{ return InputParam{
+        res.KQ_mask = make_dynamic_stream<OperatorType::Input>(graph, "KQ_mask", input_prop,
+            [this]{ return InputParam{
                 .shape = Shape(2, { num_context, num_token }, NumberType::INT32 )
-            }; })
+            }; }
         );
 
+        graph.entry_point = res.input_token_id->input(0);
         return res;
     }
 

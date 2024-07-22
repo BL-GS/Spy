@@ -18,7 +18,7 @@
 
 namespace spy {
 
-	constexpr size_t MAX_DIM = 4;
+	constexpr uint32_t MAX_DIM = 4;
 
 	struct Shape {
 	public:
@@ -28,7 +28,7 @@ namespace spy {
 		/// The type of underlying number type
 		NumberType 	   number_type;
 		/// The dimension of tensor
-		size_t         dim;
+		uint32_t       dim;
 		/// The number of slices in each dimension.
 		DimensionArray elements;
 		/// The accumulated size in each dimension.
@@ -40,7 +40,7 @@ namespace spy {
 		/*!
 		 * @brief By default, we generate a shape for contiguous structure
 		 */
-		Shape(size_t dim, const DimensionArray &num_element, const NumberType number_type):
+		Shape(uint32_t dim, const DimensionArray &num_element, const NumberType number_type):
 				number_type(number_type), dim(dim), elements(num_element), bytes{0} {
 			spy_assert(dim <= MAX_DIM, "The dimension should be within the range (0, {}] (cur: {})", MAX_DIM, dim);
 
@@ -50,7 +50,7 @@ namespace spy {
 			// Assign the accumulated size of tensor
 			bytes[0] = type_size;
 			size_t acc_bytes = get_row_size(number_type, elements[0]);
-			for (size_t i = 1; i < MAX_DIM; ++i) {
+			for (uint32_t i = 1; i < MAX_DIM; ++i) {
 				bytes[i]    = acc_bytes;
 				acc_bytes  *= elements[i];
 			}
@@ -72,14 +72,14 @@ namespace spy {
 			const size_t type_size = get_type_size(number_type);
 			size_t acc_byte = get_row_size(number_type, elements[0]);
 			bytes[0] = type_size;
-			for (size_t i = 1; i < MAX_DIM; ++i) {
+			for (uint32_t i = 1; i < MAX_DIM; ++i) {
 				// Assign the accumulated size of tensor
 				bytes[i]    = acc_byte;
 				acc_byte   *= elements[i];
 			}
 		}
 
-		Shape(size_t dim, const DimensionArray &num_element, const DimensionArray &num_byte, const NumberType number_type):
+		Shape(uint32_t dim, const DimensionArray &num_element, const DimensionArray &num_byte, const NumberType number_type):
 				number_type(number_type), dim(dim), elements(num_element), bytes(num_byte) {
 			spy_assert(dim <= MAX_DIM, "The dimension should be within the range (0, {}] (cur: {})", MAX_DIM, dim);
 			// Expect the high dimension to be 1
@@ -95,7 +95,7 @@ namespace spy {
 			std::copy(num_byte.begin(), num_byte.end(), bytes.begin());
 
 			const size_t total_size = elements[dim - 1] * bytes[dim - 1];
-			for (size_t i = dim; i < MAX_DIM; ++i) {
+			for (uint32_t i = dim; i < MAX_DIM; ++i) {
 				elements[i] = 1;
 				bytes[i]    = total_size;
 			}
@@ -115,8 +115,8 @@ namespace spy {
 			DimensionArray new_elements;
 			DimensionArray new_bytes;
 
-			for (size_t i = 0; i < MAX_DIM; ++i) { new_elements[i] 	= elements[axis[i]]; }
-			for (size_t i = 0; i < MAX_DIM; ++i) { new_bytes[i] 	= bytes[axis[i]]; 	 }
+			for (uint32_t i = 0; i < MAX_DIM; ++i) { new_elements[i] 	= elements[axis[i]]; }
+			for (uint32_t i = 0; i < MAX_DIM; ++i) { new_bytes[i] 	= bytes[axis[i]]; 	 }
 
 			dim 	 = 4;
 			elements = new_elements;
@@ -136,7 +136,7 @@ namespace spy {
 			const size_t block_size = get_block_size(number_type);
 			size_t size = 0;
 			size = bytes[0] * elements[0] / block_size;
-			for (size_t i = 1; i < dim; ++i) { size += bytes[i] * (elements[i] - 1); }
+			for (uint32_t i = 1; i < dim; ++i) { size += bytes[i] * (elements[i] - 1); }
 			return size;
 		}
 
@@ -195,7 +195,7 @@ namespace spy {
 	public: /* Utility */
 		static bool can_repeat(const Shape &multi, const Shape &single) {
 			bool can_repeat = true;
-			for (size_t i = 0; i < MAX_DIM; ++i) { can_repeat &= (multi.elements[i] % single.elements[i] == 0); }
+			for (uint32_t i = 0; i < MAX_DIM; ++i) { can_repeat &= (multi.elements[i] % single.elements[i] == 0); }
 			return can_repeat;
 		}
 

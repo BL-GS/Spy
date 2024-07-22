@@ -52,7 +52,7 @@ namespace spy {
 		std::map<std::string_view, std::string> property() const override;
 	};
 
-	class GraphStorage: PropertyInterface {
+	class GraphStorage {
 	private:
 		std::vector<std::unique_ptr<BasicNode>> node_array_;
 

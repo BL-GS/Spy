@@ -3,9 +3,8 @@
 namespace spy {
 
     void LLAMAModel::build_input(Graph &graph) {
-        const ModelMetaContext &context = *context_ptr_;
-        pre_train.token_embedding = create_constant_tensor(context, graph,
-            "token_embd.weight", DataNodeProperty {
+        pre_train.token_embedding = create_constant_tensor(context_, graph,
+            "token_embd", DataNodeProperty {
                 .node_type = DataNodeType::Constant,
                 .layer_id  = -1,
                 .expert_id = -1
@@ -14,29 +13,26 @@ namespace spy {
     }
 
     void LLAMAModel::build_output(Graph &graph) {
-        const ModelMetaContext &context = *context_ptr_;
-
         DataNodeProperty output_prop {
             .node_type = DataNodeType::Constant,
             .layer_id  = -1,
             .expert_id = -1				
         };
 
-        pre_train.output_norm = create_constant_tensor(context, graph,
-                "output_norm.weight", output_prop
+        pre_train.output_norm = create_constant_tensor(context_, graph,
+                "output_norm", output_prop
         );
-        pre_train.output_weight = create_constant_tensor(context, graph,
-                "output.weight", output_prop
+        pre_train.output_weight = create_constant_tensor(context_, graph,
+                "output", output_prop
         );
         if (pre_train.output_weight == nullptr) {
-            pre_train.output_weight = create_constant_tensor(context, graph,
-                "token_embd.weight", output_prop
+            pre_train.output_weight = create_constant_tensor(context_, graph,
+                "token_embd", output_prop
             );
         }
     }
 
     void LLAMAModel::build_attention(Graph &graph, int layer_id) {
-        const ModelMetaContext &context = *context_ptr_;
         auto  &layer      = pre_train.layers[layer_id];
 
         DataNodeProperty layer_prop {
@@ -45,29 +41,28 @@ namespace spy {
             .expert_id = -1	
         };
 
-        layer.attention_norm = create_constant_tensor(context, graph, 
-                "attn_norm.weight", layer_prop);
-        layer.weight_q = create_constant_tensor(context, graph, 
-                "attn_q.weight", layer_prop);
-        layer.weight_k = create_constant_tensor(context, graph,
-                "attn_k.weight", layer_prop);
-        layer.weight_v = create_constant_tensor(context, graph, 
-                "attn_v.weight", layer_prop);
-        layer.weight_o = create_constant_tensor(context, graph, 
-                "attn_o.weight", layer_prop);
+        layer.attention_norm = create_constant_tensor(context_, graph, 
+                "attn_norm", layer_prop);
+        layer.weight_q = create_constant_tensor(context_, graph, 
+                "attn_q", layer_prop);
+        layer.weight_k = create_constant_tensor(context_, graph,
+                "attn_k", layer_prop);
+        layer.weight_v = create_constant_tensor(context_, graph, 
+                "attn_v", layer_prop);
+        layer.weight_o = create_constant_tensor(context_, graph, 
+                "attn_output", layer_prop);
 
-        layer.bias_q = create_constant_tensor(context, graph, 
-                "attn_q.bias", layer_prop);
-        layer.bias_k = create_constant_tensor(context, graph, 
-                "attn_k.bias", layer_prop);
-        layer.bias_v = create_constant_tensor(context, graph, 
-                "attn_v.bias", layer_prop);
-        layer.bias_o = create_constant_tensor(context, graph, 
-                "attn_o.bias", layer_prop);
+        layer.bias_q = create_constant_tensor(context_, graph, 
+                "attn_q", layer_prop, "bias");
+        layer.bias_k = create_constant_tensor(context_, graph, 
+                "attn_k", layer_prop, "bias");
+        layer.bias_v = create_constant_tensor(context_, graph, 
+                "attn_v", layer_prop, "bias");
+        layer.bias_o = create_constant_tensor(context_, graph, 
+                "attn_output", layer_prop, "bias");
     }
 
     void LLAMAModel::build_ffn(Graph &graph, int layer_id) {
-        const ModelMetaContext &context = *context_ptr_;
         auto  &layer      = pre_train.layers[layer_id];
 
         DataNodeProperty layer_prop {
@@ -76,14 +71,14 @@ namespace spy {
             .expert_id = -1	
         };
 
-        layer.ffn_norm = create_constant_tensor(context, graph, 
-                "ffn_norm.weight", layer_prop);
-        layer.ffn_up   = create_constant_tensor(context, graph, 
-                "ffn_up.weight", layer_prop);
-        layer.ffn_gate = create_constant_tensor(context, graph, 
-                "ffn_gate.weight", layer_prop);
-        layer.ffn_down = create_constant_tensor(context, graph, 
-                "ffn_down.weight", layer_prop);
+        layer.ffn_norm = create_constant_tensor(context_, graph, 
+                "ffn_norm", layer_prop);
+        layer.ffn_up   = create_constant_tensor(context_, graph, 
+                "ffn_up", layer_prop);
+        layer.ffn_gate = create_constant_tensor(context_, graph, 
+                "ffn_gate", layer_prop);
+        layer.ffn_down = create_constant_tensor(context_, graph, 
+                "ffn_down", layer_prop);
     }
 
     void LLAMAModel::build_kv_cache(Graph &graph, int layer_id) {
@@ -100,11 +95,11 @@ namespace spy {
 
         layer.k_cache = create_tensor(graph, "KCache",
             Shape(1, { num_embedding_k_gqa * num_context }, NumberType::FP16),
-            layer_prop, kv_cache_ptr_->k_cache[layer_id].get()
+            layer_prop, kv_cache_.k_cache[layer_id].get()
         );
         layer.v_cache = create_tensor(graph, "VCache",
             Shape(1, { num_embedding_v_gqa * num_context }, NumberType::FP16), 
-            layer_prop, kv_cache_ptr_->v_cache[layer_id].get()
+            layer_prop, kv_cache_.v_cache[layer_id].get()
         );
     }
 
@@ -140,18 +135,10 @@ namespace spy {
         };
 
         /*
-            * Build up graph from pre-trained parameter
-            */
+         * Build up graph from pre-trained parameter
+         */
+        pre_train.layers.resize(num_layer);
 
-        // Set KV Cache
-        if constexpr (USE_KV_CACHE) {
-            if (kv_cache_ptr_ == nullptr) { kv_cache_ptr_ = std::make_unique<KVCache>(); }
-            kv_cache_ptr_->reserve(num_embedding_k_gqa, num_embedding_v_gqa,
-                                    num_context, num_layer);
-            for (int layer_id = 0; layer_id < num_layer; ++layer_id) {
-                build_kv_cache(graph, layer_id);
-            }
-        }
         // Set constant tensor
         build_input(graph);
         build_output(graph);
@@ -160,13 +147,22 @@ namespace spy {
             build_ffn(graph, layer_id);
         }			
 
+        // Set KV Cache
+        if constexpr (USE_KV_CACHE) {
+            kv_cache_.reserve(num_embedding_k_gqa, num_embedding_v_gqa,
+                                    num_context, num_layer);
+            for (int layer_id = 0; layer_id < num_layer; ++layer_id) {
+                build_kv_cache(graph, layer_id);
+            }
+        }
+
         /*
          * Set up initialized input
          */
 
         /* Build KQ Mask */
         {
-            const size_t past_kv = (kv_cache_ptr_ == nullptr) ? 0 : kv_cache_ptr_->head;
+            const size_t past_kv = (USE_KV_CACHE) ? 0 : kv_cache_.head;
 
             kq_mask_.resize(num_token * num_context, -INFINITY);
             kq_mask_.assign(num_token * num_context, -INFINITY);
@@ -223,7 +219,7 @@ namespace spy {
                 /* Dynamic params */
                 .num_context         = num_context,
                 .num_token           = num_token,
-                .num_past_token      = kv_cache_ptr_->head,
+                .num_past_token      = kv_cache_.head,
                 /* Weights */
                 .weight = layer,
                 /* Buffer */
@@ -268,7 +264,7 @@ namespace spy {
         DataNode *output = output_block.connect_output(graph);
 
         if constexpr (USE_KV_CACHE) {
-            kv_cache_ptr_->step(num_token);
+            kv_cache_.step(num_token);
         }
     }
 
@@ -283,10 +279,10 @@ namespace spy {
         for (auto &attention_block: attention_block_array) { 
             attention_block.num_token   = num_token;
             attention_block.num_context = num_context;
-            attention_block.num_past_token = kv_cache_ptr_->head;
+            attention_block.num_past_token = kv_cache_.head;
         }
         if constexpr (USE_KV_CACHE) {
-            kv_cache_ptr_->step(num_token);
+            kv_cache_.step(num_token);
         }
 
         /* Notify all listeners on parameters */

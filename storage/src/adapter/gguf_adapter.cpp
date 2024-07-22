@@ -87,8 +87,8 @@ namespace spy {
         return {};
     }
 
-    void GGUFAdapter::init_from_file(const std::string_view filename) {
-        this->filename = filename;
+    ModelMetaContext GGUFAdapter::init_from_file(const std::string_view filename) {
+        ModelMetaContext context;
 
         std::fstream file(filename.data(), std::ios::binary | std::ios::in);
         spy_assert(file.is_open(), "Cannot open file: {}", filename);
@@ -185,6 +185,8 @@ namespace spy {
             const size_t cur_size = get_row_size(cur_info.type, num_element);
             context.size 		 += align_ceil(cur_size, context.alignment);
         }
+
+        return context;
     }
 
 } // namespace spy

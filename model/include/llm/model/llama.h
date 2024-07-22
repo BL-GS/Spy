@@ -8,7 +8,6 @@
 #include <vector>
 
 #include "graph/graph.h"
-#include "metadata.h"
 #include "llm/model/abstract_model.h"
 #include "llm/plugin/graph_builder.h"
 #include "llm/plugin/attention.h"
@@ -30,7 +29,7 @@ namespace spy {
 
 	class LLAMAModel final : public AbstractModel, GraphBuilder {
 	public:
-		static constexpr ModelType MODEL_TYPE   = ModelType::LLaMa;
+		static constexpr std::string_view MODEL_ARCH = "llama";
 		static constexpr bool	   USE_KV_CACHE = true;
 
 		using Layer = LLAMALayer;
@@ -46,23 +45,21 @@ namespace spy {
 		/// Feed-forward block
 		std::vector<FFNBlock>				 ffn_block_array;
 
-		std::vector<float>               kq_mask_;
+		std::vector<float>               	 kq_mask_;
 
-		std::unique_ptr<KVCache>         kv_cache_ptr_;
+		KVCache         					 kv_cache_;
 
 	public:
-		LLAMAModel(std::unique_ptr<ModelMetaContext> &&context_ptr, const HyperParam &hyper_param):
-				AbstractModel(std::move(context_ptr), hyper_param) { }
+		LLAMAModel(ModelMetaContext &&context_ptr, const HyperParam &hyper_param):
+				AbstractModel(std::forward<ModelMetaContext>(context_ptr), hyper_param) { }
 		
 		~LLAMAModel() noexcept override = default;
 
 	protected: /* Initialization */
 		void init_metadata() override {
-			const ModelMetaContext &context = *context_ptr_;
 			AbstractModel::init_metadata();
 
-			metadata_.model_type 		= ModelType::LLaMa;
-			metadata_.ffn_norm_rms_eps  = context.find_gguf_value(LLMKey::ATTENTION_LAYERNORM_RMS_EPS).get_value<float>();
+			metadata_.ffn_norm_rms_eps  = context_.find_gguf_value(LLMKey::ATTENTION_LAYERNORM_RMS_EPS).get_value<float>();
 
 			spy_assert(metadata_.num_rot == metadata_.num_embedding / metadata_.num_head, 
 					"Invalid num_rot: {}, expect: {}", metadata_.num_rot, metadata_.num_embedding / metadata_.num_head);
@@ -75,8 +72,7 @@ namespace spy {
 		}
 
 		void init_tokenizer() override {
-			const ModelMetaContext &context = *context_ptr_;
-			tokenizer_ptr = std::make_unique<Tokenizer>(ModelVocabType::SentencePiece, context);
+			tokenizer_ptr = std::make_unique<Tokenizer>(ModelVocabType::SentencePiece, context_);
 		}
 
 	public: /* Graph building */

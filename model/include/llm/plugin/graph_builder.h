@@ -9,9 +9,8 @@
 
 #include "operator/type.h"
 #include "operator/operator.h"
+#include "adapter/type.h"
 #include "graph/graph.h"
-#include "metadata.h"
-#include "llm/config.h"
 
 namespace spy {
 
@@ -105,9 +104,9 @@ namespace spy {
 		 */
         static DataNode *create_constant_tensor(const ModelMetaContext &context, Graph &graph,
                 const std::string_view tensor_base_name,
-                const DataNodeProperty &prop) {
+                const DataNodeProperty &prop, const std::string_view tensor_suffix = "weight") {
 
-            const std::string tensor_name = make_tensor_name(tensor_base_name, prop);
+            const std::string tensor_name = make_tensor_name(tensor_base_name, prop, tensor_suffix);
 
             // Get the metadata of the tensor
             const auto &info_map  = context.infos;
@@ -122,17 +121,23 @@ namespace spy {
             return std::addressof(data_node);
         }
 
-        static std::string make_tensor_name(const std::string_view tensor_base_name, const DataNodeProperty &prop) {
-            std::string tensor_name(tensor_base_name);
+        static std::string make_tensor_name(const std::string_view tensor_base_name, const DataNodeProperty &prop, 
+                const std::string_view tensor_suffix = "weight") {
+
+            std::string tensor_name;
+            if (prop.layer_id != -1 || prop.expert_id != -1) {
+                tensor_name += "blk.";
+            }
             if (prop.layer_id != -1) {
-                tensor_name += '-';
-                tensor_name += std::to_string(prop.layer_id);     
+                tensor_name += std::to_string(prop.layer_id) + '.';
             }
             if (prop.expert_id != -1) {
-                tensor_name += '-';
-                tensor_name += std::to_string(prop.expert_id);
+                tensor_name += std::to_string(prop.expert_id) + '.';
             }
-            return tensor_name;
+
+            return tensor_name
+                    .append(tensor_base_name)
+                    .append(".").append(tensor_suffix);
         }
 
     };

@@ -6,11 +6,6 @@
 
 namespace spy {
 	
-	enum class ModelType: size_t { 
-		LLaMa, Falcon, GPT2,
-		ModelTypeEnd
-	};
-
 	enum class ModelRopeScalingType : int {
 		Unspecified = -1,
 		None        = 0,
@@ -43,5 +38,3 @@ namespace spy {
 	};
 	
 }  // namespace spy
-
-SPY_ENUM_FORMATTER(spy::ModelType);

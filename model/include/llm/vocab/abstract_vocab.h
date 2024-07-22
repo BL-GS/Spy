@@ -9,7 +9,7 @@
 #include <string>
 #include <vector>
 
-#include "metadata.h"
+#include "adapter/type.h"
 #include "llm/vocab/type.h"
 #include "llm/vocab/config.h"
 
