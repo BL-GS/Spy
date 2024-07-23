@@ -89,7 +89,7 @@ namespace spy {
 		 * @return Output nodes
 		 */
 		void propagate() override {
-			assert_num_input(1);
+			assert_num_input(2);
 			assert_num_output(1);
 
 			const Tensor &in 	   = input_data(0)->tensor;
@@ -106,7 +106,7 @@ namespace spy {
 			out_node->view_src = nullptr;
 
 			if (index_dim == in_dim - 1) { // Specify each row
-				for (size_t i = 0; i < index_dim; ++i) {
+				for (size_t i = 1; i < index_dim; ++i) {
 					spy_assert(index_shape.elements[i] == in_shape.elements[i + 1], 
 						"invalid shape of index: {}", index_shape
 					);
@@ -205,7 +205,7 @@ namespace spy {
 
 			const Tensor &src = input_data(0)->tensor;
 			const Tensor &dst = input_data(1)->tensor;
-			spy_assert(src.shape == dst.shape, 
+			spy_assert(src.shape.total_element() == dst.shape.total_element(), 
 				"invalid shape of the second input tensor: {} (expect: {})",
 				dst.shape, src.shape
 			);
@@ -264,13 +264,14 @@ namespace spy {
 		void propagate() override {
 			assert_num_input(1);
 			assert_num_output(1);
+			const Param &cur_param = params.track_ref_if_needed();
 
 			const Tensor &in = input_data(0)->tensor;
 			auto *out_node = output<DataNode>(0);
 			out_node->view_src = input_data(0);
 
 			Tensor &out = out_node->tensor;
-			const Shape &target_shape = params.get_val().new_shape;
+			const Shape &target_shape = cur_param.new_shape;
 			spy_assert(target_shape.total_element() == in.total_element(),
 				"invalid shape for reshape: {}, which contains different number of elements from input: {}",
 				target_shape, in.shape
@@ -330,13 +331,14 @@ namespace spy {
 		void propagate() override {
 			assert_num_input(1);
 			assert_num_output(1);
+			const Param &cur_param = params.track_ref_if_needed();
 
 			const Tensor &in = input_data(0)->tensor;
 			auto *out_node = output<DataNode>(0);
 			out_node->view_src = input_data(0);
 
 			Tensor &out = out_node->tensor;
-			const Shape &target_shape = params.get_val().new_shape;
+			const Shape &target_shape   = cur_param.new_shape;
 			// TODO: assert
 			out.shape = target_shape;
 		}
@@ -439,13 +441,14 @@ namespace spy {
 		void propagate() override {
 			assert_num_input(1);
 			assert_num_output(1);
+			const Param &cur_param = params.track_ref_if_needed();
 
 			const Tensor &in = input_data(0)->tensor;
 			auto *out_node = output<DataNode>(0);
 			out_node->view_src = nullptr;
 
 			auto target_element = in.shape.elements;
-			const auto &axis = params.get_val().axis;
+			const auto &axis = cur_param.axis;
 			for (int i = 0; i < in.dim(); ++i) {
 				target_element[i] = in.shape.elements[axis[i]];
 			}

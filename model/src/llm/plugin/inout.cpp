@@ -33,7 +33,9 @@ namespace spy {
             }; }
         );
 
-        graph.entry_point = res.input_token_id->input(0);
+        graph.entry_point_array.emplace_back(dynamic_cast<OperatorNode *>(res.input_token_id->input(0)));
+        graph.entry_point_array.emplace_back(dynamic_cast<OperatorNode *>(res.input_pos->input(0)));
+        graph.entry_point_array.emplace_back(dynamic_cast<OperatorNode *>(res.KQ_mask->input(0)));
         return res;
     }
 

@@ -20,7 +20,7 @@ namespace spy {
 		using ParameterWrapper    = OperatorParameter<Param>;
 		using ParameterRefPointer = ParameterWrapper::RefPointer;
 
-		static constexpr OperatorType TYPE = OperatorType::Reshape;
+		static constexpr OperatorType TYPE = OperatorType::Input;
 
 	public:
 		ParameterWrapper params;
@@ -55,17 +55,11 @@ namespace spy {
 		void propagate() override {
 			assert_num_input(0);
 			assert_num_output(1);
+			const Param &cur_param = params.track_ref_if_needed();
 
-			const Tensor &in = input_data(0)->tensor;
 			auto *out_node = output<DataNode>(0);
-			out_node->view_src = input_data(0);
-
 			Tensor &out = out_node->tensor;
-			const Shape &target_shape = params.get_val().shape;
-			spy_assert(target_shape.total_element() == in.total_element(),
-				"invalid shape for reshape: {}, which contains different number of elements from input: {}",
-				target_shape, in.shape
-			);
+			const Shape &target_shape = cur_param.shape;
 			out.shape = target_shape;
 		}
     };

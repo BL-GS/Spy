@@ -286,6 +286,7 @@ namespace spy {
         }
 
         /* Notify all listeners on parameters */
+        notify_listeners();
         input_block.notify_listeners();
         for (auto &attention_block: attention_block_array) { attention_block.notify_listeners(); }
         for (auto &ffn_block: ffn_block_array) { ffn_block.notify_listeners(); }

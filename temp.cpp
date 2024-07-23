@@ -32,6 +32,8 @@ int main(int argc, char **argv) {
 	ModelIO model_io;
 	model_io.add(0, 0, { 0 }, false);
 	model->build_graph(graph, model_io);
+    model->propagate(model_io);
+    graph.propagate();
 
 	DotGenerator dot_generator;
     std::ofstream graph_stream("graph.dot", std::ios_base::ate);

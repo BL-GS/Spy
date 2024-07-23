@@ -31,10 +31,9 @@ namespace spy {
          * @return The reference to the updated value
          */
         const Value &track_ref() {
-            spy_assert(is_ref());
             RefPointer ref_ptr = get_ref();
             spy_assert_debug(ref_ptr != nullptr, "trying to track an empty reference");
-            val_ = *ref_ptr;
+            val_.emplace(*ref_ptr);
             return val_.value();
         }
 

@@ -66,14 +66,14 @@ namespace spy {
 			node_ptr->input_list.push_back(this);
 			// Add left output nodes
 			if constexpr (sizeof ...(args) != 0)  { 
-				return add_input(std::forward<Args>(args)...); 
+				return add_output(std::forward<Args>(args)...); 
 			}
 			return idx; 
 		}
 
 	public:
 		size_t num_input()  const { 
-			return output_list.size(); 
+			return input_list.size(); 
 		}
 
 		size_t num_output() const { 

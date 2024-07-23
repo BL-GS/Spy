@@ -1,14 +1,7 @@
-#pragma once
-
-#include <cstdint>
-#include <numeric>
-#include <string_view>
-#include <vector>
-#include <string>
 #include <fstream>
+#include <numeric>
 
-#include "util/exception.h"
-#include "util/shell/logger.h"
+#include "perf/perf.h"
 
 namespace spy {
 
@@ -30,11 +23,13 @@ namespace spy {
             spy_info("Create append-only csv file: {}", filename);
             output_file_.open(filename, std::ios_base::out | std::ios_base::ate | std::ios_base::trunc);
             if (!output_file_.good()) {
-                throw SpyOSException("Failed opening file {}", filename);
+                throw SpyOSException("Failed opening file: " + filename);
             }
 
             add_row(header);
         }
+
+        ~AppendOnlyCsv() noexcept = default;
 
     public:
         void add_row(const std::vector<std::string> &row) {
@@ -57,6 +52,6 @@ namespace spy {
         }
     };
 
-
+    
 
 } // namespace spy

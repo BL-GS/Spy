@@ -16,7 +16,6 @@ namespace spy {
         template<class T_Stream>
         static void print_graph(T_Stream &output, const Graph &graph) {
             const GraphID graph_id = graph.id;
-            const BasicNode *entry_point = graph.entry_point;
 
             std::set<NodeID> visit_set;
 
@@ -24,7 +23,9 @@ namespace spy {
 
             // Print all nodes in the graph
             std::queue<const BasicNode *> node_queue;
-            node_queue.push(entry_point);
+            for (const BasicNode *entry_point: graph.entry_point_array) {
+                node_queue.push(entry_point);
+            }
             while (!node_queue.empty()) {
                 const BasicNode *cur_node_ptr = node_queue.front();
                 node_queue.pop();

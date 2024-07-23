@@ -6,10 +6,13 @@
 #pragma once
 
 #include <cstddef>
+#include <queue>
 #include <magic_enum.hpp>
 
 #include "util/shell/logger.h"
 #include "graph/basic_node.h"
+#include "graph/data_node.h"
+#include "graph/op_node.h"
 
 namespace spy {
 
@@ -21,7 +24,7 @@ namespace spy {
 
 		GraphStorage *storage_ptr 	= nullptr;
 		/// The entry of the graph, which is used for dependency analysis
-		const BasicNode *entry_point = nullptr;
+		std::vector<OperatorNode *> entry_point_array;
 
 	public:
 		Graph(GraphID id, GraphStorage &graph_storage): id(id), storage_ptr(std::addressof(graph_storage)) {}
@@ -48,13 +51,20 @@ namespace spy {
 			to_node.add_input(std::addressof(from_node));
 		}
 
+		void propagate() const;
+
 	public:
 		std::map<std::string_view, std::string> property() const override;
+
 	};
 
 	class GraphStorage {
+	public:
+		static constexpr NodeID OP_NODE_ID_MASK = 0xFF00'0000;
+
 	private:
-		std::vector<std::unique_ptr<BasicNode>> node_array_;
+		std::vector<std::unique_ptr<DataNode>> 		data_node_array_;
+		std::vector<std::unique_ptr<OperatorNode>> 	op_node_array_;
 
 	public:
 		GraphStorage() = default;
@@ -67,28 +77,44 @@ namespace spy {
 		template<class T_Node, class ...Args> 
 			requires std::is_base_of_v<BasicNode, T_Node>
 		T_Node &alloc_node(const Graph &graph, Args &&...args) {
-			const  NodeID new_id     = node_array_.size();
-			T_Node &new_node         = *static_cast<T_Node *>(std::to_address(node_array_.emplace_back(std::make_unique<T_Node>(std::forward<Args>(args)...))));
-			       new_node.id       = new_id;
-			       new_node.graph_id = graph.id;
-			return new_node;
+			if constexpr (std::is_base_of_v<OperatorNode, T_Node>) {
+				const  NodeID new_id     = op_node_array_.size() | OP_NODE_ID_MASK;
+				T_Node &new_node         = *static_cast<T_Node *>(std::to_address(op_node_array_.emplace_back(std::make_unique<T_Node>(std::forward<Args>(args)...))));
+					new_node.id       = new_id;
+					new_node.graph_id = graph.id;
+				return new_node;
+			} else {
+				const  NodeID new_id     = data_node_array_.size();
+				T_Node &new_node         = *static_cast<T_Node *>(std::to_address(data_node_array_.emplace_back(std::make_unique<T_Node>(std::forward<Args>(args)...))));
+					new_node.id       = new_id;
+					new_node.graph_id = graph.id;
+				return new_node;
+			}
 		}
+
+		bool is_data_node(NodeID id) const { return (id & OP_NODE_ID_MASK) == 0; }
+
+		bool is_op_node(NodeID id)   const { return (id & OP_NODE_ID_MASK) != 0; }
 
 	public:
 		BasicNode &operator[](NodeID id) { return node(id); }
 
 		BasicNode &node(NodeID id) { 
 			spy_assert_debug(id != INVALID_NODE_ID, "invalid node id");
-			spy_assert_debug(id < num_node(), "invalid node id");
-			return *node_array_[id]; 
+			if (is_data_node(id)) { return *data_node_array_[id]; }
+			return *op_node_array_[id ^ OP_NODE_ID_MASK]; 
 		}
 
-		size_t num_node() const { return node_array_.size(); }
+		size_t num_data_node() const { return data_node_array_.size(); }
+
+		size_t num_op_node()   const { return op_node_array_.size();   }
+
+		size_t num_node() 	   const { return num_data_node() + num_op_node(); }
 
 	public:
-		std::vector<int> get_input_count() const {
-			std::vector<int> input_count(num_node(), 0);
-			for (auto &node_ptr: node_array_) {
+		std::vector<int> get_data_input_count() const {
+			std::vector<int> input_count(num_data_node(), 0);
+			for (auto &node_ptr: data_node_array_) {
 				const NodeID node_id	= node_ptr->id;
 				const size_t num_input  = node_ptr->num_input();
 				input_count[node_id] 	= num_input;
@@ -96,12 +122,34 @@ namespace spy {
 			return input_count;
 		}
 
-		std::vector<int> get_output_count() const {
-			std::vector<int> output_count(num_node(), 0);
-			for (auto &node_ptr: node_array_) {
+		std::vector<int> get_data_output_count() const {
+			std::vector<int> output_count(num_data_node(), 0);
+			for (auto &node_ptr: data_node_array_) {
 				const NodeID node_id	 = node_ptr->id;
 				const size_t num_output  = node_ptr->num_output();
 				output_count[node_id] 	 = num_output;
+			}
+			return output_count;
+		}
+
+		std::vector<int> get_op_input_count() const {
+			std::vector<int> input_count(num_op_node(), 0);
+			for (auto &node_ptr: op_node_array_) {
+				const NodeID node_id	= node_ptr->id;
+				const NodeID op_id		= node_id ^ OP_NODE_ID_MASK;
+				const size_t num_input  = node_ptr->num_input();
+				input_count[op_id] 		= num_input;
+			}
+			return input_count;
+		}
+
+		std::vector<int> get_op_output_count() const {
+			std::vector<int> output_count(num_op_node(), 0);
+			for (auto &node_ptr: op_node_array_) {
+				const NodeID node_id	 = node_ptr->id;
+				const NodeID op_id		 = node_id ^ OP_NODE_ID_MASK;
+				const size_t num_output  = node_ptr->num_output();
+				output_count[op_id] 	 = num_output;
 			}
 			return output_count;
 		}

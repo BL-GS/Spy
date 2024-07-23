@@ -62,8 +62,8 @@ namespace spy {
 		SpyException(const std::string_view reason): std::runtime_error(PREFIX.data() + std::string(reason)) { }
 
 		template<class ...Args>
-		SpyException(const std::string_view &reason, Args ...args): 
-			std::runtime_error(fmt::vformat(PREFIX.data() + std::string(reason), std::forward<Args>(args)...)) {}
+		SpyException(const std::string_view &reason, Args &&...args): 
+			std::runtime_error(fmt::vformat(PREFIX.data() + std::string(reason), fmt::make_format_args(std::forward<Args>(args)...))) {}
 	};
 
 	class SpyAssertException: public SpyException {
@@ -77,7 +77,7 @@ namespace spy {
 		SpyAssertException(const std::string_view &reason): SpyException(PREFIX.data() + std::string(reason)) {}
 
 		template<class ...Args>
-		SpyAssertException(const std::string_view &reason, Args ...args): 
+		SpyAssertException(const std::string_view &reason, Args &&...args): 
 			SpyException(PREFIX.data() + std::string(reason), std::forward<Args>(args)...) {}
 	};
 
@@ -92,7 +92,7 @@ namespace spy {
 		SpyUnimplementedException(const std::string_view &reason): SpyException(PREFIX.data() + std::string(reason)) {}
 
 		template<class ...Args>
-		SpyUnimplementedException(const std::string_view &reason, Args ...args): 
+		SpyUnimplementedException(const std::string_view &reason, Args &&...args): 
 			SpyException(PREFIX.data() + std::string(reason), std::forward<Args>(args)...) {}
 	};
 
@@ -120,12 +120,12 @@ namespace spy {
 			reason_(PREFIX.data() + std::string(reason) + '\n' + std::system_error::what()) { }
 
 		template<class ...Args>
-		SpyOSException(const std::string_view &reason, Args ...args): 
+		SpyOSException(const std::string_view &reason, Args &&...args): 
 			std::system_error(system_error_code(), std::system_category()), 
 			reason_(fmt::vformat(PREFIX.data() + std::string(reason), std::forward<Args>(args)...) + '\n' + std::system_error::what()) {}
 
 		template<class ...Args>
-		SpyOSException(int error_code, const std::string_view &reason, Args ...args): 
+		SpyOSException(int error_code, const std::string_view &reason, Args &&...args): 
 			std::system_error(error_code, std::system_category()), 
 			reason_(fmt::vformat(PREFIX.data() + std::string(reason), std::forward<Args>(args)...) + '\n' + std::system_error::what()) {}
 

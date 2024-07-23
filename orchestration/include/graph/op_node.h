@@ -45,7 +45,7 @@ namespace spy {
 
 	public:
 		DataNode *input_data(size_t idx) const {
-			return input_data(idx);
+			return input<DataNode>(idx);
 		}
 
 		DataNode *output_data(size_t idx) const {

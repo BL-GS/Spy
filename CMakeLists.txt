@@ -74,6 +74,7 @@ TARGET_LINK_LIBRARIES(temp PRIVATE
 	${spy_system_libraries}
 	# Internal library
 	SpyUtil
+	SpyPerf
 	SpyOrchestration
 	SpyStorage
 	SpyModel

@@ -58,12 +58,12 @@ namespace spy {
 		void propagate() override {
 			assert_num_input(1);
 			assert_num_output(1);
-			params.track_ref_if_needed();
+			const Param &cur_param = params.track_ref_if_needed();
 
 			const Tensor &in = input_data(0)->tensor;
 			const size_t target_dim      = in.dim();
 			const auto   target_elements = in.elements();
-			const NumberType target_type = params.get_val().target_type;
+			const NumberType target_type = cur_param.target_type;
 			const Shape  target_shape(target_dim, target_elements, target_type);
 
 			auto *out_node = output<DataNode>(0);
