@@ -2,8 +2,6 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.20)
 PROJECT(SpyBackendDistributor)
 
 # Library
-FIND_PACKAGE(magic_enum CONFIG REQUIRED)
-
 FILE(GLOB_RECURSE source_files ${PROJECT_SOURCE_DIR}/src/*.cpp)
 
 # Project setup
@@ -13,6 +11,7 @@ TARGET_LINK_LIBRARIES(${PROJECT_NAME} PUBLIC
     # Internal libraries
     SpyUtil
     SpyOrchestration
+    SpyBackendInterface
     # External libraries
     magic_enum::magic_enum
 )

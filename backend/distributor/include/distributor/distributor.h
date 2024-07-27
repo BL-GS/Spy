@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <string_view>
 
 namespace spy {
 
@@ -8,13 +9,18 @@ namespace spy {
     class Graph;
 
     class AbstractGraphDistributor {
+    public:
+        AbstractGraphDistributor() = default;
 
+        virtual ~AbstractGraphDistributor() noexcept = default;
+
+    public:
         /*!
          * @brief Add a new backend for workload offloading.
          * @param[in] backend_ptr The pointer to the backend.
          * @return true on success; otherwise failed.
          */
-        virtual bool add_backend(AbstractBackend &backend_ptr) = 0;
+        virtual bool add_backend(AbstractBackend *backend_ptr, const std::string_view sche_policy) = 0;
 
         /*!
          * @brief Prepare graph for every backend
@@ -30,7 +36,7 @@ namespace spy {
     };
 
     class GraphDistributorFactory {
-
+    public:
         /*!
          * @brief Build up a distributor for graph divide and task distribution.
          * @param[in] policy The name of policy (greedy).

@@ -63,6 +63,8 @@ namespace spy {
         void set_view_src(DataNode *node_ptr) { view_src = node_ptr; }
 
     public:
+        bool is_view() const { return view_src != nullptr; }
+
         std::string get_tensor_name() const;
 
         std::map<std::string_view, std::string> property() const override;

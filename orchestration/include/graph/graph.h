@@ -106,45 +106,96 @@ namespace spy {
 	public:
 		void propagate() const;
 
+		template<class T_StartIter, class T_EndIter>
+		void get_data_input_count(T_StartIter start_iter, T_EndIter end_iter) const {
+			size_t count = 0;
+			for (auto iter = start_iter; iter != end_iter; ++iter) {
+				spy_assert(count < num_data_node(), 
+					"the range of ouput({}) is smaller than #num: {}", 
+					count + 1, num_data_node()
+				);
+
+				const auto &node_ptr   = data_node_array_[count];
+				const size_t num_input = node_ptr->num_input();
+				      *iter            = num_input;
+
+				++count;
+			}
+		}
+
 		std::vector<int> get_data_input_count() const {
 			std::vector<int> input_count(num_data_node(), 0);
-			for (auto &node_ptr: data_node_array_) {
-				const NodeID node_id	= node_ptr->id;
-				const size_t num_input  = node_ptr->num_input();
-				input_count[node_id] 	= num_input;
-			}
+			get_data_input_count(input_count.begin(), input_count.end());
 			return input_count;
+		}
+
+		template<class T_StartIter, class T_EndIter>
+		void get_data_output_count(T_StartIter start_iter, T_EndIter end_iter) const {
+			size_t count = 0;
+			for (auto iter = start_iter; iter != end_iter; ++iter) {
+				spy_assert(count < num_data_node(), 
+					"the range of ouput({}) is smaller than #num: {}", 
+					count + 1, num_data_node()
+				);
+
+				const auto &node_ptr    = data_node_array_[count];
+				const size_t num_output = node_ptr->num_output();
+				      *iter             = num_output;
+
+				++count;
+			}
 		}
 
 		std::vector<int> get_data_output_count() const {
 			std::vector<int> output_count(num_data_node(), 0);
-			for (auto &node_ptr: data_node_array_) {
-				const NodeID node_id	 = node_ptr->id;
-				const size_t num_output  = node_ptr->num_output();
-				output_count[node_id] 	 = num_output;
-			}
+			get_data_output_count(output_count.begin(), output_count.end());
 			return output_count;
+		}
+
+
+		template<class T_StartIter, class T_EndIter>
+		void get_op_input_count(T_StartIter start_iter, T_EndIter end_iter) const {
+			size_t count = 0;
+			for (auto iter = start_iter; iter != end_iter; ++iter) {
+				spy_assert(count < num_op_node(), 
+					"the range of ouput({}) is smaller than #num: {}", 
+					count + 1, num_op_node()
+				);
+				
+				const auto &node_ptr   = op_node_array_[count];
+				const size_t num_input = node_ptr->num_input();
+				      *iter            = num_input;
+
+				++count;
+			}
 		}
 
 		std::vector<int> get_op_input_count() const {
 			std::vector<int> input_count(num_op_node(), 0);
-			for (auto &node_ptr: op_node_array_) {
-				const NodeID node_id	= node_ptr->id;
-				const NodeID op_id		= node_id ^ OP_NODE_ID_MASK;
-				const size_t num_input  = node_ptr->num_input();
-				input_count[op_id] 		= num_input;
-			}
+			get_op_input_count(input_count.begin(), input_count.end());
 			return input_count;
+		}
+
+		template<class T_StartIter, class T_EndIter>
+		void get_op_output_count(T_StartIter start_iter, T_EndIter end_iter) const {
+			size_t count = 0;
+			for (auto iter = start_iter; iter != end_iter; ++iter) {
+				spy_assert(count < num_op_node(), 
+					"the range of ouput({}) is smaller than #num: {}", 
+					count + 1, num_op_node()
+				);
+				
+				const auto &node_ptr    = op_node_array_[count];
+				const size_t num_output = node_ptr->num_output();
+				      *iter             = num_output;
+
+				++count;
+			}
 		}
 
 		std::vector<int> get_op_output_count() const {
 			std::vector<int> output_count(num_op_node(), 0);
-			for (auto &node_ptr: op_node_array_) {
-				const NodeID node_id	 = node_ptr->id;
-				const NodeID op_id		 = node_id ^ OP_NODE_ID_MASK;
-				const size_t num_output  = node_ptr->num_output();
-				output_count[op_id] 	 = num_output;
-			}
+			get_op_output_count(output_count.begin(), output_count.end());
 			return output_count;
 		}
 	};

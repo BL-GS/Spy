@@ -1,6 +1,7 @@
 #pragma once
 
 #include "backend/config.h"
+#include "scheduler/common.h"
 #include "scheduler/scheduler.h"
 
 namespace spy {
@@ -22,7 +23,7 @@ namespace spy {
         virtual ~DefaultGraphScheduler() = default;
 
     public:
-        void execute(Graph &graph) override;
+        void execute(Graph &graph, GraphControlHeader &control_header) override;
     };
 
 } // namespace spy

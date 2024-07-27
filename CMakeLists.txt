@@ -78,6 +78,7 @@ TARGET_LINK_LIBRARIES(temp PRIVATE
 	SpyOrchestration
 	SpyStorage
 	SpyModel
+	SpyBackend
 
 	# External library
 	fmt::fmt-header-only

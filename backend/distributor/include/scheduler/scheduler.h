@@ -4,6 +4,7 @@
 
 #include "graph/graph.h"
 #include "backend/config.h"
+#include "scheduler/common.h"
 
 namespace spy {
 
@@ -17,7 +18,7 @@ namespace spy {
         virtual ~GraphScheduler() noexcept = default;
 
     public:
-        virtual void execute(Graph &graph) = 0;
+        virtual void execute(Graph &graph, GraphControlHeader &control_header) = 0;
     };
 
 	/// 

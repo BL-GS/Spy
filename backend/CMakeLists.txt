@@ -5,7 +5,7 @@ ADD_SUBDIRECTORY(${PROJECT_SOURCE_DIR}/interface)
 ADD_SUBDIRECTORY(${PROJECT_SOURCE_DIR}/distributor)
 ADD_SUBDIRECTORY(${PROJECT_SOURCE_DIR}/host)
 
-SET(spy_backend_deps SpyBackendInterface SpyBackendHost)
+SET(spy_backend_deps SpyBackendInterface SpyBackendDistributor SpyBackendHost)
 
 OPTION(SPY_BACKEND_CUDA "Enable backend: GPU"  OFF)
 IF (${SPY_BACKEND_CUDA})
