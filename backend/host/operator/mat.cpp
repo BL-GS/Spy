@@ -26,9 +26,9 @@ namespace spy::cpu {
         return type_0;
     }
 
-	std::shared_ptr<ControlHeader> OperatorMatMulImpl::get_control_header(CPUBackend *backend_ptr, const OperatorNode *op_node) {
-		const auto &operand_0	= op_node->input(0).tensor;
-		const auto &operand_1	= op_node->input(1).tensor;
+	std::shared_ptr<ControlHeader> OperatorMatMulImpl::get_control_header(CPUBackend *backend_ptr, const DerivedOperatorNode *op_node) {
+		const auto &operand_0	= op_node->input_data(0)->tensor;
+		const auto &operand_1	= op_node->input_data(1)->tensor;
 
         const auto &shape_0     = operand_0.get_shape();
         const auto &shape_1     = operand_1.get_shape();
@@ -48,10 +48,10 @@ namespace spy::cpu {
         return std::make_shared<BufferLatchControlHeader>(num_task, num_src1_row, backend_ptr, buffer_size);
 	}
 
-    OperatorResult OperatorMatMulImpl::execute([[maybe_unused]] CPUBackend *backend_ptr, const OperatorEnvParam &param, OperatorNode *op_node) {
-		const auto &operand_0 = op_node->input(0).tensor;
-		const auto &operand_1 = op_node->input(1).tensor;
-		const auto &result    = op_node->output(0).tensor;
+    OperatorResult OperatorMatMulImpl::execute([[maybe_unused]] CPUBackend *backend_ptr, const OperatorEnvParam &param, DerivedOperatorNode *op_node) {
+		const auto &operand_0 = op_node->input_data(0)->tensor;
+		const auto &operand_1 = op_node->input_data(1)->tensor;
+		const auto &result    = op_node->output_data(0)->tensor;
 
         const auto &shape_0     = operand_0.get_shape();
         const auto &shape_1     = operand_1.get_shape();
@@ -78,10 +78,10 @@ namespace spy::cpu {
             }, type_0, type_1);
 
             for (size_t col_idx = param.tid; col_idx < num_dst; col_idx += param.concurrency) {
-                const size_t i03 = col_idx / (ne02 * ne11 * ne01);
-                const size_t i02 = col_idx % (ne02 * ne11 * ne01) / (ne11 * ne01);
-                const size_t i11 = col_idx % (ne11 * ne01) / ne01;
-                const size_t i01 = col_idx % (ne11 * ne01) % ne01;
+                const int64_t i03 = col_idx / (ne02 * ne11 * ne01);
+                const int64_t i02 = col_idx % (ne02 * ne11 * ne01) / (ne11 * ne01);
+                const int64_t i11 = col_idx % (ne11 * ne01) / ne01;
+                const int64_t i01 = col_idx % (ne11 * ne01) % ne01;
 
                 const void *src1_col = operand_1.get<const void>({0, i11, i02, i03});
                 const void *src0_row = operand_0.get<const void>({0, i01, i02, i03});
@@ -106,9 +106,9 @@ namespace spy::cpu {
 				const int cur_src1_row = --header_ptr->src1_quantize_counter;
 				if (cur_src1_row < 0) { break; }
 
-                const size_t i13 = cur_src1_row / (ne12 * ne11);
-                const size_t i12 = cur_src1_row % (ne12 * ne11) / ne11;
-                const size_t i11 = cur_src1_row %  ne11;
+                const int64_t i13 = cur_src1_row / (ne12 * ne11);
+                const int64_t i12 = cur_src1_row % (ne12 * ne11) / ne11;
+                const int64_t i11 = cur_src1_row %  ne11;
 
                 const void *src1_row = operand_1.get<const void>({0, i11, i12, i13});
                 void *buffer_row     = buffer_ptr + cur_src1_row * buffer_row_size;
@@ -120,10 +120,10 @@ namespace spy::cpu {
 
             // Compute
             for (size_t col_idx = param.tid; col_idx < num_dst; col_idx += param.concurrency) {
-                const size_t i03 = col_idx / (ne02 * ne11 * ne01);
-                const size_t i02 = col_idx % (ne02 * ne11 * ne01) / (ne11 * ne01);
-                const size_t i11 = col_idx % (ne11 * ne01) / ne01;
-                const size_t i01 = col_idx % (ne11 * ne01) % ne01;
+                const int64_t i03 = col_idx / (ne02 * ne11 * ne01);
+                const int64_t i02 = col_idx % (ne02 * ne11 * ne01) / (ne11 * ne01);
+                const int64_t i11 = col_idx % (ne11 * ne01) / ne01;
+                const int64_t i01 = col_idx % (ne11 * ne01) % ne01;
 
                 const void *src1_col = buffer_ptr + (i11 + i02 * ne11 + i03 * ne11 * ne12) * buffer_row_size;
                 const void *src0_row = operand_0.get<const void>({0, i01, i02, i03});

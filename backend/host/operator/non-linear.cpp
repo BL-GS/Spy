@@ -4,8 +4,6 @@
 #include "number/lookup_table.h"
 #include "number/tensor.h"
 #include "graph/graph.h"
-#include "operator/config.h"
-#include "operator/non-linear.h"
 #include "operator_impl.h"
 
 namespace spy::cpu {
@@ -20,14 +18,14 @@ namespace spy::cpu {
 		T operator()(const T val) { return std::max(val, static_cast<T>(0)); }
 	};
 
-	std::shared_ptr<ControlHeader> OperatorReluImpl::get_control_header([[maybe_unused]] CPUBackend *backend_ptr, const OperatorNode *op_node) {
+	std::shared_ptr<ControlHeader> OperatorReluImpl::get_control_header([[maybe_unused]] CPUBackend *backend_ptr, const DerivedOperatorNode *op_node) {
         const auto &operand  = op_node->input_data(0)->tensor;
         const auto &shape_operand = operand.get_shape();
         const int num_task = shape_operand.num_row();
         return std::make_shared<ControlHeader>(num_task);
     }
 
-	OperatorResult OperatorReluImpl::execute([[maybe_unused]] CPUBackend *backend_ptr, const OperatorEnvParam &param, OperatorNode *op_node) {
+	OperatorResult OperatorReluImpl::execute([[maybe_unused]] CPUBackend *backend_ptr, const OperatorEnvParam &param, DerivedOperatorNode *op_node) {
 		const auto &operand = op_node->input_data(0)->tensor;
 		const auto &result  = op_node->output_data(0)->tensor;
 
@@ -35,12 +33,12 @@ namespace spy::cpu {
         const auto &shape_res     = result.get_shape();
 
         const auto [ne00, ne01, ne02, ne03] = shape_operand.elements;
-        const size_t num_row = ne01 * ne02 * ne03;
+        const int64_t num_row = ne01 * ne02 * ne03;
 
-        for (size_t row_idx = param.tid; row_idx < num_row; row_idx += param.concurrency) {
-            const size_t i03 = row_idx / (ne01 * ne02);
-            const size_t i02 = row_idx % (ne01 * ne02) / ne01;
-            const size_t i01 = row_idx % ne01;
+        for (int64_t row_idx = param.tid; row_idx < num_row; row_idx += param.concurrency) {
+            const int64_t i03 = row_idx / (ne01 * ne02);
+            const int64_t i02 = row_idx % (ne01 * ne02) / ne01;
+            const int64_t i01 = row_idx % ne01;
 
             const float *src0_row_ptr = operand.get<const float>({0, i01, i02, i03});
             float *		 dst_row_ptr  = result.get<float>({0, i01, i02, i03});
@@ -50,14 +48,14 @@ namespace spy::cpu {
         return { 0_op_end };
     }
 
-	std::shared_ptr<ControlHeader> OperatorSiluImpl::get_control_header([[maybe_unused]] CPUBackend *backend_ptr, const OperatorNode *op_node) {
+	std::shared_ptr<ControlHeader> OperatorSiluImpl::get_control_header([[maybe_unused]] CPUBackend *backend_ptr, const DerivedOperatorNode *op_node) {
         const auto &operand  = op_node->input_data(0)->tensor;
         const auto &shape_operand = operand.get_shape();
         const int num_task = shape_operand.num_row();
         return std::make_shared<ControlHeader>(num_task);
     }
 
-	OperatorResult OperatorSiluImpl::execute([[maybe_unused]] CPUBackend *backend_ptr, const OperatorEnvParam &param, OperatorNode *op_node) {
+	OperatorResult OperatorSiluImpl::execute([[maybe_unused]] CPUBackend *backend_ptr, const OperatorEnvParam &param, DerivedOperatorNode *op_node) {
 		const auto &operand = op_node->input_data(0)->tensor;
 		const auto &result  = op_node->output_data(0)->tensor;
 
@@ -67,9 +65,9 @@ namespace spy::cpu {
         const size_t num_row = ne01 * ne02 * ne03;
 
         for (size_t row_idx = param.tid; row_idx < num_row; row_idx += param.concurrency) {
-            const size_t i03 = row_idx / (ne01 * ne02);
-            const size_t i02 = row_idx % (ne01 * ne02) / ne01;
-            const size_t i01 = row_idx % ne01;
+            const int64_t i03 = row_idx / (ne01 * ne02);
+            const int64_t i02 = row_idx % (ne01 * ne02) / ne01;
+            const int64_t i01 = row_idx % ne01;
 
             const float *src0_row_ptr = operand.get<const float>({0, i01, i02, i03});
             float *		 dst_row_ptr  = result.get<float>({0, i01, i02, i03});
@@ -79,10 +77,10 @@ namespace spy::cpu {
         return { 0_op_end };
     }
 
-	std::shared_ptr<ControlHeader> OperatorSoftmaxImpl::get_control_header([[maybe_unused]] CPUBackend *backend_ptr, const OperatorNode *op_node) {
-        const auto &operand  = op_node->input_data(0)->tensor;
+	std::shared_ptr<ControlHeader> OperatorSoftmaxImpl::get_control_header([[maybe_unused]] CPUBackend *backend_ptr, const DerivedOperatorNode *op_node) {
+        const auto &operand       = op_node->input_data(0)->tensor;
         const auto &shape_operand = operand.get_shape();
-        const int num_task = shape_operand.num_row();
+        const int num_task        = shape_operand.num_row();
         return std::make_shared<ControlHeader>(num_task);
     }
 
@@ -98,14 +96,14 @@ namespace spy::cpu {
         const size_t num_row = ne1 * ne2 * ne3;
 
         for (size_t row_idx = param.tid; row_idx < num_row; row_idx += param.concurrency) {
-            const size_t i3 = row_idx / (ne1 * ne2);
-            const size_t i2 = row_idx % (ne1 * ne2) / ne1;
-            const size_t i1 = row_idx % ne1;
+            const int64_t i3 = row_idx / (ne1 * ne2);
+            const int64_t i2 = row_idx % (ne1 * ne2) / ne1;
+            const int64_t i1 = row_idx % ne1;
 
             const float *src_ptr = operand.get<float>({0, i1, i2, i3});
             float *dst_ptr 	     = result.get<float>({0, i1, i2, i3});
 
-            for (size_t i0 = 0; i0 < ne0; ++i0) {
+            for (int64_t i0 = 0; i0 < ne0; ++i0) {
                 dst_ptr[i0] = src_ptr[i0] * scale;
             }
 
@@ -113,48 +111,48 @@ namespace spy::cpu {
             const float max_src = *max_iter;
             spy_assert(!std::isnan(max_src));
 
-            for (size_t i0 = 0; i0 < ne0; ++i0) {
+            for (int64_t i0 = 0; i0 < ne0; ++i0) {
                 dst_ptr[i0] -= max_src;
             }
 
-            for (size_t i0 = 0; i0 < ne0; ++i0) {
+            for (int64_t i0 = 0; i0 < ne0; ++i0) {
                 dst_ptr[i0] = LOOK_UP_TABLE.exp(spy_fp32_to_fp16(dst_ptr[i0]));
             }
             const float sum = std::reduce(dst_ptr, dst_ptr + ne0);
             spy_assert(sum > 0.0F);
             const float sum_inv = 1.0F / sum;
-            for (size_t i0 = 0; i0 < ne0; ++i0) { dst_ptr[i0] *= sum_inv; }
+            for (int64_t i0 = 0; i0 < ne0; ++i0) { dst_ptr[i0] *= sum_inv; }
         }
 
         return { 0_op_end };
     }
 
-    static OperatorResult operator_masked_softmax_execute([[maybe_unused]] CPUBackend *backend_ptr, const OperatorEnvParam &param, OperatorNode *op_node) {
+    static OperatorResult operator_masked_softmax_execute([[maybe_unused]] CPUBackend *backend_ptr, const OperatorEnvParam &param, OperatorSoftmaxImpl::DerivedOperatorNode *op_node) {
         const auto &operand = op_node->input_data(0)->tensor;
-        const auto mask    = op_node->input_data(1)->tensor;
+        const auto mask     = op_node->input_data(1)->tensor;
         const auto &result  = op_node->output_data(0)->tensor;
-        const float scale  = static_cast<OperatorDefinition<OperatorType::Softmax> *>(op_node)->scale;
+        const float scale   = op_node->params.get_val().scale;
 
         const auto &shape_res     = result.get_shape();
 
         const auto [ne0, ne1, ne2, ne3] = shape_res.elements;
 
-        const size_t num_row = ne1 * ne2 * ne3;
+        const int64_t num_row = ne1 * ne2 * ne3;
 
-        for (size_t row_idx = param.tid; row_idx < num_row; row_idx += param.concurrency) {
-            const size_t i3 = row_idx / (ne1 * ne2);
-            const size_t i2 = row_idx % (ne1 * ne2) / ne1;
-            const size_t i1 = row_idx % ne1;
+        for (int64_t row_idx = param.tid; row_idx < num_row; row_idx += param.concurrency) {
+            const int64_t i3 = row_idx / (ne1 * ne2);
+            const int64_t i2 = row_idx % (ne1 * ne2) / ne1;
+            const int64_t i1 = row_idx % ne1;
 
             const float *src_ptr  = operand.get<float>({0, i1, i2, i3});
             const float *mask_ptr = mask.get<float>({0, i1, 0, 0});
             float *dst_ptr 	      = result.get<float>({0, i1, i2, i3});
 
-            for (size_t i0 = 0; i0 < ne0; ++i0) {
+            for (int64_t i0 = 0; i0 < ne0; ++i0) {
                 dst_ptr[i0] = src_ptr[i0] + mask_ptr[i0];
             }
 
-            for (size_t i0 = 0; i0 < ne0; ++i0) {
+            for (int64_t i0 = 0; i0 < ne0; ++i0) {
                 dst_ptr[i0] *= scale;
             }
 
@@ -162,11 +160,11 @@ namespace spy::cpu {
             const float max_src = *max_iter;
             spy_assert(!std::isnan(max_src));
 
-            for (size_t i0 = 0; i0 < ne0; ++i0) {
+            for (int64_t i0 = 0; i0 < ne0; ++i0) {
                 dst_ptr[i0] -= max_src;
             }
 
-            for (size_t i0 = 0; i0 < ne0; ++i0) {
+            for (int64_t i0 = 0; i0 < ne0; ++i0) {
                 if (mask_ptr[i0] == -INFINITY) { 
                     dst_ptr[i0] = 0.0F; 
                 } else {
@@ -176,28 +174,28 @@ namespace spy::cpu {
             const float sum = std::reduce(dst_ptr, dst_ptr + ne0);
             spy_assert(sum > 0.0F);
             const float sum_inv = 1.0F / sum;
-            for (size_t i0 = 0; i0 < ne0; ++i0) { dst_ptr[i0] *= sum_inv; }
+            for (int64_t i0 = 0; i0 < ne0; ++i0) { dst_ptr[i0] *= sum_inv; }
         }
 
         return { 0_op_end };
     }
 
-    OperatorResult OperatorSoftmaxImpl::execute([[maybe_unused]] CPUBackend *backend_ptr, const OperatorEnvParam &param, OperatorNode *op_node) {
+    OperatorResult OperatorSoftmaxImpl::execute([[maybe_unused]] CPUBackend *backend_ptr, const OperatorEnvParam &param, DerivedOperatorNode *op_node) {
         if (op_node->num_input() == 1) { return operator_softmax_execute(backend_ptr, param, op_node); }
         return operator_masked_softmax_execute(backend_ptr, param, op_node);
     }
 
-	std::shared_ptr<ControlHeader> OperatorNormRMSImpl::get_control_header([[maybe_unused]] CPUBackend *backend_ptr, const OperatorNode *op_node) {
+	std::shared_ptr<ControlHeader> OperatorNormRMSImpl::get_control_header([[maybe_unused]] CPUBackend *backend_ptr, const DerivedOperatorNode *op_node) {
         const auto &operand  = op_node->input_data(0)->tensor;
         const auto &shape_operand = operand.get_shape();
         const int num_task = shape_operand.num_row();
         return std::make_shared<ControlHeader>(num_task);
     }
 
-	OperatorResult OperatorNormRMSImpl::execute([[maybe_unused]] CPUBackend *backend_ptr, const OperatorEnvParam &param, OperatorNode *op_node) {
+	OperatorResult OperatorNormRMSImpl::execute([[maybe_unused]] CPUBackend *backend_ptr, const OperatorEnvParam &param, DerivedOperatorNode *op_node) {
 		const auto &operand = op_node->input_data(0)->tensor;
 		const auto &result  = op_node->output_data(0)->tensor;
-        const float eps = static_cast<OperatorDefinition<OperatorType::NormRMS> *>(op_node)->eps;
+        const float eps = op_node->params.get_val().eps;
 
         const auto &shape_res = result.get_shape();
 
@@ -206,9 +204,9 @@ namespace spy::cpu {
         const size_t num_row = ne1 * ne2 * ne3;
 
         for (size_t row_idx = param.tid; row_idx < num_row; row_idx += param.concurrency) {
-            const size_t i3 = row_idx / (ne1 * ne2);
-            const size_t i2 = row_idx % (ne1 * ne2) / ne1;
-            const size_t i1 = row_idx % ne1;
+            const int64_t i3 = row_idx / (ne1 * ne2);
+            const int64_t i2 = row_idx % (ne1 * ne2) / ne1;
+            const int64_t i1 = row_idx % ne1;
 
             const float *src_ptr = operand.get<float>({0, i1, i2, i3});
             float *		 dst_ptr = result.get<float>({0, i1, i2, i3});
@@ -259,7 +257,7 @@ namespace spy::cpu {
         *sin_theta = std::sin(theta) * mscale;
     }
 
-	std::shared_ptr<ControlHeader> OperatorRopeImpl::get_control_header([[maybe_unused]] CPUBackend *backend_ptr, const OperatorNode *op_node) {
+	std::shared_ptr<ControlHeader> OperatorRopeImpl::get_control_header([[maybe_unused]] CPUBackend *backend_ptr, const DerivedOperatorNode *op_node) {
         const auto &operand_0 = op_node->input_data(0)->tensor;
         const auto &shape_0 = operand_0.get_shape();
         const auto [ne00, ne01, ne02, ne03] = shape_0.elements;
@@ -267,11 +265,11 @@ namespace spy::cpu {
         return std::make_shared<ControlHeader>(num_task);
     }
 
-	OperatorResult OperatorRopeImpl::execute([[maybe_unused]] CPUBackend *backend_ptr, const OperatorEnvParam &param, OperatorNode *op_node) {
-        const auto &operand_0    = op_node->input_data(0)->tensor;
-        const auto &operand_1    = op_node->input_data(1)->tensor;
-        const auto &result       = op_node->output_data(0)->tensor;
-        const auto rope_context = static_cast<OperatorDefinition<OperatorType::Rope> *>(op_node)->rope_context;
+	OperatorResult OperatorRopeImpl::execute([[maybe_unused]] CPUBackend *backend_ptr, const OperatorEnvParam &param, DerivedOperatorNode *op_node) {
+        const auto &operand_0   = op_node->input_data(0)->tensor;
+        const auto &operand_1   = op_node->input_data(1)->tensor;
+        const auto &result      = op_node->output_data(0)->tensor;
+        const auto rope_context = op_node->params.get_val();
 
         const auto [mode, num_past, num_dim, num_context, num_origin_context,
         freq_base, freq_scale, extend_factor, attention_factor,
@@ -291,16 +289,16 @@ namespace spy::cpu {
 
         const int32_t *src1_ptr = operand_1.get<int32_t>();
 
-        const size_t num_matrix = ne2 * ne3;
+        const int64_t num_matrix = ne2 * ne3;
 
-        for (size_t matrix_idx = param.tid; matrix_idx < num_matrix; ++matrix_idx) {
-            const size_t i3 = matrix_idx / ne2;
-            const size_t i2 = matrix_idx % ne2;
+        for (int64_t matrix_idx = param.tid; matrix_idx < num_matrix; ++matrix_idx) {
+            const int64_t i3 = matrix_idx / ne2;
+            const int64_t i2 = matrix_idx % ne2;
 
             const int32_t p = src1_ptr[i2];
 
             float *cache = static_cast<float *>(alloca(ne0 * sizeof(float)));
-            if (mode != ModelRopeType::GLM && mode != ModelRopeType::Neox) {
+            if (mode != RopeType::GLM && mode != RopeType::Neox) {
                 const int32_t *pos_ptr = operand_1.get<const int32_t>({i2, 0, 0, 0});
                 float theta = static_cast<float>(*pos_ptr);
                 for (uint64_t i0 = 0; i0 < ne0; i0 += 2) {
@@ -310,14 +308,14 @@ namespace spy::cpu {
                 }
             }
 
-            for (size_t i1 = 0; i1 < ne1; ++i1) {
+            for (int64_t i1 = 0; i1 < ne1; ++i1) {
 
                 switch (mode) {
-                    case ModelRopeType::GLM: {
+                    case RopeType::GLM: {
                         float theta_base  = std::min(p, num_context - 2);
                         float block_theta = std::max(p - (num_context - 2), 0);
 
-                        for (size_t i0 = 0; i0 < ne0 / 4; ++i0) {
+                        for (int64_t i0 = 0; i0 < ne0 / 4; ++i0) {
                             const float cos_theta       = std::cos(theta_base);
                             const float sin_theta       = std::sin(theta_base) * sin_sign;
                             const float cos_block_theta = std::cos(block_theta);
@@ -342,12 +340,12 @@ namespace spy::cpu {
                         }
                         break;
                     }
-                    case ModelRopeType::Neox:
+                    case RopeType::Neox:
                         spy_assert(false, "To be implemented");
                         break;
 
                     default: {
-                        for (size_t i0 = 0; i0 < ne0; i0 += 2) {
+                        for (int64_t i0 = 0; i0 < ne0; i0 += 2) {
                             const float cos_theta = cache[i0 + 0];
                             const float sin_theta = cache[i0 + 1];
 

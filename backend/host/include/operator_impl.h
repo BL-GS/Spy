@@ -2,8 +2,8 @@
 
 #include <memory>
 
-#include "operator/type.h"
-#include "graph/graph.h"
+#include "graph/op_node.h"
+#include "operator/operator.h"
 #include "task.h"
 
 namespace spy::cpu {
@@ -36,20 +36,25 @@ namespace spy::cpu {
 
 #define OperatorDefinition(op_type)                                                                                                 \
     struct Operator##op_type##Impl {                                                                                                \
-        static std::shared_ptr<ControlHeader> get_control_header(CPUBackend *backend_ptr, const OperatorNode *op_node);             \
-        static OperatorResult execute([[maybe_unused]] CPUBackend *backend_ptr, [[maybe_unused]] const OperatorEnvParam &param, [[maybe_unused]] OperatorNode *op_node); \
+        using DerivedOperatorNode = OperatorDefinition<OperatorType:: op_type>;                                                     \
+                                                                                                                                    \
+        static std::shared_ptr<ControlHeader> get_control_header(CPUBackend *backend_ptr, const DerivedOperatorNode *op_node);             \
+        static OperatorResult execute([[maybe_unused]] CPUBackend *backend_ptr, [[maybe_unused]] const OperatorEnvParam &param, [[maybe_unused]] DerivedOperatorNode *op_node); \
     };                                                                                                                              \
                                                                                                                                     \
     template<>                                                                                                                      \
     struct OperatorImpl<OperatorType:: op_type> {                                                                                   \
+        using Impl                = Operator##op_type##Impl;                                                                        \
+        using DerivedOperatorNode = Impl::DerivedOperatorNode;                                                                      \
+                                                                                                                                    \
         static std::shared_ptr<ControlHeader> get_control_header(CPUBackend *backend_ptr, const OperatorNode *op_node) {            \
-            return Operator##op_type##Impl::get_control_header(backend_ptr, op_node);                                               \
+            return Impl::get_control_header(backend_ptr, static_cast<const DerivedOperatorNode *>(op_node));                        \
         }                                                                                                                           \
                                                                                                                                     \
         static constexpr bool is_support() { return true; }                                                                         \
 																																	\
         static OperatorResult execute(CPUBackend *backend_ptr, const OperatorEnvParam &param, OperatorNode *op_node) {              \
-            return Operator##op_type##Impl::execute(backend_ptr, param, op_node);                                                   \
+            return Impl::execute(backend_ptr, param, static_cast<DerivedOperatorNode *>(op_node));                                  \
         }                                                                                                                           \
     };
     
