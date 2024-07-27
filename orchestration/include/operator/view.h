@@ -3,7 +3,6 @@
 #include "operator/common.h"
 #include "util/shell/logger.h"
 #include "operator/type.h"
-#include "operator/config.h"
 #include "operator/parameter.h"
 #include "graph/graph.h"
 #include "graph/op_node.h"

@@ -3,7 +3,6 @@
 #include "graph/op_node.h"
 #include "graph/graph.h"
 #include "operator/type.h"
-#include "operator/config.h"
 #include "operator/parameter.h"
 
 #ifndef OPERATOR_HEADER_MACRO

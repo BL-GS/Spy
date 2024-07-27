@@ -2,7 +2,6 @@
 
 #include "util/shell/logger.h"
 #include "operator/type.h"
-#include "operator/config.h"
 #include "graph/data_node.h"
 #include "graph/op_node.h"
 #include "operator/common.h"

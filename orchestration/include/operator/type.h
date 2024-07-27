@@ -112,9 +112,6 @@ namespace spy {
 		spy_unreachable();
 	}
 
-	template<OperatorType T_op_type>
-	struct OperatorNodeImpl { };
-
 	inline constexpr bool is_view(OperatorType op_type) { 
 		switch (op_type) {
 		case OperatorType::View:
@@ -131,6 +128,18 @@ namespace spy {
 	inline constexpr bool is_nop(OperatorType op_type) {
 		return op_type == OperatorType::Nop;
 	}
+
+	/*!
+	 * @brief Definition of operator
+	 * @note When implementing the definition, it should be derived from OperatorNode.
+	 * @note The common type definition do not derive from OperatorNode to check the integration at compile time.
+	 */
+	template<OperatorType T_op_type>
+	struct OperatorDefinition { };
+
+	template<OperatorType T_op_type>
+	struct OperatorNodeImpl { };
+
 
 }  // namespace spy
 

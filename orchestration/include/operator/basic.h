@@ -1,7 +1,6 @@
 #pragma once
 
 #include "operator/type.h"
-#include "operator/config.h"
 #include "operator/common.h"
 
 #ifndef OPERATOR_HEADER_MACRO
