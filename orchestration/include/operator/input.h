@@ -44,6 +44,10 @@ namespace spy {
 			output_node_ptr->name = name;
 			output_node_ptr->set_prop(prop);
 			add_output(output_node_ptr);
+
+			// Register as input node
+			graph.storage_ptr->register_input(id);
+
 			return output_node_ptr;
 		}
 

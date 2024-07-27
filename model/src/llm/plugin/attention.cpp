@@ -151,7 +151,7 @@ namespace spy {
         const Tensor &k_cache_tensor    = k_cache->tensor;
         const NumberType k_type         = k_cache_tensor.type();
 
-        DataNode *k_cache_view = make_dynamic_stream<OperatorType::View>(graph, "KCache",
+        DataNode *k_cache_view = make_dynamic_stream<OperatorType::View>(graph, "KCache_view",
             default_prop, [this, k_type]{ 
                 const int64_t k_cache_update_offset = get_row_size(k_type, num_embedding_k_gqa) * num_past_token;
                 return ViewParam{
@@ -164,12 +164,12 @@ namespace spy {
             },
             k_cache
         );
-        DataNode *k_cache_sync = make_stream<OperatorType::Copy>(graph, "KCache",
+        DataNode *k_cache_sync = make_stream<OperatorType::Copy>(graph, "KCache_cpy",
             default_prop, 
             key, k_cache_view
         );
         // Concat K cache and output
-        DataNode *K_out = make_dynamic_stream<OperatorType::View>(graph, "K_Cache",
+        DataNode *K_out = make_dynamic_stream<OperatorType::View>(graph, "KCache_output",
             default_prop, [this, k_type]{ 
                 // TODO: Fix when implementing long context
                 const int64_t num_kv = num_past_token + num_token;
@@ -195,7 +195,7 @@ namespace spy {
         const Tensor &v_cache_tensor    = v_cache->tensor;
         const NumberType v_type         = v_cache_tensor.type();
 
-        DataNode *v_cache_view = make_dynamic_stream<OperatorType::View>(graph, "VCache",
+        DataNode *v_cache_view = make_dynamic_stream<OperatorType::View>(graph, "VCache_view",
             default_prop, [this, v_type]{ 
                 const int64_t v_cache_update_offset = get_type_size(v_type) * num_past_token;
                 return ViewParam {
@@ -209,12 +209,12 @@ namespace spy {
             v_cache
         );
         // A fake output for synchronization
-        DataNode *v_cache_sync = make_stream<OperatorType::Copy>(graph, "VCache",
+        DataNode *v_cache_sync = make_stream<OperatorType::Copy>(graph, "VCache_cpy",
             default_prop,
             value, v_cache_view
         );
         // Concat value cache and output
-        DataNode *V_out = make_dynamic_stream<OperatorType::View>(graph, "VCache",
+        DataNode *V_out = make_dynamic_stream<OperatorType::View>(graph, "VCache_output",
             default_prop, [this, v_type]{ 
                 const int64_t num_kv = num_past_token + num_token;
                 const int64_t v_cache_update_offset = get_type_size(v_type) * num_past_token;

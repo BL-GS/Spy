@@ -6,7 +6,6 @@
 #pragma once
 
 #include <cstddef>
-#include <queue>
 #include <magic_enum.hpp>
 
 #include "util/shell/logger.h"
@@ -40,17 +39,6 @@ namespace spy {
 			requires std::is_base_of_v<BasicNode, T_Node>
 		T_Node &alloc_node(Args &&...args) const;
 
-		void connect(BasicNode &from_node, BasicNode &to_node) {
-			spy_assert(from_node.id != INVALID_NODE_ID && to_node.id != INVALID_NODE_ID, "invalid id (from: {}, to: {})",
-				from_node.id, to_node.id);
-			spy_assert(from_node.id != to_node.id, "trying to generate a ring (id: {})", from_node.id);
-			spy_assert(from_node.graph_id == to_node.graph_id, "trying to connect nodes from different graph (from: {}, to: {})",
-				from_node.graph_id, to_node.graph_id);
-
-			from_node.add_output(std::addressof(to_node));
-			to_node.add_input(std::addressof(from_node));
-		}
-
 		void propagate() const;
 
 	public:
@@ -65,6 +53,8 @@ namespace spy {
 	private:
 		std::vector<std::unique_ptr<DataNode>> 		data_node_array_;
 		std::vector<std::unique_ptr<OperatorNode>> 	op_node_array_;
+
+		std::vector<NodeID> input_node_id_array_;
 
 	public:
 		GraphStorage() = default;
@@ -92,6 +82,8 @@ namespace spy {
 			}
 		}
 
+		void register_input(NodeID id) { input_node_id_array_.push_back(id); }
+
 		bool is_data_node(NodeID id) const { return (id & OP_NODE_ID_MASK) == 0; }
 
 		bool is_op_node(NodeID id)   const { return (id & OP_NODE_ID_MASK) != 0; }
@@ -99,7 +91,7 @@ namespace spy {
 	public:
 		BasicNode &operator[](NodeID id) { return node(id); }
 
-		BasicNode &node(NodeID id) { 
+		BasicNode &node(NodeID id) const { 
 			spy_assert_debug(id != INVALID_NODE_ID, "invalid node id");
 			if (is_data_node(id)) { return *data_node_array_[id]; }
 			return *op_node_array_[id ^ OP_NODE_ID_MASK]; 
@@ -112,6 +104,8 @@ namespace spy {
 		size_t num_node() 	   const { return num_data_node() + num_op_node(); }
 
 	public:
+		void propagate() const;
+
 		std::vector<int> get_data_input_count() const {
 			std::vector<int> input_count(num_data_node(), 0);
 			for (auto &node_ptr: data_node_array_) {
