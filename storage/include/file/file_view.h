@@ -3,10 +3,13 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
-#include <vector>
-#include <unordered_map>
 #include <memory>
+#include <vector>
+#include <functional>
 #include <thread>
+#include <unordered_map>
+#include <stdexcept>
+#include <system_error>
 
 #ifdef __has_include
 	#if __has_include(<unistd.h>)
@@ -32,315 +35,338 @@
 	#include <aio.h>
 #endif
 
-#include "util/shell/logger.h"
-#include "file/exception.h"
-
 namespace spy {
 
-	/*!
-	 * @brief The definition view of a range of the file
-	 * @detail This structure denotes a 1D view of the file.
-	 * | --- offset --- | --- size --- | ---...
-	 * | ---------------| /// view /// | ---...
-	 * ------------------==============---------
-	 */
-	struct FileView {
-	protected:
-		/// The offset of the view on file
-		int64_t offset_;
-		/// The size of the view on file
-		size_t size_;
+#ifdef _WIN32
+    constexpr size_t ALIGNED_GRANULARITY = 64 * 1024; // 64K
 
-	public:
-		FileView(): offset_(0), size_(0) {}
+    inline static size_t windows_granularity() {
+        SYSTEM_INFO si;
+        GetSystemInfo(&si);
+        return (size_t)si.dwPageSize;
+    }
 
-		FileView(int64_t offset, size_t size): offset_(offset), size_(size) {}
+    inline static std::string llama_format_win_err(DWORD err) {
+        LPSTR buf;
+        size_t size = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+            NULL, err, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&buf, 0, NULL);
+        if (!size) {
+            return "FormatMessageA failed";
+        }
+        std::string ret(buf, size);
+        LocalFree(buf);
 
-		FileView(const FileView &other) = default;
 
-		virtual ~FileView() noexcept = default;
+        return ret;
+    }
 
-		FileView &operator=(const FileView &other) = default;
+    inline static std::string llama_format_win_err() {
+        return llama_format_win_err(GetLastError());
+    }
+#endif
 
-		bool operator==(const FileView &other) const { return offset_ == other.offset_ && size_ == other.size_; }
+    struct FileView {
+    protected:
+        int64_t offset_;
 
-	public:
-		/*!
-		 * @brief Read from view the a specific buffer
-		 * @param dst The location where data is to write
-		 * @param offset The offset of data on the view
-		 * @param size The size of data to read
-		 * @return 
-		 * For asynchronous operation, this function returns 0 if finished immediately, 
-		 *  returns negatives if failed, or return the id of task which can be used for synchronization.
-		 * For synchronous operation, this function return 0 if finished successfully, or negatives if failed. 
-		 */
-		virtual int read(void *dst, int64_t offset, size_t size)        = 0;
+        size_t size_;
 
-		/*!
-		 * @brief Write specific data from buffer to the view
-		 * @param dst The location where the source data from
-		 * @param offset The offset of buffer on the view which is to written
-		 * @param size The size of data to write
-		 * @return 
-		 * For asynchronous operation, this function returns 0 if finished immediately, 
-		 *  returns negatives if failed, or return the id of task which can be used for synchronization.
-		 * For synchronous operation, this function return 0 if finished successfully, or negatives if failed. 
-		 */
-		virtual int write(const void *src, int64_t offset, size_t size) = 0;
+    public:
+        FileView(): offset_(0), size_(0) {}
 
-	 public:
-		/*!
-		 * @brief Get the offset of the view on file
-		 */
-		size_t offset() const { return offset_; }
+        FileView(int64_t offset, size_t size): offset_(offset), size_(size) {}
 
-		/*!
-		 * @brief Get the size of the view
-		 */
-		size_t   size() const { return size_;   }
-	};
+        FileView(const FileView &other) = default;
 
-	/*!
-	 * @brief For addressable device, this structure gives an simple definition of operations on the view.
-	 * On this view, data are read/written by virtual address directly.
-	 */
-	struct FileSpanView: FileView {
-	protected:
-		/// The start address of the view (which should has been offseted by offset_)
-		void *addr_;
+        virtual ~FileView() noexcept = default;
 
-	public:
-		FileSpanView(): addr_(nullptr) {}
+    public:
 
-		FileSpanView(int64_t offset, size_t size, void *addr): FileView(offset, size), addr_(addr) {}
+        virtual int read(void *dst, int64_t offset, size_t size)        = 0;
 
-		FileSpanView(const FileSpanView &other) = default;
+        virtual int write(const void *src, int64_t offset, size_t size) = 0;
 
-		 ~FileSpanView() noexcept override = default;
+     public:
+        int64_t offset() const { return offset_; }
 
-	public:
-		 /*!
-		 * @brief Read from view the a specific buffer
-		 * @param dst The location where data is to write
-		 * @param offset The offset of data on the view
-		 * @param size The size of data to read
-		 * @return 0 on success, -1 on failure
-		 * @note The given offset should not be confused with the offset_, which was set by the constructor. 
-		 * In other words, the given offset here should not contain the offset of the view.
-		 */
-		int read(void *dst, int64_t offset, size_t size) override {
-			std::memcpy(dst, static_cast<uint8_t *>(addr_) + offset, size);
-			return -1;
-		}
+        size_t   size() const { return size_;   }
+    };
 
-		/*!
-		 * @brief Write specific data from buffer to the view
-		 * @param dst The location where the source data from
-		 * @param offset The offset of buffer on the view which is to written
-		 * @param size The size of data to write
-		 * @return 0 on success, -1 on failure
-		 * @note The given offset should not be confused with the offset_, which was set by the constructor. 
-		 * In other words, the given offset here should not contain the offset of the view.
-		 */
-		int write(const void *src, int64_t offset, size_t size) override {
-			std::memcpy(static_cast<uint8_t *>(addr_) + offset, src, size);
-			return -1;
-		}
+    struct FileSpanView: FileView {
+    protected:
+        int64_t file_offset_;
+        void *  addr_;
 
-	public:
-		/// Get the start address of the view
-		void *deref()               const { return addr_; }
+    public:
+        FileSpanView(): file_offset_(0), addr_(nullptr) {}
 
-		/// Get the address offsetted of the view
-		void *deref(size_t offset)  const { return static_cast<uint8_t *>(addr_) + offset_ + offset; }
-	};
+        FileSpanView(int64_t offset, size_t size, void *addr): FileView(offset, size), file_offset_(0), addr_(addr) {}
+
+        FileSpanView(const FileSpanView &other) = default;
+
+         ~FileSpanView() noexcept override = default;
+
+    public:
+        int read(void *dst, int64_t offset, size_t size) override {
+            std::memcpy(dst, static_cast<uint8_t *>(addr_) + offset, size);
+            return -1;
+        }
+
+        int write(const void *src, int64_t offset, size_t size) override {
+            std::memcpy(static_cast<uint8_t *>(addr_) + offset, src, size);
+            return -1;
+        }
+
+    public:
+        void *deref()               const { return addr_; }
+
+        void *deref(int64_t offset) const { return static_cast<uint8_t *>(addr_) + offset_ + offset; }
+
+        int64_t file_offset()       const { return file_offset_; }
+    };
 
 #ifdef _WIN32
-	
-	struct FileMappingView final: public FileSpanView {
-	public:
-		static constexpr int ALIGNED_GRANULARITY = 64 * 1024; // 64K
 
-	public:
-		FileMappingView() = default;
+    struct FileMappingView final: public FileSpanView {
+    public:
+        FileMappingView() = default;
 
-		FileMappingView(const HANDLE mapping_handle, int64_t offset, size_t size, bool write = false) {
-			// Do not call mmap if size == 0
-			if (size == 0) {
-				offset_ = 0;
-				return;
-			}
+        FileMappingView(const HANDLE mapping_handle, int64_t offset, size_t size, bool write = false) {
+            // Do not call mmap if size == 0
+            if (size == 0) {
+                offset_ = 0;
+                return;
+            }
 
-			const auto prot  = write ? FILE_MAP_WRITE | FILE_MAP_READ : FILE_MAP_READ;
+            const auto prot  = write ? FILE_MAP_WRITE | FILE_MAP_READ : FILE_MAP_READ;
 
-			// Align offset and size by the granularity of OS
-			const int64_t aligned_offset = offset / ALIGNED_GRANULARITY * ALIGNED_GRANULARITY;
-			const size_t  aligned_size   = size + (offset - aligned_offset);
+            // Align offset and size by the granularity of OS
+            const size_t aligned_offset = offset / ALIGNED_GRANULARITY * ALIGNED_GRANULARITY;
+            const size_t aligned_size   = size + (offset - aligned_offset);
 
-			offset_ = offset - aligned_offset;
-			size_   = aligned_size;
+            offset_      = offset - aligned_offset;
+            size_        = aligned_size;
+            file_offset_ = offset;
 
-			// mmap
-			const LARGE_INTEGER mapping_offset { .QuadPart = aligned_offset };
-			addr_ = static_cast<uint8_t*>(MapViewOfFile(mapping_handle, 
-				prot, 
-				mapping_offset.HighPart, 
-				mapping_offset.LowPart, 
-				aligned_size
-			));
-			if (addr_ == nullptr) { throw SpyOSFileException("failed mapping file"); }
-		}
+            // mmap
+            {
+                constexpr size_t offset_mask    = 0xFFFFFFFF;
+                const DWORD offset_high         = (aligned_offset >> 32U) & offset_mask;
+                const DWORD offset_low          = aligned_offset & offset_mask;
+                addr_ = static_cast<uint8_t*>(MapViewOfFile(mapping_handle, prot, offset_high, offset_low, aligned_size));
+                DWORD error = GetLastError();
 
-		~FileMappingView() noexcept override {
-			if (addr_ != nullptr) {
-				const auto ret = UnmapViewOfFile(addr_);
-				spy_assert(ret != 0, "failed unmapping file");
-			}
-		}
+                if (addr_ == nullptr) {
+                    fprintf(stderr, "Failed mmap file: %s\n", llama_format_win_err().c_str());
+                    throw std::runtime_error(std::string("MapViewOfFile failed: ") + llama_format_win_err());
+                }
+            }
+        }
 
-		FileMappingView(FileMappingView&& other) noexcept : FileSpanView(other) {
-			other.reset();
-		}
+        ~FileMappingView() noexcept override {
+            if (addr_ != nullptr) {
+                if (UnmapViewOfFile(addr_) == 0) {
+                    fprintf(stderr, "warning: UnmapViewOfFile failed\n");
+                }
+            }
+        }
 
-		FileMappingView &operator = (FileMappingView &&other) noexcept {
-			addr_   = other.addr_;
-			offset_ = other.offset_;
-			size_   = other.size_;
-			other.reset();
-			return *this;
-		}
+        FileMappingView(FileMappingView&& other) noexcept : FileSpanView(other) {
+            other.offset_      = 0;
+            other.size_        = 0;
+            other.addr_        = nullptr;
+            other.file_offset_ = 0;
+        }
 
-	public:
-		/*!
-		 * @brief Prefetch and allocate necessary memory
-		 * @param offset The offset of the range to be prefetched
-		 * @param size The size of the range to be prefetched
-		 */
-		void prefetch(const size_t offset, const size_t size) {
-			// PrefetchVirtualMemory is only present on Windows 8 and above, so we dynamically load it
-			BOOL(WINAPI * pPrefetchVirtualMemory) (HANDLE, ULONG_PTR, PWIN32_MEMORY_RANGE_ENTRY, ULONG);
-			HMODULE hKernel32 = GetModuleHandleW(L"kernel32.dll");
+        FileMappingView &operator = (FileMappingView &&other) noexcept {
+            offset_      = other.offset_;
+            size_        = other.size_;
+            addr_        = other.addr_;
+            file_offset_ = other.file_offset_;
 
-			// may fail on pre-Windows 8 systems
-			pPrefetchVirtualMemory = reinterpret_cast<decltype(pPrefetchVirtualMemory)> (GetProcAddress(hKernel32, "PrefetchVirtualMemory"));
+            other.offset_      = 0;
+            other.size_        = 0;
+            other.addr_        = nullptr;
+            other.file_offset_ = 0;
 
-			if (pPrefetchVirtualMemory != nullptr) {
-				// advise the kernel to preload the mapped memory
-				WIN32_MEMORY_RANGE_ENTRY range{
-					.VirtualAddress = static_cast<uint8_t *>(addr_) + offset_,
-					.NumberOfBytes  = static_cast<SIZE_T>(size_)
-				};
+            return *this;
+        }
 
-				if (pPrefetchVirtualMemory(GetCurrentProcess(), 1, &range, 0) == 0) {
-					spy_warn("failed prefetching virtual memory");
-				}
-			}
-		}
+    public:
+        void prefetch(int64_t offset, size_t size) {
+            const size_t aligned_offset = offset / ALIGNED_GRANULARITY * ALIGNED_GRANULARITY;
+            const size_t aligned_size   = size + (offset - aligned_offset);
 
-	private:
-		void reset() {
-			addr_   = nullptr;
-			offset_ = 0;
-			size_   = 0;
-		}
-	};
+            // PrefetchVirtualMemory is only present on Windows 8 and above, so we dynamically load it
+            BOOL(WINAPI * pPrefetchVirtualMemory) (HANDLE, ULONG_PTR, PWIN32_MEMORY_RANGE_ENTRY, ULONG);
+            HMODULE hKernel32 = GetModuleHandleW(L"kernel32.dll");
 
-	struct SyncFileView final: public FileView {
-	private:
-		/// The handle of the file, which should not be freed by view
-		HANDLE file_handle_;
+            // may fail on pre-Windows 8 systems
+            pPrefetchVirtualMemory = reinterpret_cast<decltype(pPrefetchVirtualMemory)> (GetProcAddress(hKernel32, "PrefetchVirtualMemory"));
 
-	public:
-		SyncFileView() = default;
+            if (pPrefetchVirtualMemory != nullptr) {
+                // advise the kernel to preload the mapped memory
+                WIN32_MEMORY_RANGE_ENTRY range;
 
-		SyncFileView(HANDLE file_handle, int64_t offset, size_t size): FileView(offset, size), file_handle_(file_handle) {}
+                range.VirtualAddress = static_cast<uint8_t *>(addr_) + aligned_offset;
+                range.NumberOfBytes  = static_cast<SIZE_T>(aligned_size);
+                if (pPrefetchVirtualMemory(GetCurrentProcess(), 1, &range, 0) == 0) {
+                    fprintf(stderr, "warning: PrefetchVirtualMemory failed: %s\n", llama_format_win_err().c_str());
+                }
+            }
+        }
+    };
 
-		SyncFileView(const SyncFileView &other) = default;
+    struct SyncFileView final: public FileView {
+    private:
+        /// The handle of the file, which should not be freed by view
+        HANDLE file_handle_;
 
-		~SyncFileView() noexcept override       = default;
+    public:
+        SyncFileView() = default;
 
-	public:
-		int read(void *dst, int64_t offset, size_t size) override {
-			// Move the pointer of file descriptor
-			LARGE_INTEGER offset_integer { .QuadPart = this->offset_ + offset };
-			offset_integer.LowPart = SetFilePointer(file_handle_, offset_integer.LowPart, &offset_integer.HighPart, FILE_BEGIN);
-			if (offset_integer.LowPart == INVALID_SET_FILE_POINTER) {
-				throw SpyOSFileException("failed to seek file");
-			}
-			// Read file synchronously
-			ReadFile(file_handle_, dst, size, nullptr, nullptr);
-			return 0;
-		}
+        SyncFileView(HANDLE file_handle, int64_t offset, size_t size): FileView(offset, size), file_handle_(file_handle) {}
 
-		int write(const void *src, int64_t offset, size_t size) override {
-			// Move the pointer of file descriptor
-			LARGE_INTEGER offset_integer { .QuadPart = this->offset_ + offset };
-			offset_integer.LowPart = SetFilePointer(file_handle_, offset_integer.LowPart, &offset_integer.HighPart, FILE_BEGIN);
-			if (offset_integer.LowPart == INVALID_SET_FILE_POINTER) {
-				throw SpyOSFileException("failed to seek file");
-			}
-			// Write file synchronously
-			WriteFile(file_handle_, src, size, nullptr, nullptr);
-			return 0;
-		}
-	};
+        SyncFileView(const SyncFileView &other) = default;
 
-	struct ASyncFileView final: public FileView {
-	private:
-		using OverlappedPointer = std::unique_ptr<OVERLAPPED>;
-	private:
-		/// The handle of the file, which should not be freed by view
-		HANDLE file_handle_ = INVALID_HANDLE_VALUE;
+        ~SyncFileView() noexcept override       = default;
 
-		int event_counter_  = 0;
-		/// Temporal storage of event handle
-		std::unordered_map<int, OverlappedPointer> event_map_;
+    public:
+        int read(void *dst, int64_t offset, size_t size) override {
+            SetFilePointer(file_handle_, offset + this->offset_, nullptr, FILE_BEGIN);
+            BOOL ret = ReadFile(file_handle_, dst, size, nullptr, nullptr);
+            return ret ? 0 : -1;
+        }
 
-	public:
-		ASyncFileView() = default;
+        int write(const void *src, int64_t offset, size_t size) override {
+            SetFilePointer(file_handle_, offset + this->offset_, nullptr, FILE_BEGIN); 
+            BOOL ret = WriteFile(file_handle_, src, size, nullptr, nullptr);
+            return ret ? 0 : -1;
+        }
+    };
 
-		ASyncFileView(HANDLE file_handle, int64_t offset, size_t size): FileView(offset, size), file_handle_(file_handle) {}
+    struct ASyncFileView final: public FileView {
+    public:
+        static constexpr int MAX_RETRY_TIMES = 5;
 
-		ASyncFileView(const ASyncFileView &other) = default;
+        struct AsyncTask {
+            std::unique_ptr<OVERLAPPED> overlapped;
+            std::function<void()>       callback;
 
-		~ASyncFileView() noexcept override {
-			for (int i = 1; i <= event_counter_; ++i) {
-				constexpr auto timeout_ms = 5000;
-				bool success = sync<false>(i, timeout_ms);
-				spy_assert(success, "Failed sync with event");
-			}
-		}
+            AsyncTask() = default;
+            AsyncTask(std::unique_ptr<OVERLAPPED> &&overlapped): overlapped(std::move(overlapped)) {}
+            AsyncTask(std::unique_ptr<OVERLAPPED> &&overlapped, std::function<void()> &&callback):
+                overlapped(std::move(overlapped)), callback(std::forward<std::function<void()>>(callback)) {}
 
-	public:
-		int read(void *dst, int64_t offset, size_t size) override {
-            OverlappedPointer overlapped_ptr = std::make_unique<OVERLAPPED>();
+            AsyncTask& operator =(AsyncTask&& other) = default;
+        };
+    private:
+        /// The handle of the file, which should not be freed by view
+        HANDLE file_handle_ = INVALID_HANDLE_VALUE;
+
+        int event_counter_  = 0;
+        /// Temporal storage of event handle
+        std::unordered_map<int, AsyncTask> event_map_;
+
+    public:
+        ASyncFileView() = default;
+
+        ASyncFileView(HANDLE file_handle, int64_t offset, size_t size): FileView(offset, size), file_handle_(file_handle) {}
+
+        ASyncFileView(const ASyncFileView &other) = default;
+
+        ~ASyncFileView() noexcept override {
+            sync_all();
+        }
+
+    public:
+        int read(void *dst, int64_t offset, size_t size) override {
+            std::unique_ptr<OVERLAPPED> overlapped_ptr = std::make_unique<OVERLAPPED>();
             std::memset(overlapped_ptr.get(), 0, sizeof(OVERLAPPED));
 
             offset += this->offset_;
 
             constexpr DWORD offset_mask = 0xFFFFFFFF;
-            overlapped_ptr->Offset 		= offset & offset_mask;
-            overlapped_ptr->OffsetHigh 	= offset >> 32;
-            overlapped_ptr->hEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr);
+            overlapped_ptr->Offset      = offset & offset_mask;
+            overlapped_ptr->OffsetHigh  = offset >> 32;
+            overlapped_ptr->hEvent      = CreateEvent(nullptr, TRUE, FALSE, nullptr);
 
-            BOOL ret = ReadFile(file_handle_, dst, size, nullptr, overlapped_ptr.get());
-            if (ret == FALSE) {
-                DWORD err = GetLastError();
-                if (err == ERROR_IO_PENDING) { 
-                    const int event_idx = ++event_counter_;
-                    event_map_[event_idx] = std::move(overlapped_ptr);
-                    return event_idx; 
+            for (int retry_times = 0; retry_times < MAX_RETRY_TIMES; ++retry_times) {
+                BOOL ret = ReadFile(file_handle_, dst, size, nullptr, overlapped_ptr.get());
+                if (!ret) {
+                    DWORD err = GetLastError();
+                    switch (err) {
+                    case ERROR_IO_PENDING: {
+                        const int event_idx   = ++event_counter_;
+                        event_map_[event_idx] = { std::move(overlapped_ptr) };
+                        return event_idx;     
+                    }
+    
+                    // Recoverable error
+                    case ERROR_INVALID_USER_BUFFER: 
+                    case ERROR_NOT_ENOUGH_QUOTA:
+                    case ERROR_NOT_ENOUGH_MEMORY:
+                        std::this_thread::yield();
+                        continue;
+
+                    default:
+                        fprintf(stderr, "Failed reading the file: %s\n", llama_format_win_err().c_str());
+                        return -1;
+                    }
+                } else {
+                    // The content has been loaded or can be read rapidlly
+                    return 0;
                 }
-                throw SpyOSFileException("failed reading file");
             }
+            fprintf(stderr, "Retry overlapped read for too many times(%d), try to set less io_thread by `--io-thread <num>`\n", MAX_RETRY_TIMES);
+            return -1;
+        }
 
-            // The content has been loaded or can be read rapidlly
-            return 0;
-		}
+        int read(void* dst, int64_t offset, size_t size, std::function<void()>&& callback) {
+            std::unique_ptr<OVERLAPPED> overlapped_ptr = std::make_unique<OVERLAPPED>();
+            std::memset(overlapped_ptr.get(), 0, sizeof(OVERLAPPED));
 
-		int write(const void *src, int64_t offset, size_t size) override {
-            OverlappedPointer overlapped_ptr = std::make_unique<OVERLAPPED>();
+            offset += this->offset_;
+
+            constexpr DWORD offset_mask = 0xFFFFFFFF;
+            overlapped_ptr->Offset      = offset & offset_mask;
+            overlapped_ptr->OffsetHigh  = offset >> 32;
+            overlapped_ptr->hEvent      = CreateEvent(nullptr, TRUE, FALSE, nullptr);
+
+            for (int retry_times = 0; retry_times < MAX_RETRY_TIMES; ++retry_times) {
+                BOOL ret = ReadFile(file_handle_, dst, size, nullptr, overlapped_ptr.get());
+                if (!ret) {
+                    DWORD err = GetLastError();
+                    switch (err) {
+                    case ERROR_IO_PENDING: {
+                        const int event_idx   = ++event_counter_;
+                        event_map_[event_idx] = { std::move(overlapped_ptr), std::forward<std::function<void()>>(callback) };
+                        return event_idx;     
+                    }    
+
+                    // Recoverable error
+                    case ERROR_INVALID_USER_BUFFER: 
+                    case ERROR_NOT_ENOUGH_QUOTA:
+                    case ERROR_NOT_ENOUGH_MEMORY:
+                        std::this_thread::yield();
+                        continue;
+
+                    default:
+                        fprintf(stderr, "Failed reading the file: %s\n", llama_format_win_err().c_str());
+                        return -1;
+                    }
+                } else {
+                    // The content has been loaded or can be read rapidlly
+                    if (callback) { callback(); }
+                    return 0;
+                }
+            }
+            fprintf(stderr, "Retry overlapped read for too many times(%d), try to set less io_thread by `--io-thread <num>`\n", MAX_RETRY_TIMES);
+            return -1;
+        }
+
+        int write(const void *src, int64_t offset, size_t size) override {
+            std::unique_ptr<OVERLAPPED> overlapped_ptr = std::make_unique<OVERLAPPED>();
             std::memset(overlapped_ptr.get(), 0, sizeof(OVERLAPPED));
 
             offset += this->offset_;
@@ -350,64 +376,103 @@ namespace spy {
             overlapped_ptr->OffsetHigh   = offset >> 32;
             overlapped_ptr->hEvent       = CreateEvent(nullptr, TRUE, FALSE, nullptr);
 
-            BOOL ret = WriteFile(file_handle_, src, size, nullptr, overlapped_ptr.get());
-            while (ret == FALSE) {
-                const DWORD err = GetLastError();
+            for (int retry_times = 0; retry_times < MAX_RETRY_TIMES; ++retry_times) {
+                BOOL ret = WriteFile(file_handle_, src, size, nullptr, overlapped_ptr.get());
+                if (!ret) {
+                    DWORD err = GetLastError();
 
-                switch (err) {
-                // Reading file
-                case ERROR_IO_PENDING: {
-                    int event_idx = ++event_counter_;
-                    event_map_[event_idx] = std::move(overlapped_ptr);
-                    return event_idx;
-                }
+                    switch (err) {
+                    // Reading file
+                    case ERROR_IO_PENDING: {
+                        const int event_idx   = ++event_counter_;
+                        event_map_[event_idx] = { std::move(overlapped_ptr) };
+                        return event_idx;
+                    }
 
-                // Recoverable error
-                case ERROR_INVALID_USER_BUFFER: 
-                case ERROR_NOT_ENOUGH_QUOTA:
-                case ERROR_NOT_ENOUGH_MEMORY:
-                    std::this_thread::yield();
-                    continue;
+                    // Recoverable error
+                    case ERROR_INVALID_USER_BUFFER: 
+                    case ERROR_NOT_ENOUGH_QUOTA:
+                    case ERROR_NOT_ENOUGH_MEMORY:
+                        std::this_thread::yield();
+                        continue;
 
-                default:
-                    throw SpyOSFileException("failed reading file");
+                    default:
+                        fprintf(stderr, "Failed reading the file: %s\n", llama_format_win_err().c_str());
+                        return -1;
+                    }
+                } else {
+                    // The content has been loaded or can be write rapidlly
+                    return 0;                    
                 }
             }
+            fprintf(stderr, "Retry overlapped write for too many times(%d), try to set less io_thread by `--io-thread <num>`\n", MAX_RETRY_TIMES);
+            return -1;
+        }
 
-            // The content has been loaded or can be write rapidlly
-            return 0;
-		}
+        int write(const void* src, int64_t offset, size_t size, std::function<void()> &&callback) {
+            std::unique_ptr<OVERLAPPED> overlapped_ptr = std::make_unique<OVERLAPPED>();
+            std::memset(overlapped_ptr.get(), 0, sizeof(OVERLAPPED));
 
-	public:
-		bool poll(int event_idx) {
-            auto &overlapped_ptr      = event_map_[event_idx];
-            const HANDLE event_handle   = overlapped_ptr->hEvent;
-            if (event_handle == INVALID_HANDLE_VALUE) { return true; }
+            offset += this->offset_;
 
-            DWORD transfer_number = 0;
-            const BOOL ret = GetOverlappedResult(file_handle_, overlapped_ptr.get(), &transfer_number, FALSE);
-            if (ret == TRUE) { return true; }
+            constexpr DWORD offset_mask = 0xFFFFFFFF;
+            overlapped_ptr->Offset       = offset & offset_mask;
+            overlapped_ptr->OffsetHigh   = offset >> 32;
+            overlapped_ptr->hEvent       = CreateEvent(nullptr, TRUE, FALSE, nullptr);
 
-            const DWORD err = GetLastError();
-            if (err != ERROR_IO_INCOMPLETE) { 
-                throw SpyOSFileException("failed polling event");
+            for (int retry_times = 0; retry_times < MAX_RETRY_TIMES; ++retry_times) {
+                BOOL ret = WriteFile(file_handle_, src, size, nullptr, overlapped_ptr.get());
+                if (!ret) {
+                    DWORD err = GetLastError();
+
+                    switch (err) {
+                    // Reading file
+                    case ERROR_IO_PENDING: {
+                        const int event_idx   = ++event_counter_;
+                        event_map_[event_idx] = { std::move(overlapped_ptr), std::forward<std::function<void()>>(callback) };
+                        return event_idx;
+                    }
+
+                    // Recoverable error
+                    case ERROR_INVALID_USER_BUFFER: 
+                    case ERROR_NOT_ENOUGH_QUOTA:
+                    case ERROR_NOT_ENOUGH_MEMORY:
+                        std::this_thread::yield();
+                        continue;
+
+                    default:
+                        fprintf(stderr, "Failed reading the file: %s\n", llama_format_win_err().c_str());
+                        return -1;
+                    }
+                } else {
+                    // The content has been loaded or can be write rapidlly
+                    callback();
+                    return 0;                    
+                }
             }
-            return false; 
-		}
+            fprintf(stderr, "Retry overlapped write for too many times(%d), try to set less io_thread by `--io-thread <num>`\n", MAX_RETRY_TIMES);
+            return -1;
+         }
 
-		template<bool T_exception = true>
-		bool sync(int event_idx, DWORD wait_timeout_ms) {
-            auto& overlapped_ptr = event_map_[event_idx];
+    public:
+        bool sync(int event_idx, DWORD wait_timeout_ms) {
+            auto& async_task     = event_map_[event_idx];
+            auto& overlapped_ptr = async_task.overlapped;
+            auto& callback       = async_task.callback;
+
             const HANDLE event_handle = overlapped_ptr->hEvent;
             if (event_handle == INVALID_HANDLE_VALUE) { return true; }
 
-            const DWORD ret = WaitForSingleObject(event_handle, wait_timeout_ms);
+            DWORD ret = WaitForSingleObject(event_handle, wait_timeout_ms);
             DWORD transfer_number = 0;
 
             switch (ret) {
             // success
             case WAIT_OBJECT_0: 
                 GetOverlappedResult(file_handle_, overlapped_ptr.get(), &transfer_number, FALSE);
+
+                if (callback) { callback(); }
+
                 CloseHandle(event_handle);
                 event_map_.erase(event_idx);
                 return true;
@@ -416,86 +481,134 @@ namespace spy {
                 return false;
 
             case WAIT_ABANDONED:
-                spy_warn("wait for overlapped abandoned...");
+                fprintf(stderr, "Waiting for an abandoned event...\n");
                 return false;
 
             default:
-				if constexpr (T_exception) {
-					throw SpyOSFileException("failed waiting for event");
-				}
+                fprintf(stderr, "Failed waiting for an event: %s\n", llama_format_win_err().c_str());
                 return false; 
             }
-		}
+        }
 
-		void sync_all() {
-			for (auto &pair : event_map_) {
-				auto& overlapped_ptr = pair.second;
-				const HANDLE event_handle = overlapped_ptr->hEvent;
-				if (event_handle == INVALID_HANDLE_VALUE) { continue; }
+        void sync_all() {
+            std::vector<int> handle_event_table;
+            std::vector<HANDLE> handle_vec;
 
-				DWORD transfer_number = 0;
-				const BOOL success = GetOverlappedResult(file_handle_, 
-					overlapped_ptr.get(), 
-					&transfer_number, 
-					TRUE
-				);
-				overlapped_ptr->hEvent = INVALID_HANDLE_VALUE;
-			
-				if (success == FALSE) { throw SpyOSFileException("failed waiting for event"); }
-			}
-			event_map_.clear();
-		}
+            handle_event_table.reserve(event_map_.size());
+            handle_vec.reserve(event_map.size());
 
-		int sync_one() {
-			std::vector<int> handle_event_table;
-			std::vector<HANDLE> handle_vec;
+            for (auto& pair : event_map_) {
+                auto& async_task            = pair.second;
+                auto& overlapped_ptr        = async_task.overlapped;
+                const HANDLE event_handle   = overlapped_ptr->hEvent;
 
-			handle_event_table.reserve(event_map_.size());
-			handle_vec.reserve(event_map_.size());
+                if (event_handle == INVALID_HANDLE_VALUE) { continue; }
+                handle_event_table.emplace_back(pair.first);
+                handle_vec.emplace_back(event_handle);
+            }
+    
+            const size_t total_num_events = handle_event_table.size();
+            for (size_t num_processed = 0; num_processed < total_num_events; ++num_processed) {
+                const DWORD ret = WaitForMultipleObjects(handle_vec.size(), handle_vec.data(), FALSE, INFINITE);
+                // there is one finished
+                if (ret >= WAIT_OBJECT_0 && ret < WAIT_OBJECT_0 + handle_vec.size()) {
+                    const int handle_id  = ret - WAIT_OBJECT_0;
+                    const int event_id   = handle_event_table[handle_id];
+                    {
+                        auto& async_task     = event_map_[event_id];
+                        auto& overlapped_ptr = async_task.overlapped;
+                        auto& callback       = async_task.callback;
 
-			for (auto& pair : event_map_) {
-				auto& overlapped_ptr = pair.second;
-				const HANDLE event_handle = overlapped_ptr->hEvent;
+                        DWORD transfer_number = 0;
+                        const BOOL success = GetOverlappedResult(file_handle_, overlapped_ptr.get(), &transfer_number, TRUE);                     
 
-				if (event_handle == INVALID_HANDLE_VALUE) { continue; }
-				handle_event_table.push_back(pair.first);
-				handle_vec.push_back(event_handle);
-			}
+                        if (!success) {
+                            fprintf(stderr, "Failed get overlapped result: %s\n", llama_format_win_err().c_str());
+                            fprintf(stderr, "Consider using `--io-thread <num>` to decrease the number of concurrent I/O task. (default: 4)\n");
+                            throw std::runtime_error("Failed get overlapped result");
+                        } else {
+                            if (callback) { callback(); }
+                            CloseHandle(overlapped_ptr->hEvent); 
+                            overlapped_ptr->hEvent = INVALID_HANDLE_VALUE; 
+                        }
+                    }
+                    handle_event_table.erase(handle_event_table.cbegin() + handle_id);
+                    handle_vec.erase(handle_vec.cbegin() + handle_id);
+                } else { // fail
+                    switch (ret) {
 
-			const DWORD ret = WaitForMultipleObjects(
-				handle_vec.size(), 
-				handle_vec.data(), 
-				FALSE, 
-				INFINITE
-			);
-			DWORD transfer_number = 0;
-			if (ret >= WAIT_OBJECT_0 && ret < WAIT_OBJECT_0 + handle_vec.size()) {
-				// there is one finished
-				const int event_id = ret - WAIT_OBJECT_0;
-				auto& overlapped_ptr = event_map_[event_id];
+                    case WAIT_ABANDONED:
+                        fprintf(stderr, "Wait for overlapped abandoned...\n");
+                        break;
 
-				GetOverlappedResult(file_handle_, overlapped_ptr.get(), &transfer_number, TRUE);
-				CloseHandle(overlapped_ptr->hEvent);
-				event_map_.erase(event_id);
+                    default:
+                        fprintf(stderr, "Failed waiting for event: %s\n", llama_format_win_err().c_str());
+                        break;
+                    }                      
+                    throw std::runtime_error("Failed waiting for event");;
+                }
+            }
 
-				return handle_event_table[event_id];
-			}
+            event_map_.clear();
+        }
 
-			switch (ret) {
-				// fail
-			case WAIT_TIMEOUT:
-				break;
+        int sync_one() {
+            std::vector<int> handle_event_table;
+            std::vector<HANDLE> handle_vec;
 
-			case WAIT_ABANDONED:
-				spy_warn("wait for overlapped abandoned...");
-				break;
+            handle_event_table.reserve(event_map_.size());
+            handle_vec.reserve(event_map.size());
 
-			default:
-				throw SpyOSFileException("failed waiting for event");
-			}
-			return -1;
-		}
-	};
+            for (auto& pair : event_map_) {
+                auto& async_task            = pair.second;
+                auto& overlapped_ptr        = async_task.overlapped;
+                const HANDLE event_handle   = overlapped_ptr->hEvent;
+
+                if (event_handle == INVALID_HANDLE_VALUE) { continue; }
+                handle_event_table.emplace_back(pair.first);
+                handle_vec.emplace_back(event_handle);
+            }
+
+            const DWORD ret = WaitForMultipleObjects(handle_vec.size(), handle_vec.data(), FALSE, INFINITE);
+            // there is one finished
+            if (ret >= WAIT_OBJECT_0 && ret < WAIT_OBJECT_0 + handle_vec.size()) {
+                const int handle_id  = ret - WAIT_OBJECT_0;
+                const int event_id   = handle_event_table[handle_id];
+                {
+                    auto& async_task     = event_map_[event_id];
+                    auto& overlapped_ptr = async_task.overlapped;
+                    auto& callback       = async_task.callback;
+
+                    DWORD transfer_number = 0;
+                    const BOOL success = GetOverlappedResult(file_handle_, overlapped_ptr.get(), &transfer_number, TRUE);
+ 
+                    if (!success) {
+                        fprintf(stderr, "Failed get overlapped result: %s\n", llama_format_win_err().c_str());
+                        fprintf(stderr, "Consider using `--io-thread <num>` to decrease the number of concurrent I/O task. (default: 4)\n");
+                        throw std::runtime_error("Failed get overlapped result");
+                    } else {
+                        if (callback) { callback(); }
+                        CloseHandle(overlapped_ptr->hEvent);   
+                        event_map_.erase(event_id);
+                    }
+                }
+                return event_id;
+            } else { // fail
+                switch (ret) {
+
+                case WAIT_ABANDONED:
+                    fprintf(stderr, "Wait for overlapped abandoned...\n");
+                    break;
+
+                default:
+                    fprintf(stderr, "Failed waiting for event: %s\n", llama_format_win_err().c_str());
+                    break;
+                }                      
+                throw std::runtime_error("Failed waiting for event");
+                return -1;
+            }
+        }
+    };
 
 #else // _WIN32
 
@@ -519,8 +632,9 @@ namespace spy {
 			const int64_t aligned_offset = offset / ALIGNED_GRANULARITY * ALIGNED_GRANULARITY;
 			const size_t  aligned_size   = size + (offset - aligned_offset);
 
-			offset_ = offset - aligned_offset;
-			size_   = aligned_size;
+            offset_      = offset - aligned_offset;
+            size_        = aligned_size;
+            file_offset_ = offset;
 
 			// mmap
 			addr_ = mmap(
@@ -531,13 +645,15 @@ namespace spy {
 				descriptor, 
 				aligned_offset
 			);
-			if (addr_ == MAP_FAILED) { throw SpyOSFileException("failed mapping file"); }
+			if (addr_ == MAP_FAILED) { 
+                fprintf(stderr, "failed mmaping file");
+                throw std::system_error(errno, std::system_category()); 
+            }
 		}
 
 		~FileMappingView() noexcept override {
 			if (addr_ != nullptr) {
-				const auto ret = munmap(addr_, size_);
-				spy_assert(ret == 0, "failed unmapping file");
+				munmap(addr_, size_);
 			}
 		}
 
@@ -546,9 +662,10 @@ namespace spy {
 		}
 
 		FileMappingView &operator = (FileMappingView &&other) noexcept {
-			addr_   = other.addr_;
-			offset_ = other.offset_;
-			size_   = other.size_;
+            offset_      = other.offset_;
+            size_        = other.size_;
+            file_offset_ = other.file_offset_;
+            addr_        = other.addr_;
 			other.reset();
 			return *this;
 		}
@@ -559,15 +676,16 @@ namespace spy {
 		 * @param offset The offset of the range to be prefetched
 		 * @param size The size of the range to be prefetched
 		 */
-		void prefetch(const size_t offset, const size_t size) {
+		void prefetch(const int64_t offset, const size_t size) {
 			madvise(deref(offset), size, MADV_WILLNEED);
 		}
 
 	private:
 		void reset() {
-			addr_   = nullptr;
-			offset_ = 0;
-			size_   = 0;
+            offset_      = 0;
+            size_        = 0;
+            addr_        = nullptr;
+            file_offset_ = 0;
 		}
 	};
 
@@ -590,7 +708,8 @@ namespace spy {
 			// Move the pointer of file descriptor
 			const int64_t cur_offset = lseek(descriptor_, this->offset_ + offset, SEEK_SET);
 			if (cur_offset == -1) {
-				throw SpyOSFileException("failed to seek file");
+                fprintf(stderr, "failed to seek file");
+				throw std::system_error(errno, std::system_category());
 			}
 			// Read file synchronously
 			::read(descriptor_, dst, size);
@@ -601,7 +720,8 @@ namespace spy {
 			// Move the pointer of file descriptor
 			const int64_t cur_offset = lseek(descriptor_, this->offset_ + offset, SEEK_SET);
 			if (cur_offset == -1) {
-				throw SpyOSFileException("failed to seek file");
+                fprintf(stderr, "failed to seek file");
+				throw std::system_error(errno, std::system_category());
 			}
 			// Read file synchronously
 			::write(descriptor_, src, size);
@@ -617,13 +737,25 @@ namespace spy {
 
 		static constexpr size_t BUFFER_UNIT_SIZE 		= 4096;
 
+        struct AsyncTask {
+            AIOPointer                  aio_ptr;
+            std::function<void()>       callback;
+
+            AsyncTask() = default;
+            AsyncTask(AIOPointer &&aio_ptr): aio_ptr(std::move(aio_ptr)) {}
+            AsyncTask(AIOPointer &&aio_ptr, std::function<void()> &&callback):
+                aio_ptr(std::move(aio_ptr)), callback(std::forward<std::function<void()>>(callback)) {}
+
+            AsyncTask& operator =(AsyncTask&& other) = default;
+        };
+
 	private:
 		/// The handle of the file, which should not be freed by view
 		int descriptor_		= -1;
 
 		int event_counter_  = 0;
 
-		std::unordered_map<int, AIOPointer> event_map_;
+		std::unordered_map<int, AsyncTask> event_map_;
 
 	public:
 		ASyncFileView() = default;
@@ -632,9 +764,7 @@ namespace spy {
 
 		ASyncFileView(const ASyncFileView &other) = default;
 
-		~ASyncFileView() override {
-			sync_all();
-		}
+		~ASyncFileView() override { sync_all(); }
 
 	public:
 		int read(void *dst, int64_t offset, size_t size) override {
@@ -649,7 +779,10 @@ namespace spy {
 			aiocb_ptr->aio_buf	  = dst;
 			
 			int ret = aio_read(aiocb_ptr.get());
-			if (ret < 0) { throw SpyOSFileException("failed reading file asynchronously"); }
+			if (ret < 0) { 
+                fprintf(stderr, "failed reading file asynchronously");
+                throw std::system_error(errno, std::system_category()); 
+            }
 
             // The content has been loaded or can be read rapidly
 			const int event_idx 	= ++event_counter_;
@@ -669,7 +802,10 @@ namespace spy {
 			aiocb_ptr->aio_buf	  = const_cast<void *>(src);
 			
 			int ret = aio_write(aiocb_ptr.get());
-			if (ret < 0) { throw SpyOSFileException("failed reading file asynchronously"); }
+			if (ret < 0) { 
+                fprintf(stderr, "failed reading file asynchronously");
+                throw std::system_error(errno, std::system_category()); 
+            }
 
             // The content has been loaded or can be read rapidly
 			const int event_idx 	= ++event_counter_;
@@ -677,55 +813,103 @@ namespace spy {
             return event_idx;
 		}
 
-	public:
-		bool poll(int event_idx) {
-			auto &aiocb_ptr = event_map_[event_idx];
-			{ // poll
-				const int ret = aio_error(aiocb_ptr.get());
-				// The read/write is under progressing
-				if (ret == EINPROGRESS) { return false; }				
-			}
-			return true;
+        int read(void *dst, int64_t offset, size_t size, std::function<void()> &&callback) {
+            AIOPointer aiocb_ptr = std::make_unique<aiocb>();
+            std::memset(aiocb_ptr.get(), 0, sizeof(aiocb));
+
+            offset += this->offset_;
+
+			aiocb_ptr->aio_fildes = descriptor_;
+			aiocb_ptr->aio_nbytes = size;
+			aiocb_ptr->aio_offset = offset;
+			aiocb_ptr->aio_buf	  = dst;
+			
+			int ret = aio_read(aiocb_ptr.get());
+			if (ret < 0) { 
+                fprintf(stderr, "failed reading file asynchronously");
+                throw std::system_error(errno, std::system_category()); 
+            }
+
+            // The content has been loaded or can be read rapidly
+			const int event_idx 	= ++event_counter_;
+			event_map_[event_idx] 	= { std::move(aiocb_ptr), std::forward<std::function<void()>>(callback) };
+            return event_idx;
 		}
 
-		template<bool T_exception = true>
+		int write(const void *src, int64_t offset, size_t size, std::function<void()> &&callback) {
+            AIOPointer aiocb_ptr = std::make_unique<aiocb>();
+            std::memset(aiocb_ptr.get(), 0, sizeof(aiocb));
+
+            offset += this->offset_;
+
+			aiocb_ptr->aio_fildes = descriptor_;
+			aiocb_ptr->aio_nbytes = size;
+			aiocb_ptr->aio_offset = offset;
+			aiocb_ptr->aio_buf	  = const_cast<void *>(src);
+			
+			int ret = aio_write(aiocb_ptr.get());
+			if (ret < 0) { 
+                fprintf(stderr, "failed reading file asynchronously");
+                throw std::system_error(errno, std::system_category()); 
+            }
+
+            // The content has been loaded or can be read rapidly
+			const int event_idx 	= ++event_counter_;
+			event_map_[event_idx] 	= { std::move(aiocb_ptr), std::forward<std::function<void()>>(callback) };
+            return event_idx;
+		}
+
+	public:
 		bool sync(int event_idx, int64_t wait_timeout_ms) {
-            auto &aiocb_ptr = event_map_[event_idx];
+            auto &aiocb_pair = event_map_[event_idx];
+            auto &aiocb_ptr = aiocb_pair.aio_ptr;
+            auto &callback  = aiocb_pair.callback;
 
 			{
 				const aiocb *cb_list[1] = { aiocb_ptr.get() };
-				const timespec wait_time{
-					.tv_sec  = wait_timeout_ms / 1000,
-					.tv_nsec = wait_timeout_ms % 1000 * 1000'000
-				};
+				timespec wait_time;
+                wait_time.tv_sec  = wait_timeout_ms / 1000;
+                wait_time.tv_nsec = wait_timeout_ms % 1000 * 1000'000;
 				int ret = aio_suspend(cb_list, 1, (wait_timeout_ms == -1) ? nullptr : &wait_time);
 
 				if (ret == -1) {
-					if (errno == EAGAIN) {
-						return false;
-					} else {
-						throw SpyOSFileException("failed aio sync");
-					}
+					if (errno == EAGAIN) { return false; }                          
+                    
+                    fprintf(stderr, "failed aio sync");
+					throw std::system_error(errno, std::system_category());
 				}
 			}
 
 			const int ret = aio_return(aiocb_ptr.get());
-			if (ret == 0) { return true; }
+			if (ret == -1) { 
+                fprintf(stderr, "failed waiting aio event");
+			    throw std::system_error(errno, std::system_category());                
+            }
 
-			throw SpyOSFileException("failed waiting aio event");
+            if (callback) { callback(); }
+            return true; 
 		}
 
 		void sync_all() {
 			for (auto &pair : event_map_) {
-				auto& aiocb_ptr = pair.second;
+                auto &aiocb_pair = pair.second;
+                auto &aiocb_ptr = aiocb_pair.aio_ptr;
+                auto &callback  = aiocb_pair.callback;
 				{
 					const aiocb *cb_list[1] = { aiocb_ptr.get() };
 					int ret = aio_suspend(cb_list, 1, nullptr);
-					if (ret == -1) { throw SpyOSFileException("failed aio sync"); }
+					if (ret == -1) { 
+                        fprintf(stderr, "failed aio sync");
+                        throw std::system_error(errno, std::system_category()); 
+                    }
 				}
 
 				const int ret = aio_return(aiocb_ptr.get());
-				if (ret == -1) { throw SpyOSFileException("failed waiting aio event"); }
+				if (ret == -1) { 
+                    fprintf(stderr, "failed waiting aio event: %s\n", strerror(errno));
+                    throw std::system_error(errno, std::system_category()); 
+                }
+                if (callback) { callback(); }
 			}
 			event_map_.clear();
 		}
@@ -738,13 +922,18 @@ namespace spy {
 			cb_vec.reserve(event_map_.size());
 
 			for (auto& pair : event_map_) {
-				auto& aiocb_ptr = pair.second;
+                auto &aiocb_pair = pair.second;
+                auto &aiocb_ptr = aiocb_pair.aio_ptr;
+
 				handle_event_table.push_back(pair.first);
 				cb_vec.push_back(aiocb_ptr.get());
 			}
 
 			int suspend_ret = aio_suspend(cb_vec.data(), cb_vec.size(), nullptr);
-			if (suspend_ret == -1) { throw SpyOSFileException("failed aio suspend"); }
+			if (suspend_ret == -1) { 
+                fprintf(stderr, "failed aio suspend");
+                throw std::system_error(errno, std::system_category()); 
+            }
 
 			for (size_t idx = 0; idx < handle_event_table.size(); ++idx) {
 				const int event_idx = handle_event_table[idx];
@@ -753,8 +942,17 @@ namespace spy {
 				const int ret = aio_error(cb_ptr);
 				if (ret == EINPROGRESS) { continue; }
 
+				if (ret == -1) { 
+                    fprintf(stderr, "failed sync one event");
+                    throw std::system_error(errno, std::system_category()); 
+                }
+
+                auto &aiocb_pair = event_map_[event_idx];
+                auto &callback  = aiocb_pair.callback;
+                if (callback) { callback(); }
+
 				event_map_.erase(event_idx);
-				if (ret == -1) { throw SpyOSFileException("failed sync one event"); }
+
 				return event_idx;
 			}
 

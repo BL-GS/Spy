@@ -50,46 +50,46 @@ namespace spy {
 		KVCache         					 kv_cache_;
 
 	public:
-		LLAMAModel(ModelMetaContext &&context_ptr, const HyperParam &hyper_param):
-				AbstractModel(std::forward<ModelMetaContext>(context_ptr), hyper_param) { }
+		LLAMAModel(ModelMetaContext &context, const HyperParam &hyper_param):
+				AbstractModel(context, hyper_param) { }
 		
 		~LLAMAModel() noexcept override = default;
 
 	protected: /* Initialization */
-		void init_metadata() override {
-			AbstractModel::init_metadata();
+		void init_metadata(ModelMetaContext &context) override {
+			AbstractModel::init_metadata(context);
 
-			metadata_.ffn_norm_rms_eps  = context_.find_gguf_value(LLMKey::ATTENTION_LAYERNORM_RMS_EPS).get_value<float>();
+			metadata_.ffn_norm_rms_eps  = context.find_gguf_value(LLMKey::ATTENTION_LAYERNORM_RMS_EPS).get_value<float>();
 
 			spy_assert(metadata_.num_rot == metadata_.num_embedding / metadata_.num_head, 
 					"Invalid num_rot: {}, expect: {}", metadata_.num_rot, metadata_.num_embedding / metadata_.num_head);
 		}
 
-		void init_hyper_param() override {
-			AbstractModel::init_hyper_param();
+		void init_hyper_param(ModelMetaContext &context) override {
+			AbstractModel::init_hyper_param(context);
 
 			hyper_param_.rope_type = RopeType::Norm;
 		}
 
-		void init_tokenizer() override {
-			tokenizer_ptr = std::make_unique<Tokenizer>(ModelVocabType::SentencePiece, context_);
+		void init_tokenizer(ModelMetaContext &context) override {
+			tokenizer_ptr = std::make_unique<Tokenizer>(ModelVocabType::SentencePiece, context);
 		}
 
 	public: /* Graph building */
-		void build_graph(Graph &graph, ModelIO &model_io) override;
+		void build_graph(ModelMetaContext &context, Graph &graph, ModelIO &model_io) override;
 
 		void propagate(ModelIO &model_io) override;
 
 	private: /* Constant Graph component */
-		void build_input(Graph &graph);
+		void build_input(ModelMetaContext &context, Graph &graph);
 
-		void build_output(Graph &graph);
+		void build_output(ModelMetaContext &context, Graph &graph);
 
-        void build_attention(Graph &graph, int layer_id);
+        void build_attention(ModelMetaContext &context, Graph &graph, int layer_id);
 
-        void build_ffn(Graph &graph, int layer_id);
+        void build_ffn(ModelMetaContext &context, Graph &graph, int layer_id);
 
-		void build_kv_cache(Graph &graph, int layer_id);
+		void build_kv_cache(ModelMetaContext &context, Graph &graph, int layer_id);
 	};
 
 }  // namespace spy

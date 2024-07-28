@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <filesystem>
 
 #include "adapter/abstract_adapter.h"
 
@@ -10,9 +11,15 @@ namespace spy {
     public:
         /*!
          * @brief Build up a derived adapter for different file recogonization
-         * @param type the type name of the adapter (e.g. "gguf")
+         * @param[in] type the type name of the adapter (e.g. "gguf")
          */
         static std::unique_ptr<AbstractFileAdapter> build_file_adapter(std::string_view type);
+
+        /*!
+         * @brief Automatically recognize the type of model and build up a corresponding adapter.
+         * @param[in] path the location of the model
+         */
+        static std::unique_ptr<AbstractFileAdapter> auto_build_file_adapter(std::filesystem::path path);
     };
 
 } // namespace spy

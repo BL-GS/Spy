@@ -6,17 +6,17 @@
 
 namespace spy {
 
-    std::unique_ptr<AbstractModel> ModelBuilder::build_model(const std::string_view model_type, 
-            ModelMetaContext &&context_ptr, const HyperParam &hyper_param) {
+    std::unique_ptr<AbstractModel> ModelBuilder::build_model(ModelMetaContext &context, const HyperParam &hyper_param) {
         std::unique_ptr<AbstractModel> model_ptr;
+        const std::string_view model_type = context.arch_name;
 
         if (model_type == "llama") {
-            model_ptr = std::make_unique<LLAMAModel>(std::forward<ModelMetaContext>(context_ptr), hyper_param);
+            model_ptr = std::make_unique<LLAMAModel>(context, hyper_param);
         } else {
             spy_assert(false, "Unsupported model type: {}", model_type);
         }
 
-        model_ptr->init();
+        model_ptr->init(context);
         return model_ptr;
     }
 

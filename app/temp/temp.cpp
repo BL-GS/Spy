@@ -27,11 +27,11 @@ int main(int argc, char **argv) {
 
     GraphStorage storage;
     Graph graph(0, storage);
-    auto model = ModelBuilder::build_model("llama", std::move(context), hyper_param);
+    auto model = ModelBuilder::build_model(context, hyper_param);
 
 	ModelIO model_io;
 	model_io.add(0, 0, { 0 }, false);
-	model->build_graph(graph, model_io);
+	model->build_graph(context, graph, model_io);
     model->propagate(model_io);
     storage.propagate();
 

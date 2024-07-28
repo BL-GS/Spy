@@ -2,8 +2,8 @@
 
 namespace spy {
 
-    void LLAMAModel::build_input(Graph &graph) {
-        pre_train.token_embedding = create_constant_tensor(context_, graph,
+    void LLAMAModel::build_input(ModelMetaContext &context, Graph &graph) {
+        pre_train.token_embedding = create_constant_tensor(context, graph,
             "token_embd", DataNodeProperty {
                 .node_type = DataNodeType::Constant,
                 .layer_id  = -1,
@@ -12,27 +12,27 @@ namespace spy {
         );
     }
 
-    void LLAMAModel::build_output(Graph &graph) {
+    void LLAMAModel::build_output(ModelMetaContext &context, Graph &graph) {
         DataNodeProperty output_prop {
             .node_type = DataNodeType::Constant,
             .layer_id  = -1,
             .expert_id = -1				
         };
 
-        pre_train.output_norm = create_constant_tensor(context_, graph,
+        pre_train.output_norm = create_constant_tensor(context, graph,
                 "output_norm", output_prop
         );
-        pre_train.output_weight = create_constant_tensor(context_, graph,
+        pre_train.output_weight = create_constant_tensor(context, graph,
                 "output", output_prop
         );
         if (pre_train.output_weight == nullptr) {
-            pre_train.output_weight = create_constant_tensor(context_, graph,
+            pre_train.output_weight = create_constant_tensor(context, graph,
                 "token_embd", output_prop
             );
         }
     }
 
-    void LLAMAModel::build_attention(Graph &graph, int layer_id) {
+    void LLAMAModel::build_attention(ModelMetaContext &context, Graph &graph, int layer_id) {
         auto  &layer      = pre_train.layers[layer_id];
 
         DataNodeProperty layer_prop {
@@ -41,28 +41,28 @@ namespace spy {
             .expert_id = -1	
         };
 
-        layer.attention_norm = create_constant_tensor(context_, graph, 
+        layer.attention_norm = create_constant_tensor(context, graph, 
                 "attn_norm", layer_prop);
-        layer.weight_q = create_constant_tensor(context_, graph, 
+        layer.weight_q = create_constant_tensor(context, graph, 
                 "attn_q", layer_prop);
-        layer.weight_k = create_constant_tensor(context_, graph,
+        layer.weight_k = create_constant_tensor(context, graph,
                 "attn_k", layer_prop);
-        layer.weight_v = create_constant_tensor(context_, graph, 
+        layer.weight_v = create_constant_tensor(context, graph, 
                 "attn_v", layer_prop);
-        layer.weight_o = create_constant_tensor(context_, graph, 
+        layer.weight_o = create_constant_tensor(context, graph, 
                 "attn_output", layer_prop);
 
-        layer.bias_q = create_constant_tensor(context_, graph, 
+        layer.bias_q = create_constant_tensor(context, graph, 
                 "attn_q", layer_prop, "bias");
-        layer.bias_k = create_constant_tensor(context_, graph, 
+        layer.bias_k = create_constant_tensor(context, graph, 
                 "attn_k", layer_prop, "bias");
-        layer.bias_v = create_constant_tensor(context_, graph, 
+        layer.bias_v = create_constant_tensor(context, graph, 
                 "attn_v", layer_prop, "bias");
-        layer.bias_o = create_constant_tensor(context_, graph, 
+        layer.bias_o = create_constant_tensor(context, graph, 
                 "attn_output", layer_prop, "bias");
     }
 
-    void LLAMAModel::build_ffn(Graph &graph, int layer_id) {
+    void LLAMAModel::build_ffn(ModelMetaContext &context, Graph &graph, int layer_id) {
         auto  &layer      = pre_train.layers[layer_id];
 
         DataNodeProperty layer_prop {
@@ -71,17 +71,17 @@ namespace spy {
             .expert_id = -1	
         };
 
-        layer.ffn_norm = create_constant_tensor(context_, graph, 
+        layer.ffn_norm = create_constant_tensor(context, graph, 
                 "ffn_norm", layer_prop);
-        layer.ffn_up   = create_constant_tensor(context_, graph, 
+        layer.ffn_up   = create_constant_tensor(context, graph, 
                 "ffn_up", layer_prop);
-        layer.ffn_gate = create_constant_tensor(context_, graph, 
+        layer.ffn_gate = create_constant_tensor(context, graph, 
                 "ffn_gate", layer_prop);
-        layer.ffn_down = create_constant_tensor(context_, graph, 
+        layer.ffn_down = create_constant_tensor(context, graph, 
                 "ffn_down", layer_prop);
     }
 
-    void LLAMAModel::build_kv_cache(Graph &graph, int layer_id) {
+    void LLAMAModel::build_kv_cache(ModelMetaContext &context, Graph &graph, int layer_id) {
         auto  &layer      = pre_train.layers[layer_id];
 
         DataNodeProperty layer_prop {
@@ -103,7 +103,7 @@ namespace spy {
         );
     }
 
-    void LLAMAModel::build_graph(Graph &graph, ModelIO &model_io) {
+    void LLAMAModel::build_graph(ModelMetaContext &context, Graph &graph, ModelIO &model_io) {
         const uint32_t num_layer 		 = metadata_.num_layer;
 
         const int64_t num_token 			 = model_io.num_token();
@@ -140,11 +140,11 @@ namespace spy {
         pre_train.layers.resize(num_layer);
 
         // Set constant tensor
-        build_input(graph);
-        build_output(graph);
+        build_input(context, graph);
+        build_output(context, graph);
         for (int layer_id = 0; layer_id < num_layer; ++layer_id) {
-            build_attention(graph, layer_id);
-            build_ffn(graph, layer_id);
+            build_attention(context, graph, layer_id);
+            build_ffn(context, graph, layer_id);
         }			
 
         // Set KV Cache
@@ -152,7 +152,7 @@ namespace spy {
             kv_cache_.reserve(num_embedding_k_gqa, num_embedding_v_gqa,
                                     num_context, num_layer);
             for (int layer_id = 0; layer_id < num_layer; ++layer_id) {
-                build_kv_cache(graph, layer_id);
+                build_kv_cache(context, graph, layer_id);
             }
         }
 

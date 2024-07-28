@@ -17,10 +17,6 @@ ENDIF()
 INCLUDE(CMakeArch.cmake)
 
 # Libraries --------------------------------------------------------------
-IF (${CMAKE_HOST_UNIX})
-	SET(spy_system_libraries uring)
-ENDIF ()
-
 FIND_PACKAGE(fmt	 	CONFIG REQUIRED)
 FIND_PACKAGE(spdlog		CONFIG REQUIRED)
 FIND_PACKAGE(magic_enum CONFIG REQUIRED)
@@ -32,56 +28,21 @@ ADD_DEFINITIONS(-DUNOFFICIAL_CONCURRENTQUEUE)
 # Submodules -------------------------------------------------------------
 
 # -- utilities
-ADD_SUBDIRECTORY(util)
-ADD_SUBDIRECTORY(perf)
+ADD_SUBDIRECTORY(${PROJECT_SOURCE_DIR}/util)
+ADD_SUBDIRECTORY(${PROJECT_SOURCE_DIR}/perf)
 
 # -- storage
-ADD_SUBDIRECTORY(storage)
+ADD_SUBDIRECTORY(${PROJECT_SOURCE_DIR}/storage)
 
 # -- orchestration
-ADD_SUBDIRECTORY(orchestration)
+ADD_SUBDIRECTORY(${PROJECT_SOURCE_DIR}/orchestration)
 
 # -- model
-ADD_SUBDIRECTORY(model)
+ADD_SUBDIRECTORY(${PROJECT_SOURCE_DIR}/model)
 
 # -- backend
-ADD_SUBDIRECTORY(backend)
+ADD_SUBDIRECTORY(${PROJECT_SOURCE_DIR}/backend)
 
-# Main project ----------------------------------------------------------
-ADD_EXECUTABLE(spy spy.cpp)
-TARGET_INCLUDE_DIRECTORIES(spy PRIVATE ${PROJECT_SOURCE_DIR}/include)
-TARGET_LINK_LIBRARIES(spy PRIVATE
-	# System library
-	${spy_system_libraries}
-	# Internal library
-	SpyUtil
-	SpyOrchestration
-	SpyBackend
-	SpyModel
-
-	# External library
-	magic_enum::magic_enum
-	unofficial::concurrentqueue::concurrentqueue
-)
-
-# Test -----------------------------------------------------------------
-# ADD_SUBDIRECTORY(test)
-
-ADD_EXECUTABLE(temp temp.cpp)
-TARGET_INCLUDE_DIRECTORIES(temp PRIVATE ${PROJECT_SOURCE_DIR}/include)
-TARGET_LINK_LIBRARIES(temp PRIVATE
-	# System library
-	${spy_system_libraries}
-	# Internal library
-	SpyUtil
-	SpyPerf
-	SpyOrchestration
-	SpyStorage
-	SpyModel
-	SpyBackend
-
-	# External library
-	fmt::fmt-header-only
-	magic_enum::magic_enum
-	unofficial::concurrentqueue::concurrentqueue
-)
+# -- apps
+ADD_SUBDIRECTORY(${PROJECT_SOURCE_DIR}/app/cli)
+ADD_SUBDIRECTORY(${PROJECT_SOURCE_DIR}/app/temp)

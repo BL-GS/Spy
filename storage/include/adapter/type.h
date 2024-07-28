@@ -255,6 +255,8 @@ namespace spy {
 		
 		ModelMetaContext(ModelMetaContext &&other) noexcept = default;
 
+		ModelMetaContext &operator=(ModelMetaContext &&other) = default;
+
 	public:
 		template<class T>
 		void add_gguf_value(const std::string &key, T &&value) {

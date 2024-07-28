@@ -78,7 +78,7 @@ namespace spy {
 
 		template<class ...Args>
 		SpyAssertException(const std::string_view &reason, Args &&...args): 
-			SpyException(PREFIX.data() + std::string(reason), std::forward<Args>(args)...) {}
+			SpyException(PREFIX.data() + std::string(reason), fmt::make_format_args(std::forward<Args>(args)...)) {}
 	};
 
 	class SpyUnimplementedException: public SpyException {
@@ -93,7 +93,7 @@ namespace spy {
 
 		template<class ...Args>
 		SpyUnimplementedException(const std::string_view &reason, Args &&...args): 
-			SpyException(PREFIX.data() + std::string(reason), std::forward<Args>(args)...) {}
+			SpyException(PREFIX.data() + std::string(reason), fmt::make_format_args(std::forward<Args>(args)...)) {}
 	};
 
 	class SpyOSException: public std::system_error {
@@ -122,12 +122,12 @@ namespace spy {
 		template<class ...Args>
 		SpyOSException(const std::string_view &reason, Args &&...args): 
 			std::system_error(system_error_code(), std::system_category()), 
-			reason_(fmt::vformat(PREFIX.data() + std::string(reason), std::forward<Args>(args)...) + '\n' + std::system_error::what()) {}
+			reason_(fmt::vformat(PREFIX.data() + std::string(reason), fmt::make_format_args(std::forward<Args>(args)...)) + '\n' + std::system_error::what()) {}
 
 		template<class ...Args>
 		SpyOSException(int error_code, const std::string_view &reason, Args &&...args): 
 			std::system_error(error_code, std::system_category()), 
-			reason_(fmt::vformat(PREFIX.data() + std::string(reason), std::forward<Args>(args)...) + '\n' + std::system_error::what()) {}
+			reason_(fmt::vformat(PREFIX.data() + std::string(reason), fmt::make_format_args(std::forward<Args>(args)...)) + '\n' + std::system_error::what()) {}
 
 	public:	
 		const char *what() const noexcept override { return reason_.c_str(); }

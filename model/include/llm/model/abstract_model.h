@@ -5,12 +5,9 @@
 
 #pragma once
 
-#include <cstddef>
 #include <cstdint>
 #include <magic_enum.hpp>
 
-#include "number/number.h"
-#include "number/tensor.h"
 #include "llm/vocab/vocab.h"
 #include "graph/graph.h"
 #include "llm/model/config.h"
@@ -52,8 +49,6 @@ namespace spy {
     class AbstractModel {
 
     protected:
-        ModelMetaContext                context_;
-
         HyperParam                      hyper_param_;
 
         ModelMetadata                   metadata_;
@@ -62,51 +57,53 @@ namespace spy {
 
 
     public:
-        explicit AbstractModel(ModelMetaContext &&context_ptr, const HyperParam &hyper_param):
-                context_(std::forward<ModelMetaContext>(context_ptr)), hyper_param_(hyper_param) {}
+        explicit AbstractModel(ModelMetaContext &context, const HyperParam &hyper_param):
+                hyper_param_(hyper_param) {
+            init(context);
+        }
 
         virtual ~AbstractModel() = default;
 
     public:
-        virtual void init() {
-            init_metadata();
-			init_hyper_param();
-            init_tokenizer();
+        virtual void init(ModelMetaContext &context) {
+            init_metadata(context);
+			init_hyper_param(context);
+            init_tokenizer(context);
         }
 
     protected: /* Initialization */
-        virtual void init_metadata() {
-            metadata_.model_name = context_.arch_name;
-            metadata_.len_context__train = context_.find_gguf_value(LLMKey::CONTEXT_LENGTH).get_value<uint32_t>();
-            metadata_.num_embedding     = context_.find_gguf_value(LLMKey::EMBEDDING_LENGTH).get_value<uint32_t>();
-            metadata_.num_ffn           = context_.find_gguf_value(LLMKey::FEED_FORWARD_LENGTH).get_value<uint32_t>();
-            metadata_.num_head          = context_.find_gguf_value(LLMKey::ATTENTION_HEAD_COUNT).get_value<uint32_t>();
-            metadata_.num_layer         = context_.find_gguf_value(LLMKey::BLOCK_COUNT).get_value<uint32_t>();
+        virtual void init_metadata(ModelMetaContext &context) {
+            metadata_.model_name = context.arch_name;
+            metadata_.len_context__train = context.find_gguf_value(LLMKey::CONTEXT_LENGTH).get_value<uint32_t>();
+            metadata_.num_embedding     = context.find_gguf_value(LLMKey::EMBEDDING_LENGTH).get_value<uint32_t>();
+            metadata_.num_ffn           = context.find_gguf_value(LLMKey::FEED_FORWARD_LENGTH).get_value<uint32_t>();
+            metadata_.num_head          = context.find_gguf_value(LLMKey::ATTENTION_HEAD_COUNT).get_value<uint32_t>();
+            metadata_.num_layer         = context.find_gguf_value(LLMKey::BLOCK_COUNT).get_value<uint32_t>();
 
             {
-                const auto num_vocab_option = context_.find_gguf_value_option(LLMKey::VOCAB_SIZE);
+                const auto num_vocab_option = context.find_gguf_value_option(LLMKey::VOCAB_SIZE);
                 if (num_vocab_option.has_value()) {
                     metadata_.num_vocab = num_vocab_option->get_value<uint32_t>();
                 } else {
-                    metadata_.num_vocab = context_.find_gguf_value(LLMKey::TOKENIZER_LIST).get_value<ModelMetaArray>().size();
+                    metadata_.num_vocab = context.find_gguf_value(LLMKey::TOKENIZER_LIST).get_value<ModelMetaArray>().size();
                 }
             }
 
-            metadata_.num_head_kv = context_.find_gguf_value_option<uint32_t>(LLMKey::ATTENTION_HEAD_COUNT_KV, 0);
+            metadata_.num_head_kv = context.find_gguf_value_option<uint32_t>(LLMKey::ATTENTION_HEAD_COUNT_KV, 0);
 
             const uint32_t num_embedding_head_k_default = (metadata_.num_head == 0) ? 0 : metadata_.num_embedding / metadata_.num_head;
-            metadata_.num_embedding_head_k = context_.find_gguf_value_option(LLMKey::ATTENTION_KEY_LENGTH, num_embedding_head_k_default);
+            metadata_.num_embedding_head_k = context.find_gguf_value_option(LLMKey::ATTENTION_KEY_LENGTH, num_embedding_head_k_default);
             const uint32_t num_embedding_head_v_default = (metadata_.num_head == 0) ? 0 : metadata_.num_embedding / metadata_.num_head;
-            metadata_.num_embedding_head_v = context_.find_gguf_value_option(LLMKey::ATTENTION_VALUE_LENGTH, num_embedding_head_v_default);
+            metadata_.num_embedding_head_v = context.find_gguf_value_option(LLMKey::ATTENTION_VALUE_LENGTH, num_embedding_head_v_default);
 
             metadata_.num_embedding_k_gqa = metadata_.num_embedding_head_k * metadata_.num_head_kv;
             metadata_.num_embedding_v_gqa = metadata_.num_embedding_head_v * metadata_.num_head_kv;
 
-            metadata_.num_rot = context_.find_gguf_value_option(LLMKey::ROPE_DIMENSION_COUNT,
+            metadata_.num_rot = context.find_gguf_value_option(LLMKey::ROPE_DIMENSION_COUNT,
                     (metadata_.num_head == 0) ? 0 : metadata_.num_embedding / metadata_.num_head);
         }
 
-		virtual void init_hyper_param() {
+		virtual void init_hyper_param(ModelMetaContext &context) {
             if (hyper_param_.num_context == 0) {
                 hyper_param_.num_context = metadata_.len_context__train;
             }
@@ -114,19 +111,19 @@ namespace spy {
             hyper_param_.rope_type = RopeType::None;
 
 			if (hyper_param_.rope_freq_base == 0.0F) {
-				hyper_param_.rope_freq_base = context_.find_gguf_value_option<float>(LLMKey::ROPE_FREQ_BASE, 10000.0F);
+				hyper_param_.rope_freq_base = context.find_gguf_value_option<float>(LLMKey::ROPE_FREQ_BASE, 10000.0F);
 			}
 
 			if (hyper_param_.rope_scaling_type == ModelRopeScalingType::Unspecified) {
 				hyper_param_.rope_scaling_type = 
-                    HyperParam::parse_rope_scaling_type(context_.find_gguf_value_option<std::string>(LLMKey::ROPE_SCALING_TYPE, "linear"));
+                    HyperParam::parse_rope_scaling_type(context.find_gguf_value_option<std::string>(LLMKey::ROPE_SCALING_TYPE, "linear"));
 			}
 
 			if (hyper_param_.rope_scaling_type == ModelRopeScalingType::None) {
 				hyper_param_.rope_freq_scale = 1.0F;
 			} else if (hyper_param_.rope_freq_scale == 0.0F) {
-				const auto rope_scaling_factor_option = context_.find_gguf_value_option(LLMKey::ROPE_SCALING_FACTOR);
-                const auto rope_scaling_linear_option = context_.find_gguf_value_option(LLMKey::ROPE_SCALE_LINEAR);
+				const auto rope_scaling_factor_option = context.find_gguf_value_option(LLMKey::ROPE_SCALING_FACTOR);
+                const auto rope_scaling_linear_option = context.find_gguf_value_option(LLMKey::ROPE_SCALE_LINEAR);
 				if (rope_scaling_factor_option.has_value()) {
 					hyper_param_.rope_freq_scale = 1.0F / rope_scaling_factor_option->get_value<float>();
 				} else if (rope_scaling_linear_option.has_value()) {
@@ -141,7 +138,7 @@ namespace spy {
 			}
 
 			if (hyper_param_.yarn_orig_ctx == 0) {
-				hyper_param_.yarn_orig_ctx = context_.find_gguf_value_option<uint32_t>(LLMKey::ROPE_SCALING_ORIG_CTX_LEN, metadata_.len_context__train);
+				hyper_param_.yarn_orig_ctx = context.find_gguf_value_option<uint32_t>(LLMKey::ROPE_SCALING_ORIG_CTX_LEN, metadata_.len_context__train);
 			}
 
 			if (hyper_param_.yarn_ext_factor < 0.0F) {
@@ -149,21 +146,15 @@ namespace spy {
 			}
 		}
 
-        virtual void init_tokenizer() = 0;
+        virtual void init_tokenizer(ModelMetaContext &context) = 0;
 
     public: /* Graph building */
-        virtual void build_graph(Graph &graph, ModelIO &model_io) = 0;
+        virtual void build_graph(ModelMetaContext &context, Graph &graph, ModelIO &model_io) = 0;
 
         virtual void propagate(ModelIO &model_io) = 0;
 
-		// virtual std::unique_ptr<Graph>     &update_graph(ModelIO &model_io) = 0;
-
-        const auto &                        get_tensor_info_map()   const { return context_.infos; }
-
     public:
         const ModelMetadata &   get_info()      const { return metadata_;       }
-
-        const ModelMetaContext &get_context_()  const { return context_; }
 
         Tokenizer &             get_tokenizer() const { return *tokenizer_ptr;  }
 
