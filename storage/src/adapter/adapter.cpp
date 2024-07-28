@@ -2,7 +2,7 @@
 #include <string_view>
 #include <filesystem>
 
-#include "file/exception.h"
+#include "loader/file/exception.h"
 #include "adapter/abstract_adapter.h"
 #include "adapter/gguf_adaper.h"
 #include "adapter/adapter.h"

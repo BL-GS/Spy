@@ -4,7 +4,7 @@
 #include <cstddef>
 #include <vector>
 #include <variant>
-#include <map>
+#include <unordered_map>
 #include <optional>
 #include <fmt/core.h>
 #include <fmt/ranges.h>
@@ -241,9 +241,9 @@ namespace spy {
 		static constexpr size_t DEFAULT_ALIGNMENT = 32;
 
 	public:
-		ModelMetaHeader                              header;
-		std::map<std::string, ModelMetaValue>        kv_pairs;
-		std::map<std::string, ModelMetaTensorInfo>   infos;
+		ModelMetaHeader                              			header;
+		std::unordered_map<std::string, ModelMetaValue>        	kv_pairs;
+		std::unordered_map<std::string, ModelMetaTensorInfo>   	infos;
 
 		std::string arch_name;
 		size_t 		alignment;

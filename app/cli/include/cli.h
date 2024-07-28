@@ -3,7 +3,7 @@
 #include <memory>
 
 #include "util/timer.h"
-#include "model_loader.h"
+#include "loader/loader.h"
 #include "llm/sampler/sampler.h"
 #include "llm/model/model.h"
 #include "distributor/distributor.h"
@@ -13,26 +13,23 @@ namespace spy {
 
     class AutoModelGenerator {
     public:
-        ModelLoader loader;
-
-        std::unique_ptr<AbstractModel> model_ptr;
-
-        std::unique_ptr<Sampler> sampler_ptr;
-
+        /* Model Loader */
+        std::unique_ptr<ModelLoader>    loader_ptr;
+        std::unique_ptr<AbstractModel>  model_ptr;
+        std::unique_ptr<Sampler>        sampler_ptr;
+        /* Graph Constructor and Executor */
         GraphStorage graph_storage;
-
-        Graph graph;
-
+        Graph        graph;
         std::unique_ptr<AbstractGraphDistributor> distributor_ptr;
-
+        /* Profiler */
         PerformanceTimer perf_timer;
 
     public:
-        AutoModelGenerator(std::string_view filename, const HyperParam &param): loader(filename), graph(0, graph_storage) {
-            model_ptr   = ModelBuilder::build_model(loader.context, param);
+        AutoModelGenerator(std::string_view filename, const HyperParam &param): graph(0, graph_storage) {
+            loader_ptr  = ModelLoaderFactory::build_model_loader("simple", filename);
+            model_ptr   = ModelBuilder::build_model(loader_ptr->context, param);
             sampler_ptr = SamplerFactory::build_sampler(SamplerType::Greedy);
 
-            perf_timer.model_bytes = 0;
             perf_timer.num_sample  = 0;
             perf_timer.num_prefill = 0;
             perf_timer.num_decode  = 0;
@@ -59,7 +56,7 @@ namespace spy {
             model_io.enable_logits.back() = true;
             perf_timer.num_prefill = token_id_array.size();
 
-            model_ptr->build_graph(loader.context, graph, model_io);
+            model_ptr->build_graph(loader_ptr->context, graph, model_io);
             distributor_ptr->prepare_graph(std::addressof(graph));
 
             stream << prompt;
@@ -101,11 +98,7 @@ namespace spy {
     private:
         void load() {
             perf_timer.model_load_timer.start();
-            size_t load_size = loader.load();
-
-
-            
-            perf_timer.model_bytes = load_size;
+            loader_ptr->preload();
             perf_timer.model_load_timer.end();
         }
 
