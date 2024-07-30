@@ -118,7 +118,7 @@ namespace spy {
 			auto target_elements = in.elements();
 			target_elements[1] = index_shape.elements[0];
 
-			const Shape target_shape(in_dim, target_elements, in.type());
+			const Shape target_shape(in_dim, target_elements, NumberType::FP32);
 			out.shape = target_shape;
 		}      
     };
@@ -383,9 +383,9 @@ namespace spy {
 			auto *out_node = output<DataNode>(0);
 			out_node->view_src = nullptr;
 
-			auto target_element = in.shape.elements;
-			std::swap(target_element[0], target_element[1]);
-			const Shape target_shape(in.dim(), target_element, in.type());
+			Shape target_shape = in.shape;
+			std::swap(target_shape.elements[0], target_shape.elements[1]);
+			std::swap(target_shape.bytes[0], target_shape.bytes[1]);
 
 			Tensor &out = out_node->tensor;
 			out.shape = target_shape;
@@ -446,13 +446,12 @@ namespace spy {
 			auto *out_node = output<DataNode>(0);
 			out_node->view_src = nullptr;
 
-			auto target_element = in.shape.elements;
+			Shape target_shape = in.shape;
 			const auto &axis = cur_param.axis;
 			for (int i = 0; i < in.dim(); ++i) {
-				target_element[i] = in.shape.elements[axis[i]];
+				target_shape.elements[i] = in.shape.elements[axis[i]];
+				target_shape.bytes[i]    = in.shape.bytes[axis[i]];
 			}
-
-			const Shape target_shape(in.dim(), target_element, in.type());
 
 			Tensor &out = out_node->tensor;
 			out.shape = target_shape;
@@ -463,14 +462,45 @@ namespace spy {
 
 
     template<>
-    struct OperatorDefinition<OperatorType::Contiguous> final: OperatorUnaryNode {
+    struct OperatorDefinition<OperatorType::Contiguous> final: OperatorNode {
     public:
 		static constexpr OperatorType TYPE = OperatorType::Contiguous;
 
 	public:
-	    OperatorDefinition(): OperatorUnaryNode(TYPE) {}
+	    OperatorDefinition(): OperatorNode(TYPE) {}
 
 	    ~OperatorDefinition() noexcept = default;
+
+	public: /* Interface for graph deduction */
+        /*!
+         * @brief Resolve input nodes and generate output nodes
+         * @return Output nodes
+         */
+		DataNode *deduce(Graph &graph, const DataNodeProperty &prop, DataNode *in_node_ptr) {
+			add_input(in_node_ptr);
+			DataNode *output_node_ptr = std::addressof(graph.alloc_node<DataNode>());
+			output_node_ptr->name = name + "-out";
+			output_node_ptr->set_prop(prop);
+			add_output(output_node_ptr);
+			return output_node_ptr;
+		}
+
+
+		/*! 
+		 * @brief Validate the metadata of inputs and propagate to generate the metadata of the output nodes
+		 * @return Output nodes
+		 */
+		void propagate() override {
+			assert_num_input(1);
+			assert_num_output(1);
+
+			const Tensor &in = input_data(0)->tensor;
+			auto *out_node = output<DataNode>(0);
+			out_node->view_src = nullptr;
+
+			Tensor &out = out_node->tensor;
+			out.shape = Shape(in.dim(), in.elements(), in.type());
+		}
     };
 	using ContiguousOpDef = OperatorDefinition<OperatorType::Contiguous>;
 

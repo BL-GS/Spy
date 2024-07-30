@@ -11,7 +11,7 @@ namespace spy {
         const std::string_view model_type = context.arch_name;
 
         if (model_type == "llama") {
-            model_ptr = std::make_unique<LLAMAModel>(context, hyper_param);
+            model_ptr = std::make_unique<LLAMAModel>(hyper_param);
         } else {
             spy_assert(false, "Unsupported model type: {}", model_type);
         }

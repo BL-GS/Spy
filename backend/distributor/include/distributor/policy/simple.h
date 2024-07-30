@@ -16,7 +16,7 @@ namespace spy {
       Graph *graph_ptr_ = nullptr;
 
    public:
-      SimpleGraphDistributor() = default;
+      SimpleGraphDistributor(ModelLoader *loader_ptr): AbstractGraphDistributor(loader_ptr) {}
 
       ~SimpleGraphDistributor() noexcept override = default;
 

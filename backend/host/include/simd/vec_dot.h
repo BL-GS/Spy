@@ -18,7 +18,7 @@ namespace spy::cpu {
         int i = 0;
         for (; i + FP32::block_step < num; i += FP32::block_step) {
             #pragma unroll
-            for (int k = 0; k < FP32::block_arr; ++i) {
+            for (int k = 0; k < FP32::block_arr; ++k) {
                 const FP32::block_t x_blk   = FP32::block_load(x + i + k * FP32::block_len);
                 const FP32::block_t y_blk   = FP32::block_load(y + i + k * FP32::block_len);
 

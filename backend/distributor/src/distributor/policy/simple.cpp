@@ -16,7 +16,7 @@ namespace spy {
     }
 
     void SimpleGraphDistributor::prepare_graph(Graph *graph_ptr) {
-        if (graph_ptr != nullptr) {
+        if (graph_ptr_ != nullptr) {
             spy_warn("trying to overwrite the graph");
         }
         graph_ptr_ = graph_ptr;
@@ -37,7 +37,7 @@ namespace spy {
         // Denote whether the data is available
         graph_storage.get_data_input_count(data_input_array.begin(), data_input_array.end());
         // Denote whether the data is out of use
-        graph_storage.get_data_output_count(data_output_array.begin(), data_input_array.end());
+        graph_storage.get_data_output_count(data_output_array.begin(), data_output_array.end());
         // Denote whether the operator is available
         graph_storage.get_op_input_count(op_input_array.begin(), op_input_array.end());
         
@@ -48,7 +48,9 @@ namespace spy {
         GraphControlHeader control_header {
             .data_input_array_  = data_input_array,
             .data_output_array_ = data_output_array,
-            .op_input_array_    = op_input_array
+            .op_input_array_    = op_input_array,
+
+            .loader_ptr_ = loader_ptr_
         };
 
         scheduler_ptr_->execute(*graph_ptr_, control_header);

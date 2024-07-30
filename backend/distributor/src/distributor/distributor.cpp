@@ -6,10 +6,10 @@
 
 namespace spy {
 
-    std::unique_ptr<AbstractGraphDistributor> GraphDistributorFactory::build_graph_distributor(std::string_view policy) {
+    std::unique_ptr<AbstractGraphDistributor> GraphDistributorFactory::build_graph_distributor(std::string_view policy, ModelLoader *loader_ptr) {
 
         if (policy == "simple") {
-            return std::make_unique<SimpleGraphDistributor>();
+            return std::make_unique<SimpleGraphDistributor>(loader_ptr);
         }
 
         spy_error("unknown kind of graph distributor: {}", policy);

@@ -5,8 +5,14 @@ namespace spy {
     InputBlockResult InputBlock::connect_input(Graph &graph) {
         InputBlockResult res;
 
-        const DataNodeProperty input_prop {
+        DataNodeProperty default_prop {
             .node_type = DataNodeType::Dynamic,
+            .layer_id  = -1,
+            .expert_id = -1
+        };
+
+        const DataNodeProperty input_prop {
+            .node_type = DataNodeType::IO,
             .layer_id  = -1,
             .expert_id = -1
         };
@@ -17,7 +23,7 @@ namespace spy {
             }
         );
         res.input_embedding = make_stream<OperatorType::GetRow>(graph, "input_embedding",
-            input_prop, 
+            default_prop, 
             weight.token_embedding, res.input_token_id
         );
 
@@ -39,9 +45,15 @@ namespace spy {
         return res;
     }
 
-    DataNode *OutputBlock::connect_output(Graph &graph) const {
+    OutputBlockResult OutputBlock::connect_output(Graph &graph) const {
         DataNodeProperty default_prop {
             .node_type = DataNodeType::Dynamic,
+            .layer_id  = -1,
+            .expert_id = -1
+        };
+
+        DataNodeProperty output_prop {
+            .node_type = DataNodeType::IO,
             .layer_id  = -1,
             .expert_id = -1
         };
@@ -58,11 +70,11 @@ namespace spy {
         
         // Final output
         DataNode *output = make_stream<OperatorType::MatMul>(graph, "output",
-            default_prop, 
+            output_prop, 
             weight.output_weight, result_norm_weighted
         );
 
-        return output;
+        return { output };
     }
 
 } // namespace spy

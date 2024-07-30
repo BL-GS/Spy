@@ -29,6 +29,12 @@ namespace spy {
          * @return The memory range of the data
          */
         virtual std::span<uint8_t> load(std::string_view name) = 0;
+
+        /*!
+         * @brief Offload a specific data from memory
+         * @param[in] name The name of data
+         */
+        virtual void offload(std::string_view name) = 0;
     };
 
     struct ModelLoaderFactory {

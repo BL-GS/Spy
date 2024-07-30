@@ -34,7 +34,9 @@ namespace spy {
             perf_timer.num_prefill = 0;
             perf_timer.num_decode  = 0;
 
-            distributor_ptr = GraphDistributorFactory::build_graph_distributor("simple");
+            distributor_ptr = GraphDistributorFactory::build_graph_distributor("simple", loader_ptr.get());
+
+            loader_ptr->preload();
         }
 
         ~AutoModelGenerator() noexcept = default;
@@ -57,6 +59,7 @@ namespace spy {
             perf_timer.num_prefill = token_id_array.size();
 
             model_ptr->build_graph(loader_ptr->context, graph, model_io);
+
             distributor_ptr->prepare_graph(std::addressof(graph));
 
             stream << prompt;
@@ -76,6 +79,7 @@ namespace spy {
                 predict_timer.end();
 
                 /* Get logits of the last token */
+                spy_assert(model_io.logits.size() >= num_vocab);
                 const std::span<const float> logits{model_io.logits.cend() - num_vocab, model_io.logits.cend()};
 
                 /* Sample */
@@ -92,6 +96,8 @@ namespace spy {
                 model_io.reset();
                 cur_pos += num_token;
                 model_io.add(new_token_id, cur_pos, { 0 }, true);
+
+                model_ptr->propagate(graph, model_io);
             }
         }
 

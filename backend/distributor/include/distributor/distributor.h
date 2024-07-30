@@ -7,10 +7,14 @@ namespace spy {
 
     class AbstractBackend;
     class Graph;
+    class ModelLoader;
 
     class AbstractGraphDistributor {
+    protected:
+        ModelLoader *loader_ptr_ = nullptr;
+
     public:
-        AbstractGraphDistributor() = default;
+        AbstractGraphDistributor(ModelLoader *loader_ptr): loader_ptr_(loader_ptr) {}
 
         virtual ~AbstractGraphDistributor() noexcept = default;
 
@@ -42,7 +46,7 @@ namespace spy {
          * @param[in] policy The name of policy (greedy).
          * @note Please infer to the source code of policy implementation for the detail of effect.
          */
-        static std::unique_ptr<AbstractGraphDistributor> build_graph_distributor(std::string_view policy);
+        static std::unique_ptr<AbstractGraphDistributor> build_graph_distributor(std::string_view policy, ModelLoader *loader_ptr);
 
     };
 

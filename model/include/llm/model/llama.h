@@ -30,7 +30,7 @@ namespace spy {
 	class LLAMAModel final : public AbstractModel, GraphBuilder {
 	public:
 		static constexpr std::string_view MODEL_ARCH = "llama";
-		static constexpr bool	   USE_KV_CACHE = true;
+		static constexpr bool	   USE_KV_CACHE = false;
 
 		using Layer = LLAMALayer;
 
@@ -49,9 +49,11 @@ namespace spy {
 
 		KVCache         					 kv_cache_;
 
+		InputBlockResult   input;
+		OutputBlockResult  output;
+
 	public:
-		LLAMAModel(ModelMetaContext &context, const HyperParam &hyper_param):
-				AbstractModel(context, hyper_param) { }
+		LLAMAModel(const HyperParam &hyper_param): AbstractModel(hyper_param) { }
 		
 		~LLAMAModel() noexcept override = default;
 
@@ -78,7 +80,7 @@ namespace spy {
 	public: /* Graph building */
 		void build_graph(ModelMetaContext &context, Graph &graph, ModelIO &model_io) override;
 
-		void propagate(ModelIO &model_io) override;
+		void propagate(Graph &graph, ModelIO &model_io) override;
 
 	private: /* Constant Graph component */
 		void build_input(ModelMetaContext &context, Graph &graph);

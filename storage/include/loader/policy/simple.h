@@ -25,6 +25,8 @@ namespace spy {
         void preload() override;
 
         std::span<uint8_t> load(std::string_view name) override;
+
+        void offload(std::string_view name) override;
     };
 
 } // namespace spy

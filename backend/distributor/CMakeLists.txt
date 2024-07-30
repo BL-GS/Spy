@@ -11,6 +11,7 @@ TARGET_LINK_LIBRARIES(${PROJECT_NAME} PUBLIC
     # Internal libraries
     SpyUtil
     SpyOrchestration
+    SpyStorage
     SpyBackendInterface
     # External libraries
     magic_enum::magic_enum

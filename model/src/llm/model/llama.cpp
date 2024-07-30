@@ -36,7 +36,7 @@ namespace spy {
         auto  &layer      = pre_train.layers[layer_id];
 
         DataNodeProperty layer_prop {
-            .node_type = DataNodeType::Dynamic,
+            .node_type = DataNodeType::Constant,
             .layer_id  = layer_id,
             .expert_id = -1	
         };
@@ -66,7 +66,7 @@ namespace spy {
         auto  &layer      = pre_train.layers[layer_id];
 
         DataNodeProperty layer_prop {
-            .node_type = DataNodeType::Dynamic,
+            .node_type = DataNodeType::Constant,
             .layer_id  = layer_id,
             .expert_id = -1	
         };
@@ -85,7 +85,7 @@ namespace spy {
         auto  &layer      = pre_train.layers[layer_id];
 
         DataNodeProperty layer_prop {
-            .node_type = DataNodeType::Dynamic,
+            .node_type = DataNodeType::Constant,
             .layer_id  = layer_id,
             .expert_id = -1	
         };
@@ -106,7 +106,7 @@ namespace spy {
     void LLAMAModel::build_graph(ModelMetaContext &context, Graph &graph, ModelIO &model_io) {
         const uint32_t num_layer 		 = metadata_.num_layer;
 
-        const int64_t num_token 			 = model_io.num_token();
+        const int64_t num_token 		 = model_io.num_token();
         const int64_t num_vocab			 = metadata_.num_vocab;
         const int64_t num_head		 	 = metadata_.num_head;
         const int64_t num_head_kv		 = metadata_.num_head_kv;
@@ -159,19 +159,6 @@ namespace spy {
         /*
          * Set up initialized input
          */
-
-        /* Build KQ Mask */
-        {
-            const size_t past_kv = (USE_KV_CACHE) ? 0 : kv_cache_.head;
-
-            kq_mask_.resize(num_token * num_context, -INFINITY);
-            kq_mask_.assign(num_token * num_context, -INFINITY);
-            for (size_t i_token = 0; i_token < num_token; ++i_token) {
-                for (size_t j_token = 0; j_token <= i_token + past_kv; ++j_token) {
-                    kq_mask_[num_context * i_token + j_token] = 0.0F;
-                }
-            }
-        }
 
         const DataNodeProperty inout_prop {
             .node_type = DataNodeType::Dynamic,
@@ -230,7 +217,7 @@ namespace spy {
                 .input_embedding = input_embedding,
                 .input_pos		 = input_pos
             });
-            DataNode *attn_out = cur_attention_block.connect_attention(graph, layer_id);
+            DataNode *attn_out = cur_attention_block.connect_attention(graph, layer_id, -1, USE_KV_CACHE);
 
             /* Feed-forward network */
             DataNode *ffn_inp  = make_stream<OperatorType::Add>(graph, "ffn_input",
@@ -261,14 +248,51 @@ namespace spy {
             },
             .logit_out = input_embedding
         };
-        DataNode *output = output_block.connect_output(graph);
+        auto [output_logits] = output_block.connect_output(graph);
 
-        if constexpr (USE_KV_CACHE) {
-            kv_cache_.step(num_token);
+        /* Connect IO */
+        input = {
+            .input_token_id = input_token_id,
+            .input_pos = input_pos,
+            .KQ_mask = KQ_mask
+        };
+        output = {
+            .output_logits = output_logits
+        };
+
+        /* Notify all listeners on parameters */
+        notify_listeners();
+        input_block.notify_listeners();
+        for (auto &attention_block: attention_block_array) { attention_block.notify_listeners(); }
+        for (auto &ffn_block: ffn_block_array) { ffn_block.notify_listeners(); }
+        output_block.notify_listeners();
+
+        /* Propagate paramters */
+        graph.storage_ptr->propagate();
+
+        /* Allocate and assign input/output */
+        model_io.logits.resize(output.output_logits->tensor.total_element());
+
+        {  // Build KQ Mask
+            const size_t past_kv = (USE_KV_CACHE) ? 0 : kv_cache_.head;
+
+            kq_mask_.resize(num_token * num_context, -INFINITY);
+            kq_mask_.assign(num_token * num_context, -INFINITY);
+            for (size_t i_token = 0; i_token < num_token; ++i_token) {
+                for (size_t j_token = 0; j_token <= i_token + past_kv; ++j_token) {
+                    kq_mask_[num_context * i_token + j_token] = 0.0F;
+                }
+            }
         }
+
+        // We don't need to translate input token into the embedding
+        input.input_token_id->tensor.set_data_ptr(model_io.token_id_array.data());
+        input.input_pos->tensor.set_data_ptr(model_io.positions.data());
+        input.KQ_mask->tensor.set_data_ptr(kq_mask_.data());
+        output.output_logits->tensor.set_data_ptr(model_io.logits.data());
     }
 
-    void LLAMAModel::propagate(ModelIO &model_io) {
+    void LLAMAModel::propagate(Graph &graph, ModelIO &model_io) {
         /* Get the dynamic parameter */
         const int64_t num_token 	= model_io.num_token();
         const int64_t num_context	= (USE_KV_CACHE) ? hyper_param_.num_context: num_token;
@@ -292,7 +316,29 @@ namespace spy {
         for (auto &ffn_block: ffn_block_array) { ffn_block.notify_listeners(); }
         output_block.notify_listeners();
 
-        /* Remember to propagate in order to broadcast the effect to the whole graph */
+        /* Propagate paramters */
+        graph.storage_ptr->propagate();
+
+        /* Connect IO */
+
+        {  // Build KQ Mask
+            const size_t past_kv = (USE_KV_CACHE) ? 0 : kv_cache_.head;
+
+            kq_mask_.resize(num_token * num_context, -INFINITY);
+            kq_mask_.assign(num_token * num_context, -INFINITY);
+            for (size_t i_token = 0; i_token < num_token; ++i_token) {
+                for (size_t j_token = 0; j_token <= i_token + past_kv; ++j_token) {
+                    kq_mask_[num_context * i_token + j_token] = 0.0F;
+                }
+            }
+        }
+
+        model_io.logits.resize(output.output_logits->tensor.total_element());
+
+        input.input_token_id->tensor.set_data_ptr(model_io.token_id_array.data());
+        input.input_pos->tensor.set_data_ptr(model_io.positions.data());
+        input.KQ_mask->tensor.set_data_ptr(kq_mask_.data());
+        output.output_logits->tensor.set_data_ptr(model_io.logits.data());
     }
 
 } // namespace spy

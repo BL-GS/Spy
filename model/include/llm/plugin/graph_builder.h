@@ -106,6 +106,7 @@ namespace spy {
                 const std::string_view tensor_base_name,
                 const DataNodeProperty &prop, const std::string_view tensor_suffix = "weight") {
 
+            spy_assert(prop.node_type == DataNodeType::Constant);
             const std::string tensor_name = make_tensor_name(tensor_base_name, prop, tensor_suffix);
 
             // Get the metadata of the tensor
@@ -118,6 +119,7 @@ namespace spy {
             const Shape shape(info.num_dim, info.num_element, number_type);
 
             DataNode &data_node = graph.alloc_node<DataNode>(prop, shape, info.data_ptr);
+            data_node.name = tensor_name;
             return std::addressof(data_node);
         }
 

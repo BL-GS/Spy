@@ -236,7 +236,7 @@ namespace spy {
 			return static_cast<T *>(res_ptr);
 		}
 
-		void set_data_ptr(void *data_ptr) { data_ptr = data_ptr; }
+		void set_data_ptr(void *new_data_ptr) { this->data_ptr = new_data_ptr; }
 
 	public: /* Shape Information */
 		const Shape &	get_shape()       const { return shape; 					}

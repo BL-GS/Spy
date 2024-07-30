@@ -111,7 +111,7 @@ namespace spy {
     std::pair<DataNode *, DataNode *> MultiHeadAttentionBlock::reshape_KV(Graph &graph,
         const DataNodeProperty &default_prop,
         DataNode *key, DataNode *value) {
-        DataNode *K_out = make_augmented_stream<OperatorType::View>(graph, "KVCache",
+        DataNode *K_out = make_augmented_stream<OperatorType::View>(graph, "KCache",
             default_prop, ViewParam {
                 .offset    = 0,
                 .new_shape = Shape(

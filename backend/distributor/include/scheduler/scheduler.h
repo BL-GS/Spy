@@ -8,6 +8,8 @@
 
 namespace spy {
 
+	class ModelLoader;
+
     class GraphScheduler {
 	protected:
 		AbstractBackend *backend_ptr_;

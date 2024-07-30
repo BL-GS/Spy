@@ -45,13 +45,18 @@ namespace spy {
         const auto data_info = context.infos.at(std::string(name));
 
         uint8_t *data_ptr  = static_cast<uint8_t *>(data_info.data_ptr);
-        size_t   num_bytes = get_type_size(data_info.type);
-        for (int i = 0; i < data_info.num_dim; ++i) { num_bytes *= data_info.num_element[i]; }
+        size_t   num_elements = 1;
+        for (int i = 0; i < data_info.num_dim; ++i) { num_elements *= data_info.num_element[i]; }
+        size_t   num_bytes = get_row_size(data_info.type, num_elements);
 
         return { data_ptr, num_bytes };
     } catch (std::out_of_range &err) {
         spy_fatal("data unexists: {}", name);
         throw err;
+    }
+
+    void SimpleModeLoader::offload(std::string_view name) {
+        spy_assert_debug(context.infos.contains(std::string(name)), "data unexists: {}", name);
     }
 
 } // namespace spy

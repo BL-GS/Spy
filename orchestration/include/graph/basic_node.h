@@ -109,6 +109,14 @@ namespace spy {
 		}
 
 	public:
+		bool all_input_deactivated() const {
+			for (size_t i = 0; i < num_input(); ++i) {
+				if (input(i)->active) { return false; }
+			}
+			return true;
+		}
+
+	public:
 		std::map<std::string_view, std::string> property() const override {
 			std::map<std::string_view, std::string> property = {
 				{ "id", 		std::to_string(id) 		},

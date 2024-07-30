@@ -20,7 +20,7 @@ namespace spy {
         std::queue<OperatorNode *> op_queue;
 
         for (NodeID input_id: input_node_id_array_) {
-            OperatorNode *entry_point = op_node_array_[input_id ^ OP_NODE_ID_MASK].get();
+            OperatorNode *entry_point = op_node_array_[id2idx(input_id)].get();
 
             entry_point->propagate();
             entry_point->for_each_output([&](BasicNode *input_node_ptr){
@@ -37,7 +37,7 @@ namespace spy {
             const auto &cur_node = node(node_id);
             cur_node.for_each_output([&](BasicNode *next_op_node){
                 const NodeID node_id = next_op_node->id;
-                const NodeID op_id   = node_id ^ GraphStorage::OP_NODE_ID_MASK;
+                const NodeID op_id   = id2idx(node_id);
                 op_input_count_array[op_id]--;
 
                 if (op_input_count_array[op_id] == 0) {
@@ -51,7 +51,7 @@ namespace spy {
             op_queue.pop();
 
             // Propagate the infection
-            spy_info("propagate {}", cur_node_ptr->name);
+            // spy_debug(DebugFlag::Graph, "propagate {}", cur_node_ptr->name);
             cur_node_ptr->propagate();
 
             // Get the next node and push into the queue
@@ -62,7 +62,7 @@ namespace spy {
                     OperatorNode *next_op_node = dynamic_cast<OperatorNode *>(node_ptr);
 
                     const NodeID node_id = next_op_node->id;
-                    const NodeID op_id   = node_id ^ GraphStorage::OP_NODE_ID_MASK;
+                    const NodeID op_id   = id2idx(node_id);
                     op_input_count_array[op_id]--;
 
                     if (op_input_count_array[op_id] == 0) {

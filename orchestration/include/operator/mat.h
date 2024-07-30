@@ -45,7 +45,7 @@ namespace spy {
 			const auto [ne10, ne11, ne12, ne13] = in_1.elements();
 
 			spy_assert(ne00 == ne10 && ne02 == ne12 && ne03 == ne13, 
-					"Operands should be of the same shape (operand1: {}, operand2: {})", 
+					"invalid dimensions of operands (operand1: {}, operand2: {})", 
 					in_0.shape, in_1.shape
 			);
 

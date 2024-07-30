@@ -94,7 +94,7 @@ namespace spy {
 		BasicNode &node(NodeID id) const { 
 			spy_assert_debug(id != INVALID_NODE_ID, "invalid node id");
 			if (is_data_node(id)) { return *data_node_array_[id]; }
-			return *op_node_array_[id ^ OP_NODE_ID_MASK]; 
+			return *op_node_array_[id2idx(id)]; 
 		}
 
 		size_t num_data_node() const { return data_node_array_.size(); }
@@ -102,6 +102,8 @@ namespace spy {
 		size_t num_op_node()   const { return op_node_array_.size();   }
 
 		size_t num_node() 	   const { return num_data_node() + num_op_node(); }
+
+		static uint32_t id2idx(NodeID id) { return id & (~OP_NODE_ID_MASK); }
 
 	public:
 		void propagate() const;
@@ -202,10 +204,10 @@ namespace spy {
 
 	template<class T_Node>
 		requires std::is_base_of_v<BasicNode, T_Node>
-	T_Node &Graph::get_node(NodeID id) const {
-		T_Node &node = static_cast<T_Node &>(storage_ptr->node(id));
-		spy_assert(id == node.graph_id, "try to get a node(graph_id: {}) out of the graph(id: {})",
-			node.graph_id, id);
+	T_Node &Graph::get_node(NodeID node_id) const {
+		T_Node &node = static_cast<T_Node &>(storage_ptr->node(node_id));
+		spy_assert(this->id == node.graph_id, "try to get a node(graph_id: {}) out of the graph(id: {})",
+			node.graph_id, this->id);
 		return node;
 	}
 

@@ -16,10 +16,14 @@ namespace spy {
 	};
     
     struct InputBlockResult {
-		DataNode *input_token_id;
-        DataNode *input_embedding;
-        DataNode *input_pos;
-        DataNode *KQ_mask;
+        DataNode *input_token_id  = nullptr;
+        DataNode *input_embedding = nullptr;
+        DataNode *input_pos       = nullptr;
+        DataNode *KQ_mask         = nullptr;
+    };
+
+    struct OutputBlockResult {
+        DataNode *output_logits = nullptr;
     };
 
     struct InputBlock final: public GraphBuilder {
@@ -39,7 +43,7 @@ namespace spy {
 
 		DataNode *logit_out;
 
-		DataNode *connect_output(Graph &graph) const;
+		OutputBlockResult connect_output(Graph &graph) const;
 	};
 
 } // namespace spy

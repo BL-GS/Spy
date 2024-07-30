@@ -54,6 +54,7 @@ int main(int argc, char **argv) {
 	const uint32_t num_predict = cmdline_argument.get_arg<uint32_t>("--num-predict");
 
 	AutoModelGenerator model(model_filename, hyper_param);
+	model.add_backend(cpu_backend_ptr.get(), "greedy");
 	model.generate(prompt, num_predict, std::cout);
 
 	/* Finish */

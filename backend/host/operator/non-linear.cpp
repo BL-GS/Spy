@@ -197,6 +197,9 @@ namespace spy::cpu {
 		const auto &result  = op_node->output_data(0)->tensor;
         const float eps = op_node->params.get_val().eps;
 
+        spy_assert(operand.type() == NumberType::FP32);
+        spy_assert(result.type() == NumberType::FP32);
+
         const auto &shape_res = result.get_shape();
 
         const auto [ne0, ne1, ne2, ne3] = shape_res.elements;

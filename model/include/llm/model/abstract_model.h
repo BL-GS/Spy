@@ -57,10 +57,7 @@ namespace spy {
 
 
     public:
-        explicit AbstractModel(ModelMetaContext &context, const HyperParam &hyper_param):
-                hyper_param_(hyper_param) {
-            init(context);
-        }
+        explicit AbstractModel(const HyperParam &hyper_param): hyper_param_(hyper_param) {}
 
         virtual ~AbstractModel() = default;
 
@@ -151,7 +148,7 @@ namespace spy {
     public: /* Graph building */
         virtual void build_graph(ModelMetaContext &context, Graph &graph, ModelIO &model_io) = 0;
 
-        virtual void propagate(ModelIO &model_io) = 0;
+        virtual void propagate(Graph &graph, ModelIO &model_io) = 0;
 
     public:
         const ModelMetadata &   get_info()      const { return metadata_;       }

@@ -3,11 +3,6 @@
 #include <cstddef>
 #include <chrono>
 
-#ifdef __linux__
-	#include <liburing.h>
-	#undef BLOCK_SIZE
-#endif // __linux__
-
 #include "util/shell/logger.h"
 
 namespace spy {
@@ -83,29 +78,5 @@ namespace spy {
 				         decode_ms, static_cast<float>(num_decode * 1000) / static_cast<float>(decode_ms));			
 		}
 	};
-
-
-	
-#ifdef __linux__
-
-	template <class Rep, class Period>
-	struct __kernel_timespec
-	duration_to_kernel_timespec(std::chrono::duration<Rep, Period> dur) {
-		struct __kernel_timespec ts;
-		auto secs = std::chrono::duration_cast<std::chrono::seconds>(dur);
-		auto nsecs =
-			std::chrono::duration_cast<std::chrono::nanoseconds>(dur - secs);
-		ts.tv_sec = static_cast<std::uint64_t>(secs.count());
-		ts.tv_nsec = static_cast<std::uint64_t>(nsecs.count());
-		return ts;
-	}
-
-	template <class Clk, class Dur>
-	struct __kernel_timespec
-	timepoint_to_kernel_timespec(std::chrono::time_point<Clk, Dur> tp) {
-		return duration_to_kernel_timespec(tp.time_since_epoch());
-	}
-
-#endif // __linux__
 
 }  // namespace spy
