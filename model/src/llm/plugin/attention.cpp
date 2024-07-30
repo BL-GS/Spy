@@ -2,6 +2,26 @@
 
 namespace spy {
 
+    void KVCache::connect_KVCache(Graph &graph, int layer_id) {
+        const DataNodeProperty cache_prop {
+            .node_type = DataNodeType::Cache,
+            .layer_id  = layer_id,
+            .expert_id = -1
+        };
+
+        const int64_t k_num  = num_embedding_k_gqa * num_context;
+        const Shape k_shape{{k_num}, k_cache_type};
+        k_cache = make_augmented_stream<OperatorType::Input>(graph, fmt::format("KCache-{}", layer_id),
+            cache_prop, InputParam{ .shape = k_shape }
+        );
+
+        const int64_t v_num  = num_embedding_v_gqa * num_context;
+        const Shape v_shape{{v_num}, v_cache_type};
+        v_cache = make_augmented_stream<OperatorType::Input>(graph, fmt::format("VCache-{}", layer_id),
+            cache_prop, InputParam{ .shape = v_shape }
+        );
+    }
+
     std::tuple<DataNode *, DataNode *, DataNode *> MultiHeadAttentionBlock::input_linear_map(Graph &graph,
             const DataNodeProperty &default_prop, DataNode *attn_norm) const {
 
@@ -54,12 +74,22 @@ namespace spy {
             K_cur
         );
 
-        DataNode *Q_rope = make_augmented_stream<OperatorType::Rope>(graph, "Q_rope",
-            default_prop, rope_param,
+        DataNode *Q_rope = make_dynamic_stream<OperatorType::Rope>(graph, "Q_rope",
+            default_prop, [this]{
+                RopeParam param = rope_param_draft;
+                param.num_context = num_context;
+                param.num_past = num_past_token;
+                return param;
+            },
             Q_reshaped_cur, input_pos
         );
-        DataNode *K_rope = make_augmented_stream<OperatorType::Rope>(graph, "K_rope",
-            default_prop, rope_param,
+        DataNode *K_rope = make_dynamic_stream<OperatorType::Rope>(graph, "K_rope",
+            default_prop, [this]{
+                RopeParam param = rope_param_draft;
+                param.num_context = num_context;
+                param.num_past = num_past_token;
+                return param;
+            },
             K_reshaped_cur, input_pos
         );
 
@@ -146,20 +176,18 @@ namespace spy {
         DataNode *key, DataNode *value) {
 
         // Update key cache
-        spy_assert(k_cache != nullptr, "Expect the k cache not to be invalid node");
-
-        const Tensor &k_cache_tensor    = k_cache->tensor;
-        const NumberType k_type         = k_cache_tensor.type();
+        spy_assert(k_cache != nullptr, "expect the k cache not to be null");
+        spy_assert(v_cache != nullptr, "expect the v cache not to be null");
 
         DataNode *k_cache_view = make_dynamic_stream<OperatorType::View>(graph, "KCache_view",
-            default_prop, [this, k_type]{ 
-                const int64_t k_cache_update_offset = get_row_size(k_type, num_embedding_k_gqa) * num_past_token;
+            default_prop, [this]{ 
+                const int64_t k_cache_update_offset = get_row_size(k_cache_type, num_embedding_k_gqa) * num_past_token;
                 return ViewParam{
                     .offset = k_cache_update_offset,
                     .new_shape = Shape(
                         { num_token * num_embedding_k_gqa },
-                        std::initializer_list<size_t>{ get_type_size(k_type) },
-                        k_type                        
+                        std::initializer_list<size_t>{ get_type_size(k_cache_type) },
+                        k_cache_type                        
                 )}; 
             },
             k_cache
@@ -169,20 +197,19 @@ namespace spy {
             key, k_cache_view
         );
         // Concat K cache and output
-        DataNode *K_out = make_dynamic_stream<OperatorType::View>(graph, "KCache_output",
-            default_prop, [this, k_type]{ 
-                // TODO: Fix when implementing long context
+        DataNode *K_out = make_dynamic_stream<OperatorType::View>(graph, "KCache_total",
+            default_prop, [this]{ 
                 const int64_t num_kv = num_past_token + num_token;
 
-                const int64_t k_cache_update_offset = get_row_size(k_type, num_embedding_k_gqa) * num_past_token;
+                const int64_t k_cache_update_offset = get_row_size(k_cache_type, num_embedding_k_gqa) * num_past_token;
                 return ViewParam{
                     .offset = -k_cache_update_offset,
                     .new_shape = Shape(
                         { num_embedding_head, num_kv, num_head_kv }, // New dimensions
-                        std::initializer_list<size_t>{ get_type_size(k_type),
-                                                        get_row_size(k_type, num_embedding_k_gqa),
-                                                        get_row_size(k_type, num_embedding_head) }, // New offsets
-                        k_type                            
+                        std::initializer_list<size_t>{ get_type_size(k_cache_type),
+                                                        get_row_size(k_cache_type, num_embedding_k_gqa),
+                                                        get_row_size(k_cache_type, num_embedding_head) }, // New offsets
+                        k_cache_type                            
                     )
                 };
             },
@@ -192,18 +219,15 @@ namespace spy {
         // Update value cache
         spy_assert(v_cache != nullptr, "Expect the v cache not to be invalid node");
 
-        const Tensor &v_cache_tensor    = v_cache->tensor;
-        const NumberType v_type         = v_cache_tensor.type();
-
         DataNode *v_cache_view = make_dynamic_stream<OperatorType::View>(graph, "VCache_view",
-            default_prop, [this, v_type]{ 
-                const int64_t v_cache_update_offset = get_type_size(v_type) * num_past_token;
+            default_prop, [this]{ 
+                const int64_t v_cache_update_offset = get_type_size(v_cache_type) * num_past_token;
                 return ViewParam {
                     .offset = v_cache_update_offset,
                     .new_shape = Shape(
                         { num_token, num_embedding_v_gqa },
-                        std::initializer_list<size_t>{ get_type_size(v_type), num_context * get_type_size(v_type) },
-                        v_type
+                        std::initializer_list<size_t>{ get_type_size(v_cache_type), num_context * get_type_size(v_cache_type) },
+                        v_cache_type
                 )};
             },
             v_cache
@@ -214,18 +238,18 @@ namespace spy {
             value, v_cache_view
         );
         // Concat value cache and output
-        DataNode *V_out = make_dynamic_stream<OperatorType::View>(graph, "VCache_output",
-            default_prop, [this, v_type]{ 
+        DataNode *V_out = make_dynamic_stream<OperatorType::View>(graph, "VCache_total",
+            default_prop, [this]{ 
                 const int64_t num_kv = num_past_token + num_token;
-                const int64_t v_cache_update_offset = get_type_size(v_type) * num_past_token;
+                const int64_t v_cache_update_offset = get_type_size(v_cache_type) * num_past_token;
                 return ViewParam{
                 .offset = -v_cache_update_offset,
                 .new_shape = Shape(
                     { num_kv, num_embedding_head, num_head_kv }, // New dimensions
-                    std::initializer_list<size_t>{ get_type_size(v_type),
-                                                    get_type_size(v_type) * num_context,
-                                                    get_type_size(v_type) * num_context * num_embedding_head }, // New offset
-                    v_type                        
+                    std::initializer_list<size_t>{ get_type_size(v_cache_type),
+                                                    get_type_size(v_cache_type) * num_context,
+                                                    get_type_size(v_cache_type) * num_context * num_embedding_head }, // New offset
+                    v_cache_type                        
                 )};
             },
             v_cache_sync

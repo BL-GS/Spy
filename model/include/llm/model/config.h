@@ -18,6 +18,7 @@ namespace spy {
     public:
         /* Input */
 
+		size_t								acc_token = 0;
         /// The token ids of the input (used when embedding is empty)
         std::vector<TokenID>                token_id_array;
         /// The token embedding
@@ -48,16 +49,18 @@ namespace spy {
             positions.push_back(pos);
             sequence_id.push_back(std::forward<std::vector<int32_t>>(seq_ids));
             enable_logits.push_back(enable_logit);
+			++acc_token;
         }
 
         void add(TokenID token_id, std::vector<int32_t> &&seq_ids, bool enable_logit) {
             token_id_array.push_back(token_id);
-            positions.push_back(num_token());
+            positions.push_back(acc_token);
             sequence_id.push_back(std::forward<std::vector<int32_t>>(seq_ids));
             enable_logits.push_back(enable_logit);
+			++acc_token;
         }
 
-        size_t num_token() const { return token_id_array.size(); }
+		size_t num_token() const { return token_id_array.size(); }
     };
 
 	struct HyperParam {

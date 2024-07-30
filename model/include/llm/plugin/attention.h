@@ -20,10 +20,28 @@ namespace spy {
         DataNode *bias_o          = nullptr;
     };
 
+	struct KVCache final: public GraphBuilder {
+	public:
+        const int64_t  num_embedding_k_gqa;
+        const int64_t  num_embedding_v_gqa;
+        const int64_t  num_context;
+
+        const NumberType k_cache_type;
+        const NumberType v_cache_type;
+
+        int64_t num_past_token;
+        
+        DataNode * k_cache = nullptr;
+        DataNode * v_cache = nullptr; 
+
+	public:
+		void connect_KVCache(Graph &graph, int layer_id);
+	};
+
     struct MultiHeadAttentionBlock final: public GraphBuilder {
         /* Hyper params */
         const NormRMSParam norm_rms_param;
-        const RopeParam    rope_param;
+        const RopeParam    rope_param_draft;
 
         const int64_t  num_embedding_head;
         const int64_t  num_embedding_k_gqa;
@@ -43,9 +61,12 @@ namespace spy {
         DataNode *k_cache;
         DataNode *v_cache;
 
+        const NumberType k_cache_type;
+        const NumberType v_cache_type;
+
         /* Input */
-        DataNode * input_embedding;
-        DataNode * input_pos;
+        DataNode *input_embedding;
+        DataNode *input_pos;
 
 
         DataNode *connect_attention(Graph &graph, int layer_id = -1, int expert_id = -1, bool enable_kvcache = true);
@@ -92,48 +113,6 @@ namespace spy {
 
     };
 	
-	struct KVCache {
-	public:
-		int64_t head = 0;
 
-		std::vector<Tensor> k_cache;
-		std::vector<Tensor> v_cache;
-
-		std::vector<std::unique_ptr<uint8_t []>> pointer_storage;
-
-	public:
-		KVCache() = default;
-
-		~KVCache() noexcept {
-			spy_info("Delete kv cache");
-		}
-
-	public:
-		void reserve(uint32_t n_embd_k_gqa, uint32_t n_embd_v_gqa, uint32_t kv_size, uint32_t num_layer) {
-			k_cache.reserve(num_layer);
-			v_cache.reserve(num_layer);
-			pointer_storage.reserve(2 * num_layer);
-
-			for (uint32_t i = k_cache.size(); i < num_layer; ++i) {
-				const int64_t k_num  = n_embd_k_gqa * kv_size;
-				const Shape k_shape{{k_num}, NumberType::FP16};
-				const size_t k_size = k_shape.total_size();
-				uint8_t *k_data = new uint8_t[k_size];
-				k_cache.emplace_back(k_shape, k_data);
-				pointer_storage.emplace_back(k_data);
-			}
-
-			for (uint32_t i = v_cache.size(); i < num_layer; ++i) {
-				const int64_t v_num  = n_embd_v_gqa * kv_size;
-				const Shape v_shape{{v_num}, NumberType::FP16};
-				const size_t v_size = v_shape.total_size();
-				uint8_t *v_data = new uint8_t[v_size];
-				v_cache.emplace_back(v_shape, v_data);
-				pointer_storage.emplace_back(v_data);
-			}
-		}
-
-		void step(size_t n) { head += n; }
-	};
 
 } // namespace spy

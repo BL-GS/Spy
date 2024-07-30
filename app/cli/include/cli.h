@@ -62,7 +62,7 @@ namespace spy {
 
             distributor_ptr->prepare_graph(std::addressof(graph));
 
-            stream << prompt;
+            stream << prompt << std::flush;
 
             int32_t cur_pos = 0;
             for (uint32_t predict_idx = 0; predict_idx < max_num_predict; ++predict_idx) {
@@ -90,7 +90,7 @@ namespace spy {
 
 
                 /* Output predicted token */
-                stream << token_to_word(new_token_id);
+                stream << token_to_word(new_token_id) << std::flush;
 
                 /* Predict */
                 model_io.reset();

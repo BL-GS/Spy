@@ -116,7 +116,7 @@ namespace spy {
 		}
 	}
 
-#ifdef NDEBUG
+#ifndef NDEBUG
 	template<bool T_exception = false, class T>
 	inline void spy_assert_debug(bool expression, const T &msg, std::source_location loc = std::source_location::current()) { 
 		if (!expression) {

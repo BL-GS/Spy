@@ -171,6 +171,12 @@ namespace spy::cpu {
                     const int64_t i3 = global_iter / (ne2 * ne1 * ne0);
 
                     switch (enum_fuse(type_operand, type_result).value()) {
+                    case enum_fuse(NumberType::FP32, NumberType::FP32).value(): {
+                        const float *src_ptr = operand.get<float>({i00, i01, i02, i03});
+                        float *dst_ptr = result.get<float>({i0, i1, i2, i3});
+                        *dst_ptr = *src_ptr;
+                        break;                        
+                    }
                     case enum_fuse(NumberType::FP32, NumberType::FP16).value(): {
                         const float *src_ptr = operand.get<float>({i00, i01, i02, i03});
                         uint16_t *dst_ptr = result.get<uint16_t>({i0, i1, i2, i3});

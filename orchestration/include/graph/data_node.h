@@ -11,21 +11,24 @@ namespace spy {
     /// It depends on the relevant operator 
     enum class DataNodeType: int {
         /// The data and the metadata remains constant during the whole execution
-        Constant        = 1 << 0, 
-        IO              = 1 << 1,
+        Constant        = 0, 
+        /// The user is responsible for the data and the metadata.
+        IO              = 1,
+        /// 
+        Cache           = 2,
         /// The metadata remains static during the inference
-        Static          = 1 << 2,
+        Static          = 3,
 		/// The metadata of the node depends on the forward input during the inference.
 		/// The data remains static
         /// For example: add
-        ShapeDynamic    = 1 << 3,
+        ShapeDynamic    = 4,
         /// The data of the node depends on the forward input during the inference
 		/// The metadata remains static
         /// For example: shape
-        DataDynamic     = 1 << 4,
+        DataDynamic     = 5,
         /// The metadata and the data of the node will be changed during the inference
         /// For example: top-k
-        Dynamic         = 1 << 5,
+        Dynamic         = 6,
 
         Default         = Dynamic
     };

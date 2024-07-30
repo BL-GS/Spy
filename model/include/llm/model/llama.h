@@ -16,11 +16,7 @@
 
 namespace spy {
 
-	struct LLAMALayer final: MultiHeadAttentionWeight, FFNWeight {
-		/* KV Cache */
-		DataNode *k_cache				= nullptr;
-		DataNode *v_cache				= nullptr;
-	};
+	struct LLAMALayer final: MultiHeadAttentionWeight, FFNWeight {};
 
 	struct LLAMAWeight final: InputWeight, OutputWeight {
 		/* Attention & FFN */
@@ -30,7 +26,6 @@ namespace spy {
 	class LLAMAModel final : public AbstractModel, GraphBuilder {
 	public:
 		static constexpr std::string_view MODEL_ARCH = "llama";
-		static constexpr bool	   USE_KV_CACHE = false;
 
 		using Layer = LLAMALayer;
 
@@ -42,15 +37,14 @@ namespace spy {
 		OutputBlock							 output_block;
 		/// Attention block
 		std::vector<MultiHeadAttentionBlock> attention_block_array;
+		std::vector<KVCache>				 kv_cache_array;
 		/// Feed-forward block
 		std::vector<FFNBlock>				 ffn_block_array;
 
-		std::vector<float>               	 kq_mask_;
-
-		KVCache         					 kv_cache_;
-
-		InputBlockResult   input;
-		OutputBlockResult  output;
+	public: /* Interface */
+		InputBlockResult    input;
+		OutputBlockResult   output;
+		std::vector<float>  kq_mask_;
 
 	public:
 		LLAMAModel(const HyperParam &hyper_param): AbstractModel(hyper_param) { }

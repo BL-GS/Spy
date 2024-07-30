@@ -45,6 +45,7 @@ namespace spy {
 			add_output(output_node_ptr);
 
 			// Register as input node
+			graph.entry_point_array.emplace_back(this);
 			graph.storage_ptr->register_input(id);
 
 			return output_node_ptr;

@@ -88,6 +88,16 @@ namespace spy::cpu {
                 float *dst_element   = result.get<float>({i01, i11, i02, i03});
                       *dst_element   = dot_func(src0_row, src1_col, ne00);
             }
+
+            if (op_node->input_data(0)->node_prop.layer_id == 0 && op_node->name == "KQV") {
+                for (int64_t i1 = 0; i1 < ne11; ++i1) {
+                    for (int64_t i0 = 0; i0 < 10; ++i0) {
+                        printf("%.3f ", *result.get<float>({i0, i1, 0, 0}));
+                    }
+                    printf("\n");
+                }
+                printf("\n");
+            }
         };
 
         const auto matmul_with_buffer = [&](NumberType type_mid){

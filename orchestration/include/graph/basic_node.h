@@ -89,8 +89,8 @@ namespace spy {
 
 		template<class T_Node = BasicNode>
 		T_Node *output(size_t idx) const { 
-			spy_assert_debug(idx < num_input(), 
-				"Invalid index of outputs: {} (max: {})", idx, num_input() - 1);
+			spy_assert_debug(idx < num_output(), 
+				"Invalid index of outputs: {} (max: {})", idx, num_output() - 1);
 			return static_cast<T_Node *>(output_list[idx]); 
 		}
 

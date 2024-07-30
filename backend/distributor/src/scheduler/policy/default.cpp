@@ -47,21 +47,28 @@ namespace spy {
 		});
 	}
 
-	static void try_fetch_inputs(const OperatorNode *cur_node_ptr, GraphControlHeader &header) {
+	static void try_fetch_inputs(AbstractBackend *backend_ptr, const OperatorNode *cur_node_ptr, GraphControlHeader &header) {
 		cur_node_ptr->for_each_input<DataNode>([&](DataNode *data_node_ptr){
+			Tensor &tensor = data_node_ptr->tensor;
 			const DataNodeType node_type = data_node_ptr->node_prop.node_type;
 
 			if (node_type == DataNodeType::Constant) {
-				const size_t tensor_size = data_node_ptr->tensor.total_size();
+				const size_t tensor_size = tensor.total_size();
 
 				ModelLoader *loader_ptr = header.loader_ptr_;
 				std::span<uint8_t> data_area = loader_ptr->load(data_node_ptr->name);
-				data_node_ptr->tensor.set_data_ptr(data_area.data());
+				tensor.set_data_ptr(data_area.data());
 
 				spy_assert(data_area.size() == tensor_size, 
 					"expect the size of the output tensor to be {} (cur: {})", 
 					tensor_size, data_area.size()
 				);				
+			} else if (node_type == DataNodeType::Cache) {
+				const size_t tensor_size = tensor.total_size();
+				if (data_node_ptr->tensor.get() == nullptr) {
+					void *data_ptr = backend_ptr->alloc_memory(tensor_size);
+					tensor.set_data_ptr(data_ptr);
+				}
 			}
 		});
 	}
@@ -98,6 +105,7 @@ namespace spy {
 				switch (src_data_node_type) {
 				case DataNodeType::Constant:
 				case DataNodeType::IO:
+				case DataNodeType::Cache:
 					break;
 
 				case DataNodeType::ShapeDynamic:
@@ -174,12 +182,10 @@ namespace spy {
 			if (cur_node_ptr == nullptr) { --num_end_node; continue; }
 
 			// Pass the operator if it has been deactivated
-			while (!cur_node_ptr->active) { 
-				op_step(cur_node_ptr); continue; 
-			}
+			while (!cur_node_ptr->active) { op_step(cur_node_ptr); continue; }
 
 			// Fetch acquired tensors if needed
-			try_fetch_inputs(cur_node_ptr, control_header);
+			try_fetch_inputs(backend_ptr_, cur_node_ptr, control_header);
 
 			// Allocate to-be-use output
 			try_allocate_outputs(backend_ptr_, cur_node_ptr, control_header);
