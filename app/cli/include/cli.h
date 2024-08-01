@@ -27,17 +27,27 @@ namespace spy {
 
     public:
         AutoModelGenerator(std::string_view filename, const HyperParam &param): graph(0, graph_storage) {
-            loader_ptr  = ModelLoaderFactory::build_model_loader("simple", filename);
-            model_ptr   = ModelBuilder::build_model(loader_ptr->context, param);
-            sampler_ptr = SamplerFactory::build_sampler(SamplerType::Greedy);
+            using namespace perf;
+            SPY_PERF_EVENT_TRACE(Setup, "build up loader", 
+                loader_ptr  = ModelLoaderFactory::build_model_loader("simple", filename);
+            )
+            SPY_PERF_EVENT_TRACE(Setup, "build up model", 
+                model_ptr   = ModelBuilder::build_model(loader_ptr->context, param);
+            )
+            SPY_PERF_EVENT_TRACE(Setup, "build up sampler",
+                sampler_ptr = SamplerFactory::build_sampler(SamplerType::Greedy);
+            )
+            SPY_PERF_EVENT_TRACE(Setup, "build up distributor",
+                distributor_ptr = GraphDistributorFactory::build_graph_distributor("simple", loader_ptr.get());
+            )
 
             perf_timer.num_sample  = 0;
             perf_timer.num_prefill = 0;
             perf_timer.num_decode  = 0;
 
-            distributor_ptr = GraphDistributorFactory::build_graph_distributor("simple", loader_ptr.get());
-
-            loader_ptr->preload();
+            SPY_PERF_EVENT_TRACE(IO, "preload model", 
+                loader_ptr->preload();
+            )
         }
 
         ~AutoModelGenerator() noexcept = default;
@@ -49,8 +59,7 @@ namespace spy {
 
         template<class T_Stream>
         void generate(const std::string &prompt, size_t max_num_predict, T_Stream &stream) {
-            spy_start_tracing();
-            spy_enable_tracing();
+            using namespace perf;
 
             const auto &model_metadata = model_ptr->get_info();
 
@@ -74,24 +83,29 @@ namespace spy {
                 const size_t num_vocab = model_metadata.num_vocab;
 
                 /* Predict */
-                auto &predict_timer = (predict_idx == 0) ? perf_timer.prefill_timer : perf_timer.decode_timer;
-                predict_timer.start();
+                SPY_PERF_EVENT_TRACE(Control, "predict",
+                    auto &predict_timer = (predict_idx == 0) ? perf_timer.prefill_timer : perf_timer.decode_timer;
+                    predict_timer.start();
 
-                distributor_ptr->execute();
+                    distributor_ptr->execute();     
 
-                if (predict_idx != 0) { ++perf_timer.num_decode; }
-                predict_timer.end();
+                    if (predict_idx != 0) { ++perf_timer.num_decode; }
+                    predict_timer.end();           
+                )
 
                 /* Get logits of the last token */
                 spy_assert(model_io.logits.size() >= num_vocab);
                 const std::span<const float> logits{model_io.logits.cend() - num_vocab, model_io.logits.cend()};
 
                 /* Sample */
-                perf_timer.sample_timer.start();
-                const TokenID new_token_id = sample(logits);
-                perf_timer.num_sample++;
-                perf_timer.sample_timer.end();
+                SPY_PERF_EVENT_TRACE(Control, "sample",
+                    perf_timer.sample_timer.start();
 
+                    const TokenID new_token_id = sample(logits);
+
+                    perf_timer.num_sample++;
+                    perf_timer.sample_timer.end();                
+                )
 
                 /* Output predicted token */
                 stream << token_to_word(new_token_id) << std::flush;
@@ -101,10 +115,10 @@ namespace spy {
                 cur_pos += num_token;
                 model_io.add(new_token_id, cur_pos, { 0 }, true);
 
-                model_ptr->propagate(graph, model_io);
+                SPY_PERF_EVENT_TRACE(Control, "propagate",
+                    model_ptr->propagate(graph, model_io);
+                )
             }
-
-            spy_stop_tracing("spy.perfetto-trace");
         }
 
     private:

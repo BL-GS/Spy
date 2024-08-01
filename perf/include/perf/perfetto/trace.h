@@ -1,24 +1,29 @@
 #pragma once
 
 #include <cstdint>
+#include <string_view>
 
-namespace spy {
+namespace spy::perf {
 
-    void spy_start_tracing();
+    enum class TraceEventType {
+        Setup,
+        Control,
+        Operator,
+        IO
+    };
 
-    void spy_stop_tracing(const char *save_path);
+    void spy_begin_event(TraceEventType type, std::string_view name);
 
-    void spy_enable_tracing();
+    void spy_end_event(TraceEventType type);
 
-    void spy_disable_tracing();
+    void spy_begin_event(TraceEventType type, std::string_view name, uint64_t track_id);
 
-    void spy_begin_event(const char *name);
+    void spy_end_event(TraceEventType type, uint64_t track_id);    
 
-    void spy_end_event();
+    #define SPY_PERF_EVENT_TRACE(type, name, ...)           \
+            spy_begin_event(TraceEventType:: type, name);   \
+            __VA_ARGS__                                     \
+            spy_end_event(TraceEventType:: type);
 
-    void spy_begin_event_at_track(const char *name, uint64_t track_id);
 
-    void spy_end_event_at_track(uint64_t track_id);    
-
-
-} // namespace spy
+} // namespace spy::perf

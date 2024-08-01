@@ -55,9 +55,10 @@ namespace spy::cpu {
         static constexpr bool is_support() { return true; }                                                                         \
 																																	\
         static OperatorResult execute(CPUBackend *backend_ptr, const OperatorEnvParam &param, OperatorNode *op_node) {              \
-            spy_begin_event(#op_type);                                                                                              \
+            using namespace perf;                                                                                                   \
+            spy_begin_event(TraceEventType::Operator, "cpu-"#op_type);                                                              \
             auto res = Impl::execute(backend_ptr, param, static_cast<DerivedOperatorNode *>(op_node));                              \
-            spy_end_event();                                                                                                        \
+            spy_end_event(TraceEventType::Operator);                                                                                \
             return res;                                                                                                             \
         }                                                                                                                           \
     };

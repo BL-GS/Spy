@@ -22,7 +22,7 @@ namespace spy {
 
 		virtual ~OperatorNode() noexcept = default;
 
-	public: /* Assertation */
+	public: /* Assertion */
 		template<class ...Args>
 		void assert_num_input(size_t expect, Args ...others) const {
 			const size_t cur = num_input();
