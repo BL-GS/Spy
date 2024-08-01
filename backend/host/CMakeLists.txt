@@ -22,6 +22,7 @@ TARGET_INCLUDE_DIRECTORIES(${PROJECT_NAME} PRIVATE
 TARGET_LINK_LIBRARIES(${PROJECT_NAME} PRIVATE
     # Internal library
     SpyUtil
+    SpyPerf
     SpyBackendInterface
     # External library
     magic_enum::magic_enum

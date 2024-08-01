@@ -5,6 +5,7 @@
 #include "graph/op_node.h"
 #include "operator/operator.h"
 #include "task.h"
+#include "perf/perfetto/trace.h"
 
 namespace spy::cpu {
 
@@ -54,7 +55,10 @@ namespace spy::cpu {
         static constexpr bool is_support() { return true; }                                                                         \
 																																	\
         static OperatorResult execute(CPUBackend *backend_ptr, const OperatorEnvParam &param, OperatorNode *op_node) {              \
-            return Impl::execute(backend_ptr, param, static_cast<DerivedOperatorNode *>(op_node));                                  \
+            spy_begin_event(#op_type);                                                                                              \
+            auto res = Impl::execute(backend_ptr, param, static_cast<DerivedOperatorNode *>(op_node));                              \
+            spy_end_event();                                                                                                        \
+            return res;                                                                                                             \
         }                                                                                                                           \
     };
     

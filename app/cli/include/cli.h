@@ -8,6 +8,7 @@
 #include "llm/model/model.h"
 #include "distributor/distributor.h"
 #include "backend/config.h"
+#include "perf/perfetto/trace.h"
 
 namespace spy {
 
@@ -48,6 +49,9 @@ namespace spy {
 
         template<class T_Stream>
         void generate(const std::string &prompt, size_t max_num_predict, T_Stream &stream) {
+            spy_start_tracing();
+            spy_enable_tracing();
+
             const auto &model_metadata = model_ptr->get_info();
 
             ModelIO model_io;
@@ -99,6 +103,8 @@ namespace spy {
 
                 model_ptr->propagate(graph, model_io);
             }
+
+            spy_stop_tracing("spy.perfetto-trace");
         }
 
     private:

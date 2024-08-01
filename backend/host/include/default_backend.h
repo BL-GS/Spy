@@ -20,6 +20,7 @@
 #include "abstract_backend.h"
 #include "graph/op_node.h"
 #include "operator_impl.h"
+#include "perf/perfetto/trace.h"
 
 namespace spy::cpu {
 

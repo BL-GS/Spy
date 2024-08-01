@@ -10,6 +10,7 @@ TARGET_INCLUDE_DIRECTORIES(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR}/include)
 TARGET_LINK_LIBRARIES(${PROJECT_NAME} PUBLIC
     # Internal libraries
     SpyUtil
+    SpyPerf
     SpyOrchestration
     SpyStorage
     SpyBackendInterface
