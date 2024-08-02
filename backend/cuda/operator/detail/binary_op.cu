@@ -253,7 +253,7 @@ namespace spy::gpu {
             );
             break;
         default:
-            spy_assert(false, "Unsupported type: result: {}, operand_0: {}, operand_1: {}", type_res, type_0, type_1);
+            spy_abort("Unsupported type: result: {}, operand_0: {}, operand_1: {}", type_res, type_0, type_1);
         }
     }
 

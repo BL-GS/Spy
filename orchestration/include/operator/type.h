@@ -95,7 +95,7 @@ namespace spy {
 			OPERATOR_TYPE_MAP(OPERATOR_TYPE_CASE)
 		}
 #undef OPERATOR_TYPE_CASE
-		spy_assert(false, "Unknown type of number");
+		spy_abort("Unknown type of number");
 		spy_unreachable();
 	}
 
@@ -108,7 +108,7 @@ namespace spy {
 			OPERATOR_TYPE_MAP(OPERATOR_TYPE_CASE)
 		}
 #undef OPERATOR_TYPE_CASE
-		spy_assert(false, "Unknown type of number");
+		spy_abort("Unknown type of number");
 		spy_unreachable();
 	}
 

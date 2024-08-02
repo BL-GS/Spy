@@ -18,7 +18,7 @@ namespace spy {
             vocab_ = std::make_unique<WordPieceVocab>(context);
             break;
         default:
-            spy_assert(false, "Unknown vocab type: {}", vocab_type);
+            spy_abort("Unknown vocab type: {}", vocab_type);
         }
     }
 

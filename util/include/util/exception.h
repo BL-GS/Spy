@@ -81,6 +81,21 @@ namespace spy {
 			SpyException(PREFIX.data() + std::string(reason), fmt::make_format_args(std::forward<Args>(args)...)) {}
 	};
 
+	class SpyAbortException: public SpyException {
+	public:
+		static constexpr std::string_view PREFIX			= "SpyAbortException: ";
+		static constexpr std::string_view UNKNOWN_EXCEPTION = "SpyAbortException: Unknown exception";
+
+	public:
+		SpyAbortException(): SpyException(UNKNOWN_EXCEPTION.data()) {}
+
+		SpyAbortException(const std::string_view &reason): SpyException(PREFIX.data() + std::string(reason)) {}
+
+		template<class ...Args>
+		SpyAbortException(const std::string_view &reason, Args &&...args): 
+			SpyException(PREFIX.data() + std::string(reason), fmt::make_format_args(std::forward<Args>(args)...)) {}
+	};
+
 	class SpyUnimplementedException: public SpyException {
 	public:
 		static constexpr std::string_view PREFIX			= "SpyUnimplementedException: ";

@@ -111,7 +111,7 @@ namespace spy {
 					);
 				}
 			} else if (index_dim != 1) { // Broadcast index
-				spy_assert(false, "invalid dimension of index: {}(expect: {} or {})", 
+				spy_abort("invalid dimension of index: {}(expect: {} or {})", 
 					index_dim, in_dim - 1, 1);
 			}
 

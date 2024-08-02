@@ -254,7 +254,7 @@ namespace spy {
 				case ModelTokenType::Undefined:
 				case ModelTokenType::Unused:
 				default:
-					spy_assert(false, "Unknown model token type: {}", token_type);
+					spy_abort("Unknown model token type: {}", token_type);
 				}
 			}
 			return {};

@@ -29,7 +29,7 @@ namespace spy {
 
 	public:
 		std::vector<TokenID> tokenize(const std::string &raw_text, bool bos, bool special) override {
-			spy_assert(false, "Unimplemented");
+			spy_abort("Unimplemented");
 			return {};
 		}
 
@@ -39,7 +39,7 @@ namespace spy {
 		}
 
 		uint8_t token_id_to_byte([[maybe_unused]] TokenID token_id) const override {
-			spy_assert(false, "Try toe convert token id using unsupported vocab");
+			spy_abort("Try toe convert token id using unsupported vocab");
 			return 0;
 		}
 
@@ -70,7 +70,7 @@ namespace spy {
 				case ModelTokenType::Undefined:
 				case ModelTokenType::Unused:
 				default:
-					spy_assert(false, "Unknown model token type: {}", token_type);
+					spy_abort("Unknown model token type: {}", token_type);
 				}
 			}
 			return {};

@@ -344,7 +344,7 @@ namespace spy::cpu {
                         break;
                     }
                     case RopeType::Neox:
-                        spy_assert(false, "To be implemented");
+                        spy_abort("To be implemented");
                         break;
 
                     default: {

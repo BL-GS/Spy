@@ -77,7 +77,7 @@ namespace spy::gpu {
             dequantize_row_q4_0_cuda(static_cast<half *>(dst_ptr), static_cast<const block_q4_0_t *>(src_ptr), num, stream);
             break;
         default:
-            spy_assert(false, "Unsupported type for convert: dst: {}; src: {}", dst_type, src_type);
+            spy_abort("Unsupported type for convert: dst: {}; src: {}", dst_type, src_type);
         }
     }
 

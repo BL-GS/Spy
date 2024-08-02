@@ -76,13 +76,13 @@ namespace spy {
                         case ModelMetaDataType::Float64: array.emplace_back(read_gguf_value<double>(file));	 break;
                         case ModelMetaDataType::String:  array.emplace_back(read_gguf_string(file));			 break;
                         default:
-                            spy_assert(false, "Unknown gguf data type in array");
+                            spy_abort("Unknown gguf data type in array");
                     }
                 }
                 return array;
             }
             default:
-                spy_assert(false, "Unknown gguf data type");
+                spy_abort("Unknown gguf data type");
         }
         return {};
     }

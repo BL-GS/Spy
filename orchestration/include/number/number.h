@@ -40,7 +40,7 @@ inline uint16_t spy_fp32_to_fp16(const float x) { return _cvtss_sh(x, 0); }
 	inline constexpr size_t get_type_size(NumberType number_type) {
 		return NumberTypeMapper::map(
 			[](const auto T_number_type){ return NumberMetadata<T_number_type>::TYPE_SIZE; }, 
-			[](const auto T_number_type){ spy_assert(false, "Unknown nunmber type: {}", T_number_type); }, 
+			[](const auto T_number_type){ spy_abort("Unknown nunmber type: {}", T_number_type); }, 
 			number_type
 		);
 	}
@@ -54,7 +54,7 @@ inline uint16_t spy_fp32_to_fp16(const float x) { return _cvtss_sh(x, 0); }
 	inline constexpr size_t get_block_size(NumberType number_type) {
 		return NumberTypeMapper::map(
 			[](const auto T_number_type){ return NumberMetadata<T_number_type>::BLOCK_SIZE; }, 
-			[](const auto T_number_type){ spy_assert(false, "Unknown nunmber type: {}", T_number_type); }, 
+			[](const auto T_number_type){ spy_abort("Unknown nunmber type: {}", T_number_type); }, 
 			number_type
 		);
 	}
@@ -75,7 +75,7 @@ inline uint16_t spy_fp32_to_fp16(const float x) { return _cvtss_sh(x, 0); }
 	inline constexpr std::string_view get_type_name(NumberType number_type) {
 		return NumberTypeMapper::map(
 			[](const auto T_number_type){ return NumberMetadata<T_number_type>::NAME; }, 
-			[](const auto T_number_type){ spy_assert(false, "Unknown nunmber type: {}", T_number_type); }, 
+			[](const auto T_number_type){ spy_abort("Unknown nunmber type: {}", T_number_type); }, 
 			number_type
 		);
 	}
@@ -92,7 +92,7 @@ inline uint16_t spy_fp32_to_fp16(const float x) { return _cvtss_sh(x, 0); }
 	inline constexpr bool is_quantized(NumberType number_type) {
 		return NumberTypeMapper::map(
 			[](const auto T_number_type){ return NumberMetadata<T_number_type>::IS_QUANTIZATION; }, 
-			[](const auto T_number_type){ spy_assert(false, "Unknown nunmber type: {}", T_number_type); }, 
+			[](const auto T_number_type){ spy_abort("Unknown nunmber type: {}", T_number_type); }, 
 			number_type
 		);
 	}

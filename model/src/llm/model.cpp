@@ -13,7 +13,7 @@ namespace spy {
         if (model_type == "llama") {
             model_ptr = std::make_unique<LLAMAModel>(hyper_param);
         } else {
-            spy_assert(false, "Unsupported model type: {}", model_type);
+            spy_abort("Unsupported model type: {}", model_type);
         }
 
         model_ptr->init(context);

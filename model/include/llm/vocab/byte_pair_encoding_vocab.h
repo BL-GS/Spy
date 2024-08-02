@@ -186,7 +186,7 @@ namespace spy {
 		}
 
 		uint8_t token_id_to_byte([[maybe_unused]] TokenID token_id) const override {
-			spy_assert(false, "Try toe convert token id using unsupported vocab");
+			spy_abort("Try toe convert token id using unsupported vocab");
 			return 0;
 		}
 
@@ -214,7 +214,7 @@ namespace spy {
 					return {};
 
 				default:
-					spy_assert(false, "Unknown model token type: {}", token_type);
+					spy_abort("Unknown model token type: {}", token_type);
 				}
 			}
 			return {};
