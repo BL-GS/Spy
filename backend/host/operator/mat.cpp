@@ -1,28 +1,44 @@
 #include <memory>
+#include <magic_enum_switch.hpp>
+#include <magic_enum_fuse.hpp>
 
 #include "util/shell/logger.h"
+#include "util/align.h"
 #include "number/tensor.h"
-#include "graph/graph.h"
 #include "operator_impl.h"
 #include "simd/vec_dot.h"
 #include "simd/vec_convert.h"
 
 namespace spy::cpu {
 
+    constexpr int64_t QUANTIZE_BLOCK_SIZE = 128;
+
 	struct BufferLatchControlHeader: public BufferControlHeader {
+        /// The remaining unproceeded quantization task
 		std::atomic<int> src1_quantize_counter;
+        /// The remaining unfinished quantization task
 		std::atomic<int> src1_quantize_done;
 
 		BufferLatchControlHeader() = default;
-		BufferLatchControlHeader(int num_task, int num_src1_row):
-			BufferControlHeader(num_task), src1_quantize_counter(num_src1_row), src1_quantize_done(num_src1_row) {}
-		BufferLatchControlHeader(int num_task, int num_src1_row, CPUBackend *backend_ptr, int size):
-			BufferControlHeader(num_task, backend_ptr, size), src1_quantize_counter(num_src1_row), src1_quantize_done(num_src1_row) {}
+
+		BufferLatchControlHeader(int num_task, int num_src1_block):
+			BufferControlHeader(num_task), src1_quantize_counter(num_src1_block), src1_quantize_done(num_src1_block) {}
+
+		BufferLatchControlHeader(int num_task, int num_src1_block, CPUBackend *backend_ptr, int size):
+			BufferControlHeader(num_task, backend_ptr, size), src1_quantize_counter(num_src1_block), src1_quantize_done(num_src1_block) {}
 
 		~BufferLatchControlHeader() override = default;
 	};
 
     inline constexpr NumberType target_buffer_type(NumberType type_0, NumberType type_1) {
+        if (type_0 == type_1) { return type_0; }
+
+        using magic_enum::enum_fuse;
+        switch (enum_fuse(type_0, type_1).value()) {
+        case enum_fuse(NumberType::FP16, NumberType::FP32).value(): return NumberType::FP16;
+        case enum_fuse(NumberType::Q4_0, NumberType::FP32).value(): return NumberType::Q8_0;
+        case enum_fuse(NumberType::Q8_0, NumberType::FP32).value(): return NumberType::Q8_0;
+        }
         return type_0;
     }
 
@@ -42,6 +58,11 @@ namespace spy::cpu {
         const int num_task = ne03 * ne02 * ne11 * ne01;
 
         const NumberType type_mid    = target_buffer_type(type_0, type_1);
+
+        // no need to create a buffer for dequantization
+        if (type_mid == type_1) { return std::make_shared<ControlHeader>(num_task); }
+
+        // a temporary buffer is necessary for dequantizated data
         const int num_src1_row       = shape_1.num_row();
         const size_t buffer_row_size = get_row_size(type_mid, ne10);
         const size_t buffer_size     = num_src1_row * buffer_row_size;
@@ -65,14 +86,7 @@ namespace spy::cpu {
 
 		const size_t num_dst         = shape_res.total_element();
 
-        auto *   header_ptr   = static_cast<BufferLatchControlHeader *>(param.header_ptr.get());
-        const   auto buffer_span   = header_ptr->data_span;
-        uint8_t *buffer_ptr        = buffer_span.data();
-        const   size_t buffer_size = buffer_span.size_bytes();
-
         const auto matmul_without_buffer = [&](){
-            spy_assert(type_0 == type_1, "Expect the operands to be of the same type: {}, {}", type_0, type_1);
-
             const auto dot_func = NumberTypeMapper::product_map([](const auto T_type_0, const auto T_type_1){
                 return Dot<T_type_0, T_type_1>::exec_raw;
             }, type_0, type_1);
@@ -88,19 +102,14 @@ namespace spy::cpu {
                 float *dst_element   = result.get<float>({i01, i11, i02, i03});
                       *dst_element   = dot_func(src0_row, src1_col, ne00);
             }
-
-            if (op_node->input_data(0)->node_prop.layer_id == 0 && op_node->name == "KQV") {
-                for (int64_t i1 = 0; i1 < ne11; ++i1) {
-                    for (int64_t i0 = 0; i0 < 10; ++i0) {
-                        printf("%.3f ", *result.get<float>({i0, i1, 0, 0}));
-                    }
-                    printf("\n");
-                }
-                printf("\n");
-            }
         };
 
         const auto matmul_with_buffer = [&](NumberType type_mid){
+            auto    *   header_ptr     = static_cast<BufferLatchControlHeader *>(param.header_ptr.get());
+            const   auto buffer_span   = header_ptr->data_span;
+            const   size_t buffer_size = buffer_span.size_bytes();
+            uint8_t *buffer_ptr        = buffer_span.data();
+
             const auto dot_func = NumberTypeMapper::product_map([](const auto T_type_0, const auto T_type_1){
                 return Dot<T_type_0, T_type_1>::exec_raw;
             }, type_0, type_mid);
@@ -130,8 +139,8 @@ namespace spy::cpu {
 
             // Compute
             for (size_t col_idx = param.tid; col_idx < num_dst; col_idx += param.concurrency) {
-                const int64_t i03 = col_idx / (ne02 * ne11 * ne01);
-                const int64_t i02 = col_idx % (ne02 * ne11 * ne01) / (ne11 * ne01);
+                const int64_t i03 = col_idx / (ne11 * ne01 * ne02);
+                const int64_t i02 = col_idx % (ne11 * ne01 * ne02) / (ne11 * ne01);
                 const int64_t i11 = col_idx % (ne11 * ne01) / ne01;
                 const int64_t i01 = col_idx % (ne11 * ne01) % ne01;
 
