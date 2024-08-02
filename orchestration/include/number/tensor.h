@@ -226,7 +226,10 @@ namespace spy {
 		T *get() const { return static_cast<T *>(data_ptr); }
 
 		template<class T = void>
-		T *get(const DimensionArray &index_array) const {
+		T *get(DimensionArray index_array) const {
+			// align with data block
+			index_array[0] /= get_block_size(type());
+	
 			DimensionArray offset_array;
 			std::transform( index_array.begin(), index_array.end(), shape.bytes.begin(), 
 				offset_array.begin(), std::multiplies<size_t>()
