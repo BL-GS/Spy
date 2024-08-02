@@ -15,6 +15,11 @@
 #include "perf/listener/exception.h"
 #include "perf/listener/mem.h"
 
+#ifdef SPY_PERFETTO_TRACING
+    #include "perfetto.h"
+    #include "perf/event.h"
+#endif // SPY_PERFETTO_TRACING
+
 namespace spy::perf {
 
 #ifdef _WIN32
@@ -105,11 +110,22 @@ namespace spy::perf {
 
     ProfileRecord MemoryProfiler::profile() {
         const MemoryProfilerInfo info = get_memory_info();
+
+#ifdef SPY_PERFETTO_TRACING
+        using Unit = perfetto::CounterTrack::Unit;
+        {
+            perfetto::CounterTrack physical_memory_track = perfetto::CounterTrack("PhysicalMemory").set_unit(Unit::UNIT_SIZE_BYTES);
+            TRACE_COUNTER(SYSTEM_CATEGORY.data(), physical_memory_track, info.process_used_physical);
+            perfetto::CounterTrack virtual_memory_track = perfetto::CounterTrack("VirtualMemory").set_unit(Unit::UNIT_SIZE_BYTES);
+            TRACE_COUNTER(SYSTEM_CATEGORY.data(), virtual_memory_track, info.process_used_physical);            
+        }
+#endif
+
         return {{
             { "avail_virtual_memory", std::to_string(info.avail_virtual) },
-            { "process_physical_memory", std::to_string(info.process_used_virtual) },
+            { "process_virtual_memory", std::to_string(info.process_used_virtual) },
             { "avail_physical_memory", std::to_string(info.avail_physical) },
-            { "process_virtual_memory", std::to_string(info.process_used_physical) },
+            { "process_physical_memory", std::to_string(info.process_used_physical) },
         }};
     }
 

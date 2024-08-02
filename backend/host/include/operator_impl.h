@@ -5,7 +5,7 @@
 #include "graph/op_node.h"
 #include "operator/operator.h"
 #include "task.h"
-#include "perf/perfetto/trace.h"
+#include "perf/event.h"
 
 namespace spy::cpu {
 

@@ -8,7 +8,7 @@
 #include "llm/model/model.h"
 #include "distributor/distributor.h"
 #include "backend/config.h"
-#include "perf/perfetto/trace.h"
+#include "perf/event.h"
 
 namespace spy {
 
