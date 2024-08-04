@@ -2,7 +2,7 @@
 #include <magic_enum_switch.hpp>
 #include <magic_enum_fuse.hpp>
 
-#include "util/shell/logger.h"
+#include "util/log/logger.h"
 #include "util/align.h"
 #include "number/tensor.h"
 #include "operator_impl.h"

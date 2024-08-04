@@ -14,9 +14,31 @@
 #include <source_location>
 #include <spdlog/spdlog.h>
 
-#include "util/exception.h"
+#include "util/log/exception.h"
 
 namespace spy {
+
+	struct LogParam {
+	public:
+		using Level = spdlog::level::level_enum;
+
+	public:
+		std::string log_level = "info";
+
+	public:
+		Level get_log_level() const {
+			if (log_level == "trace") 	{ return Level::trace; 		}
+			if (log_level == "debug") 	{ return Level::debug; 		}
+			if (log_level == "info") 	{ return Level::info; 		}
+			if (log_level == "warn") 	{ return Level::warn; 		}
+			if (log_level == "error") 	{ return Level::err; 		}
+			if (log_level == "fatal") 	{ return Level::critical; 	}
+			if (log_level == "off")		{ return Level::off; 		}
+
+			spdlog::warn("unknown log level: {}, use debug as default", log_level);
+			return Level::debug;
+		}
+	};
 
 	/*!
 	 * @brief Init the global logger
@@ -29,8 +51,8 @@ namespace spy {
 	 * - 5: fatal
 	 * - 6: off
 	 */
-	inline void init_logger_format(int log_level) {
-		spdlog::set_level(static_cast<spdlog::level::level_enum>(log_level));
+	inline void init_logger_format(const LogParam &context) {
+		spdlog::set_level(context.get_log_level());
 		spdlog::set_pattern("[%^%l%$: %t]: %v"); // level-tid-content
 	}
 
@@ -117,7 +139,7 @@ namespace spy {
 	}
 
 	template<bool T_exception = false, class ...Args>
-	inline constexpr void spy_abort(spdlog::format_string_t<Args...> fmt, Args &&...args, std::source_location loc = std::source_location::current()) {
+	inline constexpr void spy_abort(spdlog::format_string_t<Args...> fmt, Args &&...args) {
 		spdlog::critical("Abort");
 		spdlog::critical(fmt, std::forward<Args>(args)...); 
 		spdlog::critical("System Error: {}", system_error());

@@ -9,7 +9,7 @@
 #include <cstddef>
 #include <string>
 
-#include "util/shell/logger.h"
+#include "util/log/logger.h"
 #include "llm/vocab/type.h"
 
 namespace spy {

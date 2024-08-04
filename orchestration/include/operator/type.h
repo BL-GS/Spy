@@ -9,9 +9,9 @@
 #include <magic_enum.hpp>
 #include <fmt/format.h>
 
-#include "util/exception.h"
+#include "util/log/exception.h"
 #include "util/type/enum.h"
-#include "util/shell/logger.h"
+#include "util/log/logger.h"
 
 namespace spy {
 

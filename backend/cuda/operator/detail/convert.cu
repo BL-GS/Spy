@@ -3,7 +3,7 @@
 #include <cuda_runtime.h>
 #include <magic_enum_fuse.hpp>
 
-#include "util/shell/logger.h"
+#include "util/log/logger.h"
 #include "operator/detail/convert.h"
 
 namespace spy::gpu {

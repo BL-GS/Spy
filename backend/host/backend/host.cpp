@@ -5,7 +5,7 @@
 
 #include <memory>
 
-#include "util/shell/logger.h"
+#include "util/log/logger.h"
 #include "backend/config.h"
 #include "default_backend.h"
 

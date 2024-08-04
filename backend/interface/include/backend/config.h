@@ -10,7 +10,7 @@
 #include <functional>
 #include <unordered_map>
 
-#include "util/shell/logger.h"
+#include "util/log/logger.h"
 #include "util/wrapper/config_table.h"
 #include "backend/type.h"
 #include "operator/type.h"

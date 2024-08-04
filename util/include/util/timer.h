@@ -3,7 +3,7 @@
 #include <cstddef>
 #include <chrono>
 
-#include "util/shell/logger.h"
+#include "util/log/logger.h"
 
 namespace spy {
 

@@ -4,7 +4,7 @@
 #include <sys/socket.h>
 
 #include "gpu_util.h"
-#include "util/shell/logger.h"
+#include "util/log/logger.h"
 
 namespace spy::gpu {
 

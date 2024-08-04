@@ -12,7 +12,7 @@
 #include <cublas.h>
 #include <memory>
 
-#include "util/shell/logger.h"
+#include "util/log/logger.h"
 #include "gpu_util.h"
 #include "gpu_mem.h"
 

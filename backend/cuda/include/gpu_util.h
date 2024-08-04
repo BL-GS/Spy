@@ -18,7 +18,7 @@
 #include <source_location>
 #include <spdlog/spdlog.h>
 
-#include "util/shell/logger.h"
+#include "util/log/logger.h"
 
 namespace spy::gpu {
 

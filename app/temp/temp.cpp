@@ -2,7 +2,7 @@
 #include <fstream>
 #include <string>
 
-#include "util/shell/logger.h"
+#include "util/log/logger.h"
 #include "adapter/adapter.h"
 #include "graph/graph.h"
 #include "graph/dot.h"

@@ -5,7 +5,7 @@
 #include <map>
 #include <magic_enum.hpp>
 
-#include "util/shell/logger.h"
+#include "util/log/logger.h"
 #include "util/type/printable.h"
 
 namespace spy {

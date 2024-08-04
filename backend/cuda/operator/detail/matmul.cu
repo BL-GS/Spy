@@ -1,7 +1,7 @@
 #include <cuda_runtime.h>
 #include <cublas.h>
 
-#include "util/shell/logger.h"
+#include "util/log/logger.h"
 #include "number/number.h"
 #include "gpu_mem.h"
 #include "gpu_util.h"

@@ -2,7 +2,7 @@
 #include <cuda_runtime.h>
 #include <magic_enum_fuse.hpp>
 
-#include "util/shell/logger.h"
+#include "util/log/logger.h"
 #include "number/tensor.h"
 #include "gpu_device.h"
 #include "operator/detail/binary_op.h"

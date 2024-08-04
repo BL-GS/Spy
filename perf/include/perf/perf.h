@@ -2,7 +2,7 @@
 
 #include <vector>
 
-#include "util/shell/logger.h"
+#include "util/log/logger.h"
 #include "perf/listener/listener.h"
 
 namespace spy::perf {

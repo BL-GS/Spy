@@ -1,6 +1,6 @@
 #include <memory>
 
-#include "util/shell/logger.h"
+#include "util/log/logger.h"
 #include "distributor/distributor.h"
 #include "distributor/policy/simple.h"
 

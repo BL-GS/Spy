@@ -9,7 +9,7 @@
 #include <cstring>
 #include <array>
 
-#include "util/shell/logger.h"
+#include "util/log/logger.h"
 #include "backend/config.h"
 
 namespace spy {

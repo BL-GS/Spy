@@ -15,7 +15,7 @@
     #include <concurrentqueue.h>
 #endif
 
-#include "util/shell/logger.h"
+#include "util/log/logger.h"
 #include "task.h"
 #include "abstract_backend.h"
 #include "graph/op_node.h"

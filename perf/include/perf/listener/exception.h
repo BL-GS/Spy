@@ -1,6 +1,6 @@
 #pragma once
 
-#include "util/exception.h"
+#include "util/log/exception.h"
 
 namespace spy::perf {
 

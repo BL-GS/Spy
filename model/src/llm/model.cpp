@@ -1,6 +1,6 @@
 #include <memory>
 
-#include "util/shell/logger.h"
+#include "util/log/logger.h"
 #include "llm/model/llama.h"
 #include "llm/model/model.h"
 

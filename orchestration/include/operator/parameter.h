@@ -2,7 +2,7 @@
 
 #include <optional>
 
-#include "util/shell/logger.h"
+#include "util/log/logger.h"
 
 namespace spy {
 

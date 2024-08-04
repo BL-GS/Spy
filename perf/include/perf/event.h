@@ -26,7 +26,7 @@ namespace spy::perf {
 #include <fstream>
 #include <perfetto.h>
 
-#include "util/shell/logger.h"
+#include "util/log/logger.h"
 
 namespace spy::perf {
 

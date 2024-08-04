@@ -11,7 +11,7 @@
 
 #include "util/type/enum.h"
 #include "util/type/printable.h"
-#include "util/shell/logger.h"
+#include "util/log/logger.h"
 #include "number/number.h"
 
 namespace spy {

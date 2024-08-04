@@ -1,6 +1,6 @@
 #pragma once
 
-#include "util/shell/logger.h"
+#include "util/log/logger.h"
 #include "graph/data_node.h"
 #include "graph/op_node.h"
 #include "graph/graph.h"
