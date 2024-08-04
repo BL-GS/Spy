@@ -1,49 +1,69 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 3.20)
-SET(CMAKE_POLICY_DEFAULT_CMP0126 NEW)
+cmake_minimum_required(VERSION 3.20)
+set(CMAKE_POLICY_DEFAULT_CMP0126 NEW)
 
-PROJECT(spy)
+project(spy)
 
-SET(CMAKE_C_STANDARD 17)
-SET(CMAKE_CXX_STANDARD 20)
+set(CMAKE_C_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 
 IF (CMAKE_BUILD_TYPE STREQUAL Release)
-	ADD_DEFINITIONS(-DNDEBUG)
-ELSE()
-	SET(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-fsanitize=address")
-ENDIF()
+	add_definitions(-DNDEBUG)
+else()
+	set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-fsanitize=address")
+endif()
 
 # Hardware Architecture --------------------------------------------------
 
-INCLUDE(CMakeArch.cmake)
+include(CMakeArch.cmake)
+
+# Options
+option(SPY_APP			"Enable compiling apps"					ON)
+
+option(SPY_TEST			"Enable compiling test suites" 			OFF)
+
+option(SPY_BENCHMARK 	"Enable compiling benchmark suites"		OFF)
 
 # Libraries --------------------------------------------------------------
-FIND_PACKAGE(fmt	 	CONFIG REQUIRED)
-FIND_PACKAGE(spdlog		CONFIG REQUIRED)
-FIND_PACKAGE(magic_enum CONFIG REQUIRED)
-FIND_PACKAGE(argparse 	CONFIG REQUIRED)
-FIND_PACKAGE(unofficial-perfetto CONFIG REQUIRED)
-FIND_PACKAGE(unofficial-concurrentqueue CONFIG REQUIRED)
+find_package(fmt	 	CONFIG REQUIRED)
+find_package(spdlog		CONFIG REQUIRED)
+find_package(magic_enum CONFIG REQUIRED)
+find_package(argparse 	CONFIG REQUIRED)
+find_package(unofficial-perfetto CONFIG REQUIRED)
+find_package(unofficial-concurrentqueue CONFIG REQUIRED)
 
-ADD_DEFINITIONS(-DUNOFFICIAL_CONCURRENTQUEUE)
+add_definitions(-DUNOFFICIAL_CONCURRENTQUEUE)
 
 # Submodules -------------------------------------------------------------
 
 # -- utilities
-ADD_SUBDIRECTORY(${PROJECT_SOURCE_DIR}/util)
-ADD_SUBDIRECTORY(${PROJECT_SOURCE_DIR}/perf)
+add_subdirectory(${PROJECT_SOURCE_DIR}/util)
+add_subdirectory(${PROJECT_SOURCE_DIR}/perf)
 
 # -- storage
-ADD_SUBDIRECTORY(${PROJECT_SOURCE_DIR}/storage)
+add_subdirectory(${PROJECT_SOURCE_DIR}/storage)
 
 # -- orchestration
-ADD_SUBDIRECTORY(${PROJECT_SOURCE_DIR}/orchestration)
+add_subdirectory(${PROJECT_SOURCE_DIR}/orchestration)
 
 # -- model
-ADD_SUBDIRECTORY(${PROJECT_SOURCE_DIR}/model)
+add_subdirectory(${PROJECT_SOURCE_DIR}/model)
 
 # -- backend
-ADD_SUBDIRECTORY(${PROJECT_SOURCE_DIR}/backend)
+add_subdirectory(${PROJECT_SOURCE_DIR}/backend)
 
 # -- apps
-ADD_SUBDIRECTORY(${PROJECT_SOURCE_DIR}/app/cli)
-ADD_SUBDIRECTORY(${PROJECT_SOURCE_DIR}/app/temp)
+if(${SPY_APP})
+	add_subdirectory(${PROJECT_SOURCE_DIR}/app/cli)
+	add_subdirectory(${PROJECT_SOURCE_DIR}/app/temp)
+endif()
+
+# -- test
+if(${SPY_TEST})
+	enable_testing()
+	add_subdirectory(${PROJECT_SOURCE_DIR}/test)
+endif()
+
+# -- benchmark
+if(${SPY_BENCHMARK})
+	add_subdirectory(${PROJECT_SOURCE_DIR}/benchmark)
+endif()

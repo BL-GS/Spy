@@ -1,23 +1,23 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 3.20)
-PROJECT(SpyBackend)
+cmake_minimum_required(VERSION 3.20)
+project(SpyBackend)
 
-ADD_SUBDIRECTORY(${PROJECT_SOURCE_DIR}/interface)
-ADD_SUBDIRECTORY(${PROJECT_SOURCE_DIR}/distributor)
-ADD_SUBDIRECTORY(${PROJECT_SOURCE_DIR}/host)
+add_subdirectory(${PROJECT_SOURCE_DIR}/interface)
+add_subdirectory(${PROJECT_SOURCE_DIR}/distributor)
+add_subdirectory(${PROJECT_SOURCE_DIR}/host)
 
-SET(spy_backend_deps SpyBackendInterface SpyBackendDistributor SpyBackendHost)
+set(spy_backend_deps SpyBackendInterface SpyBackendDistributor SpyBackendHost)
 
-OPTION(SPY_BACKEND_CUDA "Enable backend: GPU"  OFF)
+option(SPY_BACKEND_CUDA "Enable backend: GPU"  OFF)
 IF (${SPY_BACKEND_CUDA})
-	ADD_DEFINITIONS(-DSPY_BACKEND_CUDA)
-	ADD_SUBDIRECTORY(${PROJECT_SOURCE_DIR}/cuda)
-    SET(spy_backend_deps ${spy_backend_deps} SpyBackendCUDA)
+	add_definitions(-DSPY_BACKEND_CUDA)
+	add_subdirectory(${PROJECT_SOURCE_DIR}/cuda)
+    set(spy_backend_deps ${spy_backend_deps} SpyBackendCUDA)
 ENDIF ()
 
 # Project setup
-ADD_LIBRARY(${PROJECT_NAME} INTERFACE)
-TARGET_INCLUDE_DIRECTORIES(${PROJECT_NAME} INTERFACE ${PROJECT_SOURCE_DIR}/include)
-TARGET_LINK_LIBRARIES(${PROJECT_NAME} INTERFACE
+add_library(${PROJECT_NAME} INTERFACE)
+target_include_directories(${PROJECT_NAME} INTERFACE ${PROJECT_SOURCE_DIR}/include)
+target_link_libraries(${PROJECT_NAME} INTERFACE
     # Internal libraries
     SpyUtil
     SpyPerf

@@ -1,11 +1,11 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 3.20)
-PROJECT(SpyStorage)
+cmake_minimum_required(VERSION 3.20)
+project(SpyStorage)
 
-FILE(GLOB_RECURSE source_files ${PROJECT_SOURCE_DIR}/src/*.cpp)
+file(GLOB_RECURSE source_files ${PROJECT_SOURCE_DIR}/src/*.cpp)
 
-ADD_LIBRARY(${PROJECT_NAME} STATIC ${source_files})
-TARGET_INCLUDE_DIRECTORIES(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR}/include)
-TARGET_LINK_LIBRARIES(${PROJECT_NAME} PUBLIC
+add_library(${PROJECT_NAME} STATIC ${source_files})
+target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR}/include)
+target_link_libraries(${PROJECT_NAME} PUBLIC
     # Internal libraries
     SpyUtil
     SpyOrchestration
