@@ -23,6 +23,11 @@ namespace spy::perf {
 
 #ifdef _WIN32
 
+    ProfileRecord MemoryProfiler::get_hardware_info() const { return {}; }
+
+    void MemoryProfiler::start() { /* nothing to do */ }
+
+    ProfileRecord MemoryProfiler::profile() { return {}; }
 
 #elif __linux__
 

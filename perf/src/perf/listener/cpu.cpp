@@ -9,6 +9,12 @@ namespace spy::perf {
 
 #ifdef _WIN32
 
+    ProfileRecord ProcessorProfiler::get_hardware_info() const { return {}; }
+
+    void ProcessorProfiler::start() { }
+
+    ProfileRecord ProcessorProfiler::profile() { return {}; }
+
 #elif __linux__
 
     static constexpr std::string_view STAT_FILENAME = "/proc/stat";
