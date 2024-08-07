@@ -6,11 +6,11 @@
 
 namespace spy {
 
-    class AbstractFileAdapter {
+    class FileAdapter {
     public:
-        AbstractFileAdapter() = default;
+        FileAdapter() = default;
 
-        virtual ~AbstractFileAdapter() = default;
+        virtual ~FileAdapter() = default;
 
     public:
         /*!

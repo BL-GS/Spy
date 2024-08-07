@@ -9,7 +9,7 @@ namespace spy {
 	/// 
 	/// @brief An file adapter for gguf files
 	/// 
-	class GGUFAdapter final: public AbstractFileAdapter {
+	class GGUFAdapter final: public FileAdapter {
 	public:
 		GGUFAdapter() = default;
 

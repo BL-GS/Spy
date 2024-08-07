@@ -10,12 +10,12 @@ namespace spy::cpu {
 	struct OperatorEnvParam;
 	struct ControlHeader;
 
-    class CPUBackend: public AbstractBackend {
+    class CPUBackend: public Backend {
 	public:
 		using TaskFunc = OperatorResult (*)(CPUBackend *, const OperatorEnvParam &, OperatorNode *);
 		
 	public:
-		CPUBackend(): AbstractBackend(BackendType::Host) {}
+		CPUBackend(): Backend(BackendType::Host) {}
 
 		~CPUBackend() noexcept override = default;
 

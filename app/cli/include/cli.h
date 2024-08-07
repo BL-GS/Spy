@@ -16,12 +16,12 @@ namespace spy {
     public:
         /* Model Loader */
         std::unique_ptr<ModelLoader>    loader_ptr;
-        std::unique_ptr<AbstractModel>  model_ptr;
+        std::unique_ptr<Model>  model_ptr;
         std::unique_ptr<Sampler>        sampler_ptr;
         /* Graph Constructor and Executor */
         GraphStorage graph_storage;
         Graph        graph;
-        std::unique_ptr<AbstractGraphDistributor> distributor_ptr;
+        std::unique_ptr<GraphDistributor> distributor_ptr;
         /* Profiler */
         PerformanceTimer perf_timer;
 
@@ -53,7 +53,7 @@ namespace spy {
         ~AutoModelGenerator() noexcept = default;
 
     public:
-        void add_backend(AbstractBackend *backend_ptr, std::string_view policy) {
+        void add_backend(Backend *backend_ptr, std::string_view policy) {
             distributor_ptr->add_backend(backend_ptr, policy);
         }
 

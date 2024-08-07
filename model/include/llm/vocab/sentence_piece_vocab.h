@@ -19,7 +19,7 @@
 
 namespace spy {
 
-	struct SentencePieceVocab: AbstractVocab {
+	struct SentencePieceVocab: Vocab {
 	protected:
 		struct LLMBigram {
 		public:
@@ -47,7 +47,7 @@ namespace spy {
 		std::map<std::string, std::pair<int, int>> rev_merge;
 
 	public:
-		SentencePieceVocab(const ModelMetaContext &context): AbstractVocab(context) {
+		SentencePieceVocab(const ModelMetaContext &context): Vocab(context) {
 			vocab_type = ModelVocabType::SentencePiece;
 			init(context);
 		}

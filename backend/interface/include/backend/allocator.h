@@ -112,12 +112,12 @@ namespace spy {
 		static_assert(MIN_ALLOC_SIZE > sizeof(void *));
 
 	private:
-		AbstractBackend *backend_ptr_;
+		Backend *backend_ptr_;
 		size_t total_size_;
 		std::array<Page *, NUM_BUCKET> page_bucket_;
 
 	public:
-		SimpleAllocator(AbstractBackend *backend_ptr) : backend_ptr_(backend_ptr), total_size_(0) {
+		SimpleAllocator(Backend *backend_ptr) : backend_ptr_(backend_ptr), total_size_(0) {
 			page_bucket_.fill(nullptr);
 
 			for (size_t bucket_idx = 0; bucket_idx < NUM_BUCKET; ++bucket_idx) {

@@ -17,7 +17,6 @@ macro(add_spy_benchmark BENCHMARK_NAME)
         SpyBackend
         # External libraries
         benchmark::benchmark
-        benchmark::benchmark_main
     )
 endmacro()
 

@@ -9,7 +9,7 @@
 
 namespace spy {
 
-    using FileAdapterPointer = std::unique_ptr<AbstractFileAdapter>;
+    using FileAdapterPointer = std::unique_ptr<FileAdapter>;
 
     FileAdapterPointer FileAdapterFactory::build_file_adapter(std::string_view type) {
         if (type == "gguf") {

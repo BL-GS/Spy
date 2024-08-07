@@ -46,7 +46,7 @@ namespace spy {
         uint32_t        num_vocab;
     };
 
-    class AbstractModel {
+    class Model {
 
     protected:
         HyperParam                      hyper_param_;
@@ -57,9 +57,9 @@ namespace spy {
 
 
     public:
-        explicit AbstractModel(const HyperParam &hyper_param): hyper_param_(hyper_param) {}
+        explicit Model(const HyperParam &hyper_param): hyper_param_(hyper_param) {}
 
-        virtual ~AbstractModel() = default;
+        virtual ~Model() = default;
 
     public:
         virtual void init(ModelMetaContext &context) {

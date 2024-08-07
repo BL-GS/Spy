@@ -12,10 +12,10 @@ namespace spy {
 
     class GraphScheduler {
 	protected:
-		AbstractBackend *backend_ptr_;
+		Backend *backend_ptr_;
 
 	public:
-		GraphScheduler(AbstractBackend *backend_ptr): backend_ptr_(backend_ptr) {}
+		GraphScheduler(Backend *backend_ptr): backend_ptr_(backend_ptr) {}
 
         virtual ~GraphScheduler() noexcept = default;
 
@@ -32,7 +32,7 @@ namespace spy {
 		/*!
 		 * @brief Distribute the scheduler dynamically
 		 */
-		static std::unique_ptr<GraphScheduler> build_scheduler(std::string_view name, AbstractBackend *backend_ptr);
+		static std::unique_ptr<GraphScheduler> build_scheduler(std::string_view name, Backend *backend_ptr);
 	};
     
 } // namespace spy

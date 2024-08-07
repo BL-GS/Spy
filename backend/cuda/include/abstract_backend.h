@@ -9,7 +9,7 @@ namespace spy::gpu {
 
 	void print_cuda_devices();
 
-	class GPUBackend: public AbstractBackend {
+	class GPUBackend: public Backend {
 	public:
 		using TaskFunc = OperatorStatus (*)(GPUBackend *, const OperatorEnvParam &);
 

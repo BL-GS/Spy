@@ -1,9 +1,6 @@
 #pragma once
 
 #include <atomic>
-#include <memory>
-#include <any>
-#include <condition_variable>
 
 namespace spy {
 

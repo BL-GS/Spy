@@ -23,7 +23,7 @@ namespace spy {
 		std::vector<LLAMALayer> 	layers;
 	};
 
-	class LLAMAModel final : public AbstractModel, GraphBuilder {
+	class LLAMAModel final : public Model, GraphBuilder {
 	public:
 		static constexpr std::string_view MODEL_ARCH = "llama";
 
@@ -47,13 +47,13 @@ namespace spy {
 		std::vector<float>  kq_mask_;
 
 	public:
-		LLAMAModel(const HyperParam &hyper_param): AbstractModel(hyper_param) { }
+		LLAMAModel(const HyperParam &hyper_param): Model(hyper_param) { }
 		
 		~LLAMAModel() noexcept override = default;
 
 	protected: /* Initialization */
 		void init_metadata(ModelMetaContext &context) override {
-			AbstractModel::init_metadata(context);
+			Model::init_metadata(context);
 
 			metadata_.ffn_norm_rms_eps  = context.find_gguf_value(LLMKey::ATTENTION_LAYERNORM_RMS_EPS).get_value<float>();
 
@@ -62,7 +62,7 @@ namespace spy {
 		}
 
 		void init_hyper_param(ModelMetaContext &context) override {
-			AbstractModel::init_hyper_param(context);
+			Model::init_hyper_param(context);
 
 			hyper_param_.rope_type = RopeType::Norm;
 		}

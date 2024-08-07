@@ -1,12 +1,14 @@
 #include <string_view>
 
+#define BACKEND_SCHEDULER_HEADER_MACRO
+
 #include "backend/config.h"
-#include "scheduler/policy/default.h"
 #include "scheduler/scheduler.h"
+#include "scheduler/default_scheduler.h"
 
 namespace spy {
 
-    std::unique_ptr<GraphScheduler> GraphSchedulerBuilder::build_scheduler(std::string_view name, AbstractBackend *backend_ptr) {
+    std::unique_ptr<GraphScheduler> GraphSchedulerBuilder::build_scheduler(std::string_view name, Backend *backend_ptr) {
         if (name == "greedy") {
             return std::make_unique<DefaultGraphScheduler>(backend_ptr);
         }

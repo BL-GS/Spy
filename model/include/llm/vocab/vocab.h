@@ -18,7 +18,7 @@ namespace spy {
     class Tokenizer {
 
     private:
-        std::unique_ptr<AbstractVocab> vocab_;
+        std::unique_ptr<Vocab> vocab_;
 
     public:
         Tokenizer(ModelVocabType vocab_type, const ModelMetaContext &context) {
@@ -38,7 +38,7 @@ namespace spy {
         }
 
     public:
-        const std::unique_ptr<AbstractVocab> &get_vocab() const { return vocab_; }
+        const std::unique_ptr<Vocab> &get_vocab() const { return vocab_; }
 
 		TokenID get_special_bos_id() const { return vocab_->special_bos_id; }
 		TokenID get_special_eos_id() const { return vocab_->special_eos_id; }

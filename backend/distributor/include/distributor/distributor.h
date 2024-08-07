@@ -5,18 +5,18 @@
 
 namespace spy {
 
-    class AbstractBackend;
+    class Backend;
     class Graph;
     class ModelLoader;
 
-    class AbstractGraphDistributor {
+    class GraphDistributor {
     protected:
         ModelLoader *loader_ptr_ = nullptr;
 
     public:
-        AbstractGraphDistributor(ModelLoader *loader_ptr): loader_ptr_(loader_ptr) {}
+        GraphDistributor(ModelLoader *loader_ptr): loader_ptr_(loader_ptr) {}
 
-        virtual ~AbstractGraphDistributor() noexcept = default;
+        virtual ~GraphDistributor() noexcept = default;
 
     public:
         /*!
@@ -24,7 +24,7 @@ namespace spy {
          * @param[in] backend_ptr The pointer to the backend.
          * @return true on success; otherwise failed.
          */
-        virtual bool add_backend(AbstractBackend *backend_ptr, const std::string_view sche_policy) = 0;
+        virtual bool add_backend(Backend *backend_ptr, const std::string_view sche_policy) = 0;
 
         /*!
          * @brief Prepare graph for every backend
@@ -46,7 +46,7 @@ namespace spy {
          * @param[in] policy The name of policy (greedy).
          * @note Please infer to the source code of policy implementation for the detail of effect.
          */
-        static std::unique_ptr<AbstractGraphDistributor> build_graph_distributor(std::string_view policy, ModelLoader *loader_ptr);
+        static std::unique_ptr<GraphDistributor> build_graph_distributor(std::string_view policy, ModelLoader *loader_ptr);
 
     };
 

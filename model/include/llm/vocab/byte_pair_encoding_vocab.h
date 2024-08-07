@@ -12,7 +12,7 @@
 
 namespace spy {
 
-	struct BytePairEncodingVocab final: AbstractVocab {
+	struct BytePairEncodingVocab final: Vocab {
 	protected:
 		struct LLMBigram {
 		public:
@@ -42,7 +42,7 @@ namespace spy {
 		std::map<std::pair<std::string, std::string>, int> 	bpe_ranks;
 
 	public:
-		BytePairEncodingVocab(const ModelMetaContext &context): AbstractVocab(context) {
+		BytePairEncodingVocab(const ModelMetaContext &context): Vocab(context) {
 			vocab_type = ModelVocabType::BytePairEncoding;
 		}
 

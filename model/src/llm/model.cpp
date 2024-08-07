@@ -6,8 +6,8 @@
 
 namespace spy {
 
-    std::unique_ptr<AbstractModel> ModelBuilder::build_model(ModelMetaContext &context, const HyperParam &hyper_param) {
-        std::unique_ptr<AbstractModel> model_ptr;
+    std::unique_ptr<Model> ModelBuilder::build_model(ModelMetaContext &context, const HyperParam &hyper_param) {
+        std::unique_ptr<Model> model_ptr;
         const std::string_view model_type = context.arch_name;
 
         if (model_type == "llama") {

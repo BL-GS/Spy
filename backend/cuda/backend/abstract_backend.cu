@@ -15,7 +15,7 @@
 
 namespace spy::gpu {
 
-	GPUBackend::GPUBackend(int device_id): AbstractBackend(BackendType::Device), metadata_(device_id) {}
+	GPUBackend::GPUBackend(int device_id): Backend(BackendType::Device), metadata_(device_id) {}
 
 	size_t GPUBackend::get_max_memory_capacity() const {
 		return metadata_.get_max_memory_capacity();

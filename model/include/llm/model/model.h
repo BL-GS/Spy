@@ -9,7 +9,7 @@ namespace spy {
 
     struct ModelBuilder {
     public:
-        static std::unique_ptr<AbstractModel> build_model(ModelMetaContext &context, const HyperParam &hyper_param);
+        static std::unique_ptr<Model> build_model(ModelMetaContext &context, const HyperParam &hyper_param);
     };
 
 } // namespace spy

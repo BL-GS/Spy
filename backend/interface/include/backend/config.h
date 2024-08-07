@@ -28,14 +28,14 @@ namespace spy {
 		Unsupport
 	};
 
-	class AbstractBackend {
+	class Backend {
 	private:
 		BackendType backend_type_;
 
 	public:
-		AbstractBackend(BackendType backend_type): backend_type_(backend_type) {}
+		Backend(BackendType backend_type): backend_type_(backend_type) {}
 
-		virtual ~AbstractBackend() = default;
+		virtual ~Backend() = default;
 
 	public:
 		BackendType type() const { return backend_type_; }
@@ -97,7 +97,7 @@ namespace spy {
 	class BackendFactory {
 	public:
 		using BackendConfiguration = ConfigTable;
-		using BackendGeneratorFunc = std::unique_ptr<AbstractBackend>(*)(const BackendConfiguration &);
+		using BackendGeneratorFunc = std::unique_ptr<Backend>(*)(const BackendConfiguration &);
 
 	private:
 		std::unordered_map<std::string, BackendGeneratorFunc> generator_map_;
@@ -106,7 +106,7 @@ namespace spy {
 		BackendFactory();
 
 	public:
-		std::unique_ptr<AbstractBackend> init_backend(const std::string &backend_name, const BackendConfiguration &config) {
+		std::unique_ptr<Backend> init_backend(const std::string &backend_name, const BackendConfiguration &config) {
 			const auto iter = generator_map_.find(backend_name);
 			if (iter == generator_map_.end()) {
 				spy_fatal("Failed to find backend with name: {}", backend_name);

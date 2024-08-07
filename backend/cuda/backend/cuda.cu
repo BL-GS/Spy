@@ -14,7 +14,7 @@ namespace spy::gpu {
 
         const std::string default_backend_name = BackendFactory::make_backend_name("gpu", "default");
         factory.add_backend_map(default_backend_name, 
-            +[](const BackendConfiguration &config) -> std::unique_ptr<AbstractBackend> {
+            +[](const BackendConfiguration &config) -> std::unique_ptr<Backend> {
                 return std::make_unique<DefaultGPUBackend>(config);
             }
         );        

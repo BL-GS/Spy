@@ -15,7 +15,7 @@
 
 namespace spy {
 
-	struct AbstractVocab {
+	struct Vocab {
 	public:
 		/* Special ID definition */
 		TokenID special_bos_id;
@@ -44,14 +44,14 @@ namespace spy {
 		std::map<std::string, TokenID> special_tokens_cache;
 
 	public:
-		AbstractVocab(const ModelMetaContext &context):
+		Vocab(const ModelMetaContext &context):
 			special_bos_id(1), special_eos_id(2), special_unk_id(0), special_sep_id(-1), special_pad_id(-1),
 			linefeed_id(13), special_prefix_id(32007), special_middle_id(32009), special_suffix_id(32008), special_eot_id(32010),
 			special_add_bos(VocabSpecialAdd::Unknown), special_add_eos(VocabSpecialAdd::Unknown), add_space_prefix(true),
 			vocab_type(ModelVocabType::SentencePiece), num_vocab(0) {
 		}
 
-		virtual ~AbstractVocab() noexcept = default;
+		virtual ~Vocab() noexcept = default;
 
 	protected: /* Initialization */
 		void init(const ModelMetaContext &context) {

@@ -14,9 +14,9 @@
 
 namespace spy {
 
-	struct WordPieceVocab final: AbstractVocab {
+	struct WordPieceVocab final: Vocab {
 	public:
-		WordPieceVocab(const ModelMetaContext &context): AbstractVocab(context) {
+		WordPieceVocab(const ModelMetaContext &context): Vocab(context) {
 			vocab_type = ModelVocabType::WordPiece;
 		}
 
