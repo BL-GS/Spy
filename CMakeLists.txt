@@ -54,7 +54,6 @@ add_subdirectory(${PROJECT_SOURCE_DIR}/backend)
 # -- apps
 if(${SPY_APP})
 	add_subdirectory(${PROJECT_SOURCE_DIR}/app/cli)
-	add_subdirectory(${PROJECT_SOURCE_DIR}/app/temp)
 endif()
 
 # -- test
