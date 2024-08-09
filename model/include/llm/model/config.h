@@ -44,6 +44,11 @@ namespace spy {
 			logits.clear();
 		}
 
+		void reset_all() {
+			acc_token = 0;
+			reset();
+		}
+
         void add(TokenID token_id, int32_t pos, std::vector<int32_t> &&seq_ids, bool enable_logit) {
             token_id_array.push_back(token_id);
             positions.push_back(pos);

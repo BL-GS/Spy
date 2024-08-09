@@ -58,7 +58,7 @@ namespace spy {
         }
 
         template<class T_Stream>
-        void generate(const std::string &prompt, size_t max_num_predict, T_Stream &stream) {
+        void generate(const std::string &prompt, size_t max_num_predict, T_Stream &stream, bool warmup = true) {
             using namespace perf;
 
             const auto &model_metadata = model_ptr->get_info();
@@ -74,6 +74,13 @@ namespace spy {
             model_ptr->build_graph(loader_ptr->context, graph, model_io);
 
             distributor_ptr->prepare_graph(std::addressof(graph));
+
+            if (warmup) {
+                spy_info("warming up");
+
+                distributor_ptr->execute(); 
+            }
+
 
             stream << prompt << std::flush;
 
