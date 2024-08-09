@@ -19,7 +19,7 @@ namespace spy::cpu {
 	public:
 		float operator()(const LhsBlock *lhs, const RhsBlock *rhs, size_t num) { return exec(lhs, rhs, num); }
 
-		static float exec(const LhsBlock *lhs, const RhsBlock *rhs, size_t num) {
+		static float exec([[maybe_unused]]const LhsBlock *lhs, [[maybe_unused]]const RhsBlock *rhs, [[maybe_unused]]size_t num) {
 			spy_abort("Unimplemented dot product: {} - {}", get_type_name(T_lhs_type), get_type_name(T_rhs_type));
 			return 0.0F;
 		}
@@ -139,7 +139,7 @@ namespace spy::cpu {
 			FP16::block_t ax[FP16::block_arr];
 			FP16::block_t ay[FP16::block_arr];
 
-			int i = 0;
+			size_t i = 0;
 			for (; i + FP16::block_step < num; i += FP16::block_step) {
 				for (int j = 0; j < FP16::block_arr; j++) {
 					ax[j]  = FP16::block_load(lhs + i + j * FP16::block_len);
@@ -175,13 +175,9 @@ namespace spy::cpu {
 		static float exec(const LhsBlock *lhs, const RhsBlock *rhs, size_t num) {
 			using namespace simd;
 
-			const int outer_end = num / FP32::block_step;
-			const int inner_end = FP32::block_step / FP32::block_len;
-
 			FP32::block_t sum[FP32::block_arr] = { FP32::block_zero() };
-			int i = 0;
+			size_t i = 0;
 			for (; i + FP32::block_step < num; i += FP32::block_step) {
-				#pragma unroll
 				for (int k = 0; k < FP32::block_arr; ++k) {
 					const FP32::block_t x_blk   = FP32::block_load(lhs + i + k * FP32::block_len);
 					const FP32::block_t y_blk   = FP32::block_load(rhs + i + k * FP32::block_len);
@@ -218,13 +214,9 @@ namespace spy::cpu {
 		static float exec(const LhsBlock *lhs, const RhsBlock *rhs, size_t num) {
 			using namespace simd;
 
-			const int outer_end = num / FP32::block_step;
-			const int inner_end = FP32::block_step / FP32::block_len;
-
 			FP32::block_t sum[FP32::block_arr] = { FP32::block_zero() };
-			int i = 0;
+			size_t i = 0;
 			for (; i + FP32::block_step < num; i += FP32::block_step) {
-				#pragma unroll
 				for (int k = 0; k < FP32::block_arr; ++k) {
 					const FP32::block_t x_blk   = FP32::block_load(lhs + i + k * FP32::block_len);
 					const FP32::block_t y_blk   = FP32::block_load(rhs + i + k * FP32::block_len);

@@ -26,22 +26,42 @@ namespace spy {
         DataNode *output_logits = nullptr;
     };
 
-    struct InputBlock final: public GraphBuilder {
+    struct InputBlockData {
         /* Hyper param */
         int64_t num_token;
         int64_t num_context;
 
-        InputWeight weight;
+        InputWeight weight;        
+    };
+
+    struct InputBlock final: public GraphBuilder, InputBlockData {
+        InputBlock() = default;
+
+        InputBlock(const InputBlockData &data): InputBlockData(data) {}
+
+        InputBlock(InputBlock &&other) = default;
+
+        InputBlock &operator= (InputBlock &&other) = default;
 
         InputBlockResult connect_input(Graph &graph);
     };
 
-	struct OutputBlock final: public GraphBuilder {
+    struct OutputBlockData {
 		NormRMSParam result_norm_param;
 
         OutputWeight weight;
 
 		DataNode *logit_out;
+    };
+
+	struct OutputBlock final: public GraphBuilder, OutputBlockData {
+        OutputBlock() = default;
+
+        OutputBlock(const OutputBlockData &data): OutputBlockData(data) {}
+
+        OutputBlock(OutputBlock &&other) = default;
+
+        OutputBlock &operator= (OutputBlock &&other) = default;
 
 		OutputBlockResult connect_output(Graph &graph) const;
 	};

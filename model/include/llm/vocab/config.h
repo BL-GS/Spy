@@ -41,7 +41,6 @@ namespace spy {
 		FragmentBufferVariant(const std::string &new_raw_text, int64_t new_offset, int64_t new_length):
 				type(FragmentBufferType::RawText), token_id(-1),
 				raw_text(new_raw_text), offset(new_offset), length(new_length) {
-			spy_assert(offset >= 0);
 			spy_assert(length >= 1);
 			spy_assert(offset + length <= raw_text.length());
 		}

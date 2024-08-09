@@ -6,12 +6,6 @@ project(spy)
 set(CMAKE_C_STANDARD 17)
 set(CMAKE_CXX_STANDARD 20)
 
-IF (CMAKE_BUILD_TYPE STREQUAL Release)
-	add_definitions(-DNDEBUG)
-else()
-	set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-fsanitize=address")
-endif()
-
 # Hardware Architecture --------------------------------------------------
 
 include(CMakeArch.cmake)
@@ -22,6 +16,23 @@ option(SPY_APP			"Enable compiling apps"					ON)
 option(SPY_TEST			"Enable compiling test suites" 			OFF)
 
 option(SPY_BENCHMARK 	"Enable compiling benchmark suites"		OFF)
+
+
+# Flags -----------------------------------------------------------------
+
+macro(add_cxx_flag NEW_FLAGS)
+	set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} ${NEW_FLAGS})	
+endmacro(add_cxx_flag)
+
+if(CMAKE_BUILD_TYPE STREQUAL DEBUG)
+	add_cxx_flag("-fsanitize=address")
+else()
+	add_definitions(-DNDEBUG)
+endif()
+
+add_cxx_flag("-Wall -Wextra")
+
+set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
 
 # Libraries --------------------------------------------------------------
 find_package(fmt	 	CONFIG REQUIRED)

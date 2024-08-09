@@ -84,11 +84,10 @@ namespace spy {
     }
 
     void LLAMAModel::build_graph(ModelMetaContext &context, Graph &graph, ModelIO &model_io) {
-        const uint32_t num_layer 		 = metadata_.num_layer;
+        const int32_t num_layer 		  = metadata_.num_layer;
 
         const int64_t num_token           = model_io.token_id_array.size();
         const int64_t num_past_token      = model_io.acc_token - num_token;
-        const int64_t num_vocab           = metadata_.num_vocab;
         const int64_t num_head            = metadata_.num_head;
         const int64_t num_head_kv         = metadata_.num_head_kv;
         const int64_t num_embedding_head  = metadata_.num_embedding_head_v;
@@ -123,7 +122,7 @@ namespace spy {
         // Set constant tensor
         build_input(context, graph);
         build_output(context, graph);
-        for (int layer_id = 0; layer_id < num_layer; ++layer_id) {
+        for (int32_t layer_id = 0; layer_id < num_layer; ++layer_id) {
             build_attention(context, graph, layer_id);
             build_ffn(context, graph, layer_id);
         }			
@@ -132,24 +131,12 @@ namespace spy {
          * Set up initialized input
          */
 
-        const DataNodeProperty inout_prop {
-            .node_type = DataNodeType::Dynamic,
-            .layer_id  = -1,
-            .expert_id = -1
-        };
-
-        const DataNodeProperty default_prop {
-            .node_type = DataNodeType::Dynamic,
-            .layer_id  = -1,
-            .expert_id = -1
-        };
-
         /* Set input */
-        input_block = {
+        input_block = InputBlock{ {
             .num_token   = num_token,
             .num_context = num_context,
             .weight      = { .token_embedding = pre_train.token_embedding }
-        };
+        } };
         auto [input_token_id, input_embedding, input_pos, KQ_mask] = input_block.connect_input(graph);
 
         /* Connection */
@@ -165,17 +152,17 @@ namespace spy {
                 .expert_id = -1
             };
 
-            KVCache &kv_cache_block = kv_cache_array.emplace_back(KVCache {
+            KVCache &kv_cache_block = kv_cache_array.emplace_back(KVCache {{
                 .num_embedding_k_gqa = num_embedding_k_gqa,
                 .num_embedding_v_gqa = num_embedding_v_gqa,
                 .num_context         = num_context,
                 .k_cache_type        = KVCacheType,
                 .v_cache_type        = KVCacheType,
                 .num_past_token      = 0
-            });
+            }});
             kv_cache_block.connect_KVCache(graph, layer_id);
 
-            MultiHeadAttentionBlock &cur_attention_block = attention_block_array.emplace_back(MultiHeadAttentionBlock{
+            MultiHeadAttentionBlock &cur_attention_block = attention_block_array.emplace_back(MultiHeadAttentionBlock{{
                 /* Hyper param */
                 .norm_rms_param		 = NormRMSParam{ .eps = metadata_.ffn_norm_rms_eps },
                 .rope_param_draft	 = rope_context,
@@ -200,7 +187,7 @@ namespace spy {
                 /* Input */
                 .input_embedding = input_embedding,
                 .input_pos		 = input_pos
-            });
+            }});
             DataNode *attn_out = cur_attention_block.connect_attention(graph, layer_id, -1, true);
 
             /* Feed-forward network */
@@ -208,11 +195,11 @@ namespace spy {
                 layer_prop,
                 attn_out, input_embedding
             );
-            FFNBlock &cur_ffn_block = ffn_block_array.emplace_back(FFNBlock{
+            FFNBlock &cur_ffn_block = ffn_block_array.emplace_back(FFNBlock{{
                 .norm_rms_param	  = NormRMSParam{ .eps = metadata_.ffn_norm_rms_eps },
                 .weight			  = layer,
                 .ffn_input 		  = ffn_inp					
-            });
+            }});
             DataNode *ffn_out  = cur_ffn_block.connect_ffn(graph, layer_id);
 
             /* Output */
@@ -224,14 +211,14 @@ namespace spy {
             input_embedding = logit_out;
         }
 
-        output_block = {
+        output_block = OutputBlock{{
             .result_norm_param = NormRMSParam{ .eps = metadata_.ffn_norm_rms_eps },
             .weight = { 
                 .output_norm = pre_train.output_norm,
                 .output_weight = pre_train.output_weight
             },
             .logit_out = input_embedding
-        };
+        }};
         auto [output_logits] = output_block.connect_output(graph);
 
         /* Connect IO */
@@ -262,8 +249,8 @@ namespace spy {
             spy_assert(num_past_token + num_token <= num_context, "the number of tokens excesses the length of context");
             kq_mask_.resize(num_token * num_context, -INFINITY);
             kq_mask_.assign(num_token * num_context, -INFINITY);
-            for (size_t i_token = 0; i_token < num_token; ++i_token) {
-                for (size_t j_token = 0; j_token <= i_token + num_past_token; ++j_token) {
+            for (int64_t i_token = 0; i_token < num_token; ++i_token) {
+                for (int64_t j_token = 0; j_token <= i_token + num_past_token; ++j_token) {
                     kq_mask_[num_context * i_token + j_token] = 0.0F;
                 }
             }
@@ -310,8 +297,8 @@ namespace spy {
             spy_assert(num_past_token + num_token <= num_context, "the number of tokens excesses the length of context");
             kq_mask_.resize(num_token * num_context, -INFINITY);
             kq_mask_.assign(num_token * num_context, -INFINITY);
-            for (size_t i_token = 0; i_token < num_token; ++i_token) {
-                for (size_t j_token = 0; j_token <= i_token + num_past_token; ++j_token) {
+            for (int64_t i_token = 0; i_token < num_token; ++i_token) {
+                for (int64_t j_token = 0; j_token <= i_token + num_past_token; ++j_token) {
                     kq_mask_[num_context * i_token + j_token] = 0.0F;
                 }
             }

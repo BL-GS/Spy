@@ -87,7 +87,7 @@ namespace spy {
 			std::fill(bytes.begin() + dim, bytes.end(), elements[dim - 1] * num_byte[dim - 1]);
 		}
 
-		Shape(const std::initializer_list<int64_t> &num_element, const std::initializer_list<size_t> &num_byte, const NumberType number_type):
+		Shape(const std::initializer_list<int64_t> &num_element, const std::initializer_list<int64_t> &num_byte, const NumberType number_type):
 				number_type(number_type), dim(num_element.size()), elements{0}, bytes{0} {
 			spy_assert(dim <= MAX_DIM, "The dimension should be within the range (0, {}] (cur: {})", MAX_DIM, dim);
 
@@ -132,9 +132,9 @@ namespace spy {
 		/*!
 		 * @brief Get the total size of tensor
 		 */
-		size_t total_size() 	const { 
+		int64_t total_size() 	const { 
 			const size_t block_size = get_block_size(number_type);
-			size_t size = 0;
+			int64_t size = 0;
 			size = bytes[0] * elements[0] / block_size;
 			for (uint32_t i = 1; i < dim; ++i) { size += bytes[i] * (elements[i] - 1); }
 			return size;
@@ -143,32 +143,32 @@ namespace spy {
 		/*!
 		 * @brief Get the total size of tensor
 		 */
-		size_t row_size() 		const { return get_type_size(number_type) * elements[0] / get_block_size(number_type); }
+		int64_t row_size() 		const { return get_type_size(number_type) * elements[0] / get_block_size(number_type); }
 
 		/*!
 		 * @brief Get the total number of elements
 		 */
-		size_t total_element() 	const { return std::accumulate(elements.begin(), elements.end(), 1, std::multiplies<size_t>()); }
+		int64_t total_element() 	const { return std::accumulate(elements.begin(), elements.end(), 1, std::multiplies<int64_t>()); }
 
 		/*!
 		 * @brief Get the accumulated number of elements in the specific dimension
 		 */
-		size_t acc_element(size_t acc_dim)	const { return std::accumulate(elements.begin(), elements.begin() + acc_dim, 1, std::multiplies<size_t>()); }
+		int64_t acc_element(uint32_t acc_dim)	const { return std::accumulate(elements.begin(), elements.begin() + acc_dim, 1, std::multiplies<int64_t>()); }
 
 		/*
 		 * @brief Get the total number of element in the sub-tensor
 		 */
-		size_t num_sub_tensor(size_t sub_dim) const { return std::accumulate(elements.begin() + sub_dim, elements.end(), 1, std::multiplies<size_t>()); }
+		int64_t num_sub_tensor(uint32_t sub_dim) const { return std::accumulate(elements.begin() + sub_dim, elements.end(), 1, std::multiplies<int64_t>()); }
 
 		/*!
 		 * @brief Get the number of rows in tensor
 		 */
-		size_t num_row() const { return num_sub_tensor(1); }
+		int64_t num_row() const { return num_sub_tensor(1); }
 
 		/*!
 		 * @brief Get the total number of block
 		 */
-		size_t total_block() const { return total_element() / get_block_size(number_type); }
+		int64_t total_block() const { return total_element() / get_block_size(number_type); }
 
 	public: /* View */
 		/*!
@@ -244,12 +244,12 @@ namespace spy {
 	public: /* Shape Information */
 		const Shape &	get_shape()       const { return shape; 					}
 		NumberType  	type() 			  const { return shape.number_type; 		}
-		size_t      	dim()         	  const { return shape.dim; 				}
+		uint32_t      	dim()         	  const { return shape.dim; 				}
 		DimensionArray  elements()	  	  const { return shape.elements; 			}
 		DimensionArray  bytes()	  		  const { return shape.bytes; 				}
-		size_t			total_size()	  const { return shape.total_size(); 		}
-		size_t			total_element()	  const { return shape.total_element(); 	}
-		size_t          total_block()     const { return shape.total_block(); 		}
+		int64_t 		total_size()	  const { return shape.total_size(); 		}
+		int64_t			total_element()	  const { return shape.total_element(); 	}
+		int64_t         total_block()     const { return shape.total_block(); 		}
 
 	public: /* View Information */
 		bool			is_continuous()   const { return shape.is_continuous();   }

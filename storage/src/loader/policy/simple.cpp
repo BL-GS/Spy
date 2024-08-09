@@ -46,7 +46,7 @@ namespace spy {
 
         uint8_t *data_ptr  = static_cast<uint8_t *>(data_info.data_ptr);
         size_t   num_elements = 1;
-        for (int i = 0; i < data_info.num_dim; ++i) { num_elements *= data_info.num_element[i]; }
+        for (uint32_t i = 0; i < data_info.num_dim; ++i) { num_elements *= data_info.num_element[i]; }
         size_t   num_bytes = get_row_size(data_info.type, num_elements);
 
         return { data_ptr, num_bytes };

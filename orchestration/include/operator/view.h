@@ -332,7 +332,6 @@ namespace spy {
 			assert_num_output(1);
 			const Param &cur_param = params.track_ref_if_needed();
 
-			const Tensor &in = input_data(0)->tensor;
 			auto *out_node = output<DataNode>(0);
 			out_node->view_src = input_data(0);
 
@@ -448,7 +447,7 @@ namespace spy {
 
 			Shape target_shape = in.shape;
 			const auto &axis = cur_param.axis;
-			for (int i = 0; i < in.dim(); ++i) {
+			for (uint32_t i = 0; i < in.dim(); ++i) {
 				target_shape.elements[i] = in.shape.elements[axis[i]];
 				target_shape.bytes[i]    = in.shape.bytes[axis[i]];
 			}

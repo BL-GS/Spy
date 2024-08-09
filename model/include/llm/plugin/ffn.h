@@ -13,7 +13,7 @@ namespace spy {
         DataNode *ffn_down  = nullptr;
     };
 
-    struct FFNBlock final: public GraphBuilder {
+    struct FFNBlockData {
         /* Hyper param */
         NormRMSParam     norm_rms_param;
 
@@ -21,7 +21,18 @@ namespace spy {
         FFNWeight        weight;
 
         /* Input */
-        DataNode *ffn_input;    
+        DataNode *       ffn_input;    
+    };
+
+    struct FFNBlock final: public GraphBuilder, FFNBlockData {
+
+        FFNBlock() = default;
+
+        FFNBlock(const FFNBlockData &data): FFNBlockData(data) {}
+
+        FFNBlock(FFNBlock &&other) = default;
+
+        FFNBlock &operator= (FFNBlock &&other) = default;
 
         DataNode *connect_ffn(Graph &graph, int layer_id = -1, int expert_id = -1) const;
     };

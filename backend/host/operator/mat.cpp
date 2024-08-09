@@ -1,5 +1,4 @@
 #include <memory>
-#include <magic_enum_switch.hpp>
 #include <magic_enum_fuse.hpp>
 
 #include "util/log/logger.h"

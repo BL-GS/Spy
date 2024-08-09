@@ -28,7 +28,7 @@ namespace spy {
 		}
 
 	public:
-		std::vector<TokenID> tokenize(const std::string &raw_text, bool bos, bool special) override {
+		std::vector<TokenID> tokenize([[maybe_unused]]const std::string &raw_text, [[maybe_unused]]bool bos, [[maybe_unused]]bool special) override {
 			spy_abort("Unimplemented");
 			return {};
 		}
