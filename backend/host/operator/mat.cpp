@@ -55,7 +55,7 @@ namespace spy::cpu {
         const auto [ne00, ne01, ne02, ne03] = shape_0.elements;
         const auto [ne10, ne11, ne12, ne13] = shape_1.elements;
 
-        const int num_task = ne03 * ne02 * ne11 * ne01;
+        const int num_task = ne03 * ne02 * ne01 * ne11;
 
         const NumberType type_mid    = target_buffer_type(type_0, type_1);
 
@@ -86,33 +86,18 @@ namespace spy::cpu {
 
 		const size_t num_dst         = shape_res.total_element();
 
-        const auto matmul_without_buffer = [&](){
-            const auto dot_func = NumberTypeMapper::product_map([](const auto T_type_0, const auto T_type_1){
-                return Dot<T_type_0, T_type_1>::exec_raw;
-            }, type_0, type_1);
-
-            for (size_t col_idx = param.tid; col_idx < num_dst; col_idx += param.concurrency) {
-                const int64_t i03 = col_idx / (ne02 * ne11 * ne01);
-                const int64_t i02 = col_idx % (ne02 * ne11 * ne01) / (ne11 * ne01);
-                const int64_t i11 = col_idx % (ne11 * ne01) / ne01;
-                const int64_t i01 = col_idx % (ne11 * ne01) % ne01;
-
-                const void *src1_col = operand_1.get<const void>({0, i11, i02, i03});
-                const void *src0_row = operand_0.get<const void>({0, i01, i02, i03});
-                float *dst_element   = result.get<float>({i01, i11, i02, i03});
-                      *dst_element   = dot_func(src0_row, src1_col, ne00);
-            }
-        };
-
-        const auto matmul_with_buffer = [&](NumberType type_mid){
-            auto    *   header_ptr     = static_cast<BufferLatchControlHeader *>(param.header_ptr.get());
-            const   auto buffer_span   = header_ptr->data_span;
-            const   size_t buffer_size = buffer_span.size_bytes();
-            uint8_t *buffer_ptr        = buffer_span.data();
-
-            const auto dot_func = NumberTypeMapper::product_map([](const auto T_type_0, const auto T_type_1){
+        const NumberType type_mid = target_buffer_type(type_0, type_1);
+        const auto dot_func = NumberTypeMapper::product_map([](const auto T_type_0, const auto T_type_1){
                 return Dot<T_type_0, T_type_1>::exec_raw;
             }, type_0, type_mid);
+
+        Tensor final_operand_1 = operand_1;
+
+        if (type_1 != type_mid) { // Quantize operand_1 if needed
+            auto    *    header_ptr = static_cast<BufferLatchControlHeader *>(param.header_ptr.get());
+            const auto   buffer_span = header_ptr->data_span;
+            const size_t buffer_size = buffer_span.size_bytes();
+            uint8_t *    buffer_ptr  = buffer_span.data();
 
             // Init buffer
             const int num_src1_row       = shape_1.num_row();
@@ -137,25 +122,22 @@ namespace spy::cpu {
             }
 			while (header_ptr->src1_quantize_done.load() != 0) { std::this_thread::yield(); }
 
-            // Compute
-            for (size_t col_idx = param.tid; col_idx < num_dst; col_idx += param.concurrency) {
-                const int64_t i03 = col_idx / (ne11 * ne01 * ne02);
-                const int64_t i02 = col_idx % (ne11 * ne01 * ne02) / (ne11 * ne01);
-                const int64_t i11 = col_idx % (ne11 * ne01) / ne01;
-                const int64_t i01 = col_idx % (ne11 * ne01) % ne01;
+            final_operand_1 = Tensor(
+                Shape({ne10, ne11, ne12, ne13}, type_mid), 
+                buffer_ptr
+            );
+        }
 
-                const void *src1_col = buffer_ptr + (i11 + i02 * ne11 + i03 * ne11 * ne12) * buffer_row_size;
-                const void *src0_row = operand_0.get<const void>({0, i01, i02, i03});
-                float *dst_element   = result.get<float>({i01, i11, i02, i03});
-                      *dst_element   = dot_func(src0_row, src1_col, ne00);
-            }
-        };
+        for (size_t col_idx = param.tid; col_idx < num_dst; col_idx += param.concurrency) {
+            const int64_t i03 = col_idx / (ne01 * ne11 * ne02);
+            const int64_t i02 = col_idx % (ne01 * ne11 * ne02) / (ne01 * ne11);
+            const int64_t i11 = col_idx % (ne01 * ne11) / ne01;
+            const int64_t i01 = col_idx % (ne01 * ne11) % ne01;
 
-        const NumberType target_type = target_buffer_type(type_0, type_1);
-        if (type_1 == target_type) {
-            matmul_without_buffer();
-        } else {
-            matmul_with_buffer(target_type);
+            const void *src1_col = final_operand_1.get<const void>({0, i11, i02, i03});
+            const void *src0_row = operand_0.get<const void>({0, i01, i02, i03});
+            float *dst_element   = result.get<float>({i01, i11, i02, i03});
+                    *dst_element = dot_func(src0_row, src1_col, ne00);
         }
 
         return { 0_op_end };
