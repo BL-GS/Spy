@@ -38,8 +38,9 @@ namespace spy {
                 num_column_, row.size()
             );
 
-            std::string row_str = std::reduce(row.begin(), row.end(), std::string(), 
-                [](auto &a, auto &b){ return a + ',' + b; });
+			std::string row_str;
+			for (const auto &str: row) { row_str += str + ','; }
+			row_str.pop_back();
             // Replace the last ',' with '\n'
             *row_str.rbegin() = '\n';
             // Write row to output stream

@@ -8,7 +8,7 @@ namespace spy {
 
 	struct ViewMap {
 	public:
-        /// Mapping containe <start, end> pair denoting the range of views
+        /// Mapping contain <start, end> pair denoting the range of views
 		std::map<size_t, size_t> view_map;
 
 	public:

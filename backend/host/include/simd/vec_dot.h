@@ -178,10 +178,9 @@ namespace spy::cpu {
 			const int outer_end = num / FP32::block_step;
 			const int inner_end = FP32::block_step / FP32::block_len;
 
-			FP32::block_t sum[FP32::block_arr] = { FP32::block_zero() };
+			FP32::block_t sum[FP32::block_arr] = { _mm256_setzero_ps() };
 			int i = 0;
 			for (; i + FP32::block_step < num; i += FP32::block_step) {
-				#pragma unroll
 				for (int k = 0; k < FP32::block_arr; ++k) {
 					const FP32::block_t x_blk   = FP32::block_load(lhs + i + k * FP32::block_len);
 					const FP32::block_t y_blk   = FP32::block_load(rhs + i + k * FP32::block_len);
@@ -218,13 +217,9 @@ namespace spy::cpu {
 		static float exec(const LhsBlock *lhs, const RhsBlock *rhs, size_t num) {
 			using namespace simd;
 
-			const int outer_end = num / FP32::block_step;
-			const int inner_end = FP32::block_step / FP32::block_len;
-
-			FP32::block_t sum[FP32::block_arr] = { FP32::block_zero() };
+			FP32::block_t sum[FP32::block_arr] = { _mm256_setzero_ps() };
 			int i = 0;
 			for (; i + FP32::block_step < num; i += FP32::block_step) {
-				#pragma unroll
 				for (int k = 0; k < FP32::block_arr; ++k) {
 					const FP32::block_t x_blk   = FP32::block_load(lhs + i + k * FP32::block_len);
 					const FP32::block_t y_blk   = FP32::block_load(rhs + i + k * FP32::block_len);
@@ -247,4 +242,4 @@ namespace spy::cpu {
 		}
 	};
 
-} // namespace spy
+}  // namespace spy::cpu

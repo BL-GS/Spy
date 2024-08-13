@@ -105,7 +105,7 @@ namespace spy {
 
     public:
         /*!
-         * Creare a view of a portion of the file. It may use mapping or buffer for creating the view.
+         * Create a view of a portion of the file. It may use mapping or buffer for creating the view.
          * When the OS cannot allocate the address space of mapping, it turns to the buffer method.
          */
         void create_view(size_t offset, size_t size) {

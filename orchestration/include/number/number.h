@@ -37,24 +37,24 @@ inline uint16_t spy_fp32_to_fp16(const float x) { return _cvtss_sh(x, 0); }
 	 * Especially for quantized number, there are several elements clustered as a block. This function returns the size of the block in bytes.
 	 * As for unquantized number, it acts like `sizeof(element)`
 	 */
-	inline constexpr size_t get_type_size(NumberType number_type) {
+	inline constexpr int64_t get_type_size(NumberType number_type) {
 		return NumberTypeMapper::map(
 			[](const auto T_number_type){ return NumberMetadata<T_number_type>::TYPE_SIZE; }, 
-			[](const auto T_number_type){ spy_abort("Unknown nunmber type: {}", T_number_type); }, 
+			[](const auto T_number_type){ spy_abort("Unknown number type: {}", T_number_type); },
 			number_type
 		);
 	}
 
 	/*!
 	 * @brief Get the number of elements in the number block.
-	 * Especially for quantized number, there are serveral elements sharing one metadata (e.g. scale), and these elements are clustered as a block.
+	 * Especially for quantized number, there are several elements sharing one metadata (e.g. scale), and these elements are clustered as a block.
 	 * This function returns the number of elements in a block. 
 	 * As for unquantized number, it returns 1.
 	 */
-	inline constexpr size_t get_block_size(NumberType number_type) {
+	inline constexpr int64_t get_block_size(NumberType number_type) {
 		return NumberTypeMapper::map(
 			[](const auto T_number_type){ return NumberMetadata<T_number_type>::BLOCK_SIZE; }, 
-			[](const auto T_number_type){ spy_abort("Unknown nunmber type: {}", T_number_type); }, 
+			[](const auto T_number_type){ spy_abort("Unknown number type: {}", T_number_type); },
 			number_type
 		);
 	}
@@ -65,7 +65,7 @@ inline uint16_t spy_fp32_to_fp16(const float x) { return _cvtss_sh(x, 0); }
 	 * And we need to consider the number of block (num_element / get_block_size(number_type)) and the size in bytes of block.
 	 * As for unquantized number, it acts like `num_element` * `sizeof(element)`
 	 */
-	inline constexpr size_t get_row_size(NumberType number_type, size_t num_element) {
+	inline constexpr int64_t get_row_size(NumberType number_type, int64_t num_element) {
 		return num_element * get_type_size(number_type) / get_block_size(number_type);
 	}
 
@@ -75,7 +75,7 @@ inline uint16_t spy_fp32_to_fp16(const float x) { return _cvtss_sh(x, 0); }
 	inline constexpr std::string_view get_type_name(NumberType number_type) {
 		return NumberTypeMapper::map(
 			[](const auto T_number_type){ return NumberMetadata<T_number_type>::NAME; }, 
-			[](const auto T_number_type){ spy_abort("Unknown nunmber type: {}", T_number_type); }, 
+			[](const auto T_number_type){ spy_abort("Unknown number type: {}", T_number_type); },
 			number_type
 		);
 	}

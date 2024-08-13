@@ -1,5 +1,4 @@
 #include <memory>
-#include <magic_enum_switch.hpp>
 #include <magic_enum_fuse.hpp>
 
 #include "util/log/logger.h"
@@ -14,7 +13,7 @@ namespace spy::cpu {
     constexpr int64_t QUANTIZE_BLOCK_SIZE = 128;
 
 	struct BufferLatchControlHeader: public BufferControlHeader {
-        /// The remaining unproceeded quantization task
+        /// The remaining unprocessed quantization task
 		std::atomic<int> src1_quantize_counter;
         /// The remaining unfinished quantization task
 		std::atomic<int> src1_quantize_done;
@@ -62,10 +61,10 @@ namespace spy::cpu {
         // no need to create a buffer for dequantization
         if (type_mid == type_1) { return std::make_shared<ControlHeader>(num_task); }
 
-        // a temporary buffer is necessary for dequantizated data
-        const int num_src1_row       = shape_1.num_row();
-        const size_t buffer_row_size = get_row_size(type_mid, ne10);
-        const size_t buffer_size     = num_src1_row * buffer_row_size;
+        // a temporary buffer is necessary for quantized data
+        const int num_src1_row    = shape_1.num_row();
+        const int buffer_row_size = get_row_size(type_mid, ne10);
+        const int buffer_size     = num_src1_row * buffer_row_size;
         return std::make_shared<BufferLatchControlHeader>(num_task, num_src1_row, backend_ptr, buffer_size);
 	}
 

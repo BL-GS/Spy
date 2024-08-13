@@ -1,11 +1,16 @@
 #pragma once
 
 #include <cstdint>
+
+    #define __SSE3__
+    #define __SSSE3__
+#include <intrin.h>
 #include <immintrin.h>
 
 namespace spy::cpu::simd {
 
-#if defined(__AVX2__)
+#ifdef SPY_AVX2
+
 
     struct FP32 {
         using block_t = __m256;
@@ -14,7 +19,7 @@ namespace spy::cpu::simd {
         static constexpr int  block_step = 32; 
         static constexpr int  block_arr  = block_step / block_len;
 
-        static constexpr auto block_zero = _mm256_setzero_ps;
+        static constexpr auto block_zero  = _mm256_setzero_ps;
         static constexpr auto block_load  = _mm256_loadu_ps;
         static constexpr auto block_store = _mm256_storeu_ps;
 
@@ -67,7 +72,7 @@ namespace spy::cpu::simd {
         }
     };
 
-#elif defined(__AVX__)
+#elif defined (SPY_AVX)
 
     struct FP32 {
         using block_t = __m128;

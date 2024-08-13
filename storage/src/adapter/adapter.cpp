@@ -38,7 +38,7 @@ namespace spy {
             }
 
             spy_warn("the filename({}) does not has extension. It may spend a lot of time to get a proper adapter", 
-                path.filename().c_str()); 
+                path.filename().string());
         }
 
         throw SpyOSFileException("unsupported file type, expect as directory or regular file: {}", path_str);

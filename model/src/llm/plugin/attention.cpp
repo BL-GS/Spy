@@ -146,9 +146,7 @@ namespace spy {
                 .offset    = 0,
                 .new_shape = Shape(
                         { num_embedding_head, num_token, num_head_kv }, // New dimensions
-                        { get_type_size(NumberType::FP32),
-                                        get_row_size(NumberType::FP32, num_embedding_k_gqa),
-                                        get_row_size(NumberType::FP32, num_embedding_head) }, // New offsets
+                        { get_type_size(NumberType::FP32), get_row_size(NumberType::FP32, num_embedding_k_gqa), get_row_size(NumberType::FP32, num_embedding_head) }, // New offsets
                         NumberType::FP32
                     )
             },
@@ -186,7 +184,7 @@ namespace spy {
                     .offset = k_cache_update_offset,
                     .new_shape = Shape(
                         { num_token * num_embedding_k_gqa },
-                        std::initializer_list<size_t>{ get_type_size(k_cache_type) },
+                        { get_type_size(k_cache_type) },
                         k_cache_type                        
                 )}; 
             },
@@ -206,9 +204,7 @@ namespace spy {
                     .offset = -k_cache_update_offset,
                     .new_shape = Shape(
                         { num_embedding_head, num_kv, num_head_kv }, // New dimensions
-                        std::initializer_list<size_t>{ get_type_size(k_cache_type),
-                                                        get_row_size(k_cache_type, num_embedding_k_gqa),
-                                                        get_row_size(k_cache_type, num_embedding_head) }, // New offsets
+                        { get_type_size(k_cache_type), get_row_size(k_cache_type, num_embedding_k_gqa), get_row_size(k_cache_type, num_embedding_head) }, // New offsets
                         k_cache_type                            
                     )
                 };
@@ -226,7 +222,7 @@ namespace spy {
                     .offset = v_cache_update_offset,
                     .new_shape = Shape(
                         { num_token, num_embedding_v_gqa },
-                        std::initializer_list<size_t>{ get_type_size(v_cache_type), num_context * get_type_size(v_cache_type) },
+                        { get_type_size(v_cache_type), num_context * get_type_size(v_cache_type) },
                         v_cache_type
                 )};
             },
@@ -246,9 +242,7 @@ namespace spy {
                 .offset = -v_cache_update_offset,
                 .new_shape = Shape(
                     { num_kv, num_embedding_head, num_head_kv }, // New dimensions
-                    std::initializer_list<size_t>{ get_type_size(v_cache_type),
-                                                    get_type_size(v_cache_type) * num_context,
-                                                    get_type_size(v_cache_type) * num_context * num_embedding_head }, // New offset
+                    { get_type_size(v_cache_type), get_type_size(v_cache_type) * num_context, get_type_size(v_cache_type) * num_context * num_embedding_head }, // New offset
                     v_cache_type                        
                 )};
             },
