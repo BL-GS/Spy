@@ -1,33 +1,32 @@
 #pragma once
 
 #include <cstdint>
-
-    #define __SSE3__
-    #define __SSSE3__
-#include <intrin.h>
-#include <immintrin.h>
+#include <simde/x86/fma.h>
+#include <simde/x86/f16c.h>
+#include <simde/x86/avx2.h>
 
 namespace spy::cpu::simd {
 
-#ifdef SPY_AVX2
-
+#ifndef SPY_AVX2
+	#warning "It may be of awful performance if using CPU without AVX2"
+#endif
 
     struct FP32 {
-        using block_t = __m256;
+        using block_t = simde__m256;
 
         static constexpr int  block_len  = 8;
         static constexpr int  block_step = 32; 
         static constexpr int  block_arr  = block_step / block_len;
 
-        static constexpr auto block_zero  = _mm256_setzero_ps;
-        static constexpr auto block_load  = _mm256_loadu_ps;
-        static constexpr auto block_store = _mm256_storeu_ps;
+        static constexpr auto block_zero  = simde_mm256_setzero_ps;
+        static constexpr auto block_load  = simde_mm256_loadu_ps;
+        static constexpr auto block_store = simde_mm256_storeu_ps;
 
-        static constexpr auto block_add  = _mm256_add_ps;
-        static constexpr auto block_sub  = _mm256_sub_ps;
-        static constexpr auto block_mul  = _mm256_mul_ps;
-        static constexpr auto block_div  = _mm256_div_ps;
-        static constexpr auto block_madd = _mm256_fmadd_ps;
+        static constexpr auto block_add  = simde_mm256_add_ps;
+        static constexpr auto block_sub  = simde_mm256_sub_ps;
+        static constexpr auto block_mul  = simde_mm256_mul_ps;
+        static constexpr auto block_div  = simde_mm256_div_ps;
+        static constexpr auto block_madd =  simde_mm256_fmadd_ps;
 
         static float block_reduce(block_t x[block_arr]) {
             int offset = block_arr >> 1;
@@ -43,21 +42,21 @@ namespace spy::cpu::simd {
     };
 
     struct FP16 {
-        using block_t = __m256;
+        using block_t = simde__m256;
 
         static constexpr int  block_len  = 8;
         static constexpr int  block_step = 32; 
         static constexpr int  block_arr  = block_step / block_len;
 
-        static constexpr auto block_zero = _mm256_setzero_ps;
-        static constexpr auto block_load  = +[](const uint16_t *x) { return _mm256_cvtph_ps(_mm_loadu_si128((const __m128i *)x)); };
-        static constexpr auto block_store = +[](uint16_t *x, __m256 y) { _mm_storeu_si128((__m128i *)(x), _mm256_cvtps_ph(y, 0)); };
+        static constexpr auto block_zero = simde_mm256_setzero_ps;
+        static constexpr auto block_load  = +[](const uint16_t *x) { return simde_mm256_cvtph_ps(simde_mm_loadu_si128((const __m128i *)x)); };
+        static constexpr auto block_store = +[](uint16_t *x, simde__m256 y) { simde_mm_storeu_si128((simde__m128i *)(x), simde_mm256_cvtps_ph(y, 0)); };
 
-        static constexpr auto block_add  = _mm256_add_ps;
-        static constexpr auto block_sub  = _mm256_sub_ps;
-        static constexpr auto block_mul  = _mm256_mul_ps;
-        static constexpr auto block_div  = _mm256_div_ps;
-        static constexpr auto block_madd = _mm256_fmadd_ps;
+		static constexpr auto block_add  = simde_mm256_add_ps;
+		static constexpr auto block_sub  = simde_mm256_sub_ps;
+		static constexpr auto block_mul  = simde_mm256_mul_ps;
+		static constexpr auto block_div  = simde_mm256_div_ps;
+		static constexpr auto block_madd =  simde_mm256_fmadd_ps;
 
         static float block_reduce(block_t x[block_arr]) {
             int offset = block_arr >> 1;
@@ -71,48 +70,6 @@ namespace spy::cpu::simd {
             return _mm_cvtss_f32(_mm_hadd_ps(t1, t1));
         }
     };
-
-#elif defined (SPY_AVX)
-
-    struct FP32 {
-        using block_t = __m128;
-
-        static constexpr int  block_len  = 4;
-        static constexpr int  block_step = 64; 
-        static constexpr int  block_arr  = block_step / block_len;
-
-        static constexpr auto block_zero  = _mm_setzero_ps;
-        static constexpr auto block_load  = _mm_loadu_ps;
-        static constexpr auto block_store = _mm_storeu_ps;
-
-        static constexpr auto block_add  = _mm_add_ps;
-        static constexpr auto block_sub  = _mm_sub_ps;
-        static constexpr auto block_mul  = _mm_mul_ps;
-        static constexpr auto block_div  = _mm_div_ps;
-        static constexpr auto block_madd = _mm_fmadd_ps;
-    };
-
-#else 
-
-    struct FP32 {
-        using block_t = float;
-
-        static constexpr int  block_len  = 1;
-        static constexpr int  block_step = 256; 
-        static constexpr int  block_arr  = block_step / block_len;
-
-        static constexpr auto block_zero  = 0;
-        static constexpr auto block_load  = +[](const block_t *p){ return *p; };
-        static constexpr auto block_store = +[](block_t *p, block_t x){ return *p = x; };
-
-        static constexpr auto block_add  = +[](const block_t x, const block_t y) { return x + y; };
-        static constexpr auto block_sub  = +[](const block_t x, const block_t y) { return x - y; };
-        static constexpr auto block_mul  = +[](const block_t x, const block_t y) { return x * y; };
-        static constexpr auto block_div  = +[](const block_t x, const block_t y) { return x / y; };
-        static constexpr auto block_madd = +[](const block_t x, const block_t y, const block_t k) { return x * y + k; };
-    };
-
-#endif
 
 	// horizontally add 8 floats
 	static inline float hsum_float_8(const __m256 x) {

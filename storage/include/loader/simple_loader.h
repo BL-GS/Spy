@@ -25,6 +25,7 @@ namespace spy {
 				context = file_adapter_ptr->init_from_file(filename);
 			}
 
+			builder.open_if_exist(filename);
 			builder.init_sync_handle(filename);
 			builder.init_mapping();
 		}
@@ -57,7 +58,7 @@ namespace spy {
 			const auto data_info = context.infos.at(std::string(name));
 
 			uint8_t *data_ptr  = static_cast<uint8_t *>(data_info.data_ptr);
-			size_t   num_elements = 1;
+			int64_t   num_elements = 1;
 
 			for (int i = 0; i < data_info.num_dim; ++i) { num_elements *= data_info.num_element[i]; }
 			size_t   num_bytes = get_row_size(data_info.type, num_elements);

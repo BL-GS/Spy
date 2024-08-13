@@ -5,6 +5,7 @@ project(SpyBackendHost)
 # Libraries --------------------------------------------------------------
 find_package(magic_enum CONFIG REQUIRED)
 find_package(unofficial-concurrentqueue CONFIG REQUIRED)
+find_path(SIMDE_INCLUDE_DIRS "simde/arm/neon.h" CONFIG REQUIRED)
 
 add_definitions(-DUNOFFICIAL_CONCURRENTQUEUE)
 
@@ -14,6 +15,8 @@ file(GLOB_RECURSE operator_files ${PROJECT_SOURCE_DIR}/operator/*.cpp)
 # Main project ----------------------------------------------------------
 add_library(${PROJECT_NAME} ${backend_files} ${operator_files})
 target_include_directories(${PROJECT_NAME} PRIVATE
+        # External library
+        ${SIMDE_INCLUDE_DIRS}
         # Parent interface
         ${spy_include_dir}
         # Internal interface

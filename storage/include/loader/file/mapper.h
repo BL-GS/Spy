@@ -65,13 +65,13 @@ namespace spy {
         } 
 
     public:
-        bool open_if_exist(const std::string &filename, bool write = false, bool use_overlapped = false) {
+        bool open_if_exist(std::string_view filename, bool write = false, bool use_overlapped = false) {
             const DWORD prot          = write ?           GENERIC_READ | GENERIC_WRITE        : GENERIC_READ;
             const DWORD share_flag    = write ?           FILE_SHARE_READ | FILE_SHARE_WRITE  : FILE_SHARE_READ;
             const DWORD flag          = use_overlapped ?  FILE_FLAG_OVERLAPPED                : NULL;
             const DWORD open_flag     = OPEN_EXISTING;
 
-            HANDLE file_handle = CreateFile(filename.c_str(), prot, share_flag, nullptr, open_flag, flag, nullptr);
+            HANDLE file_handle = CreateFile(filename.data(), prot, share_flag, nullptr, open_flag, flag, nullptr);
             if (file_handle == INVALID_HANDLE_VALUE) {
                 fprintf(stderr, "Failed reopening file: %s\n", llama_format_win_err().c_str());
                 return false;
