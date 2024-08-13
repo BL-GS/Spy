@@ -1,6 +1,8 @@
 #pragma once
 
 #include <cstring>
+#include <simde/simde-f16.h>
+#include <simde/x86/avx2.h>
 
 #include "number/lookup_table.h"
 #include "number/number.h"
@@ -52,20 +54,13 @@ namespace spy::cpu {
 
 	public:
 		static void transform(const FromBlock * __restrict from_ptr, ToBlock * __restrict to_ptr, size_t num_from) {
-			for (size_t i = 0; i < num_from; ++i) {
-				to_ptr[i] = spy_fp32_to_fp16(from_ptr[i]);
-			}
-			// int64_t i = 0;
-			// for (; i + 7 < num_from; i += 8) {
-			// 	__m256 x_vec = _mm256_loadu_ps(from_ptr + i);
-			// 	__m128i y_vec = _mm256_cvtps_ph(x_vec, _MM_FROUND_TO_NEAREST_INT);
-			// 	_mm_storeu_si128(reinterpret_cast<__m128i *>(to_ptr + i), y_vec);
-			// }
-			// for(; i + 3 < num_from; i += 4) {
-			// 	__m128 x_vec = _mm_loadu_ps(from_ptr + i);
-			// 	__m128i y_vec = _mm_cvtps_ph(x_vec, _MM_FROUND_TO_NEAREST_INT);
-			// 	_mm_storel_epi64(reinterpret_cast<__m128i *>(to_ptr + i), y_vec);
-			// }
+			 int64_t i = 0;
+			 for (; i + 7 < num_from; i += 8) {
+			 	simde__m256 x_vec  = _mm256_loadu_ps(from_ptr + i);
+				simde__m128i y_vec = simde_mm256_cvtps_ph(x_vec, SIMDE_MM_FROUND_TO_NEAREST_INT);
+			 	simde_mm_storeu_si128(to_ptr + i, y_vec);
+			 }
+			 for (; i < num_from; ++i) { to_ptr[i] = spy_fp32_to_fp16(from_ptr[i]); }
 		}
 	};
 
@@ -472,4 +467,4 @@ namespace spy::cpu {
 		transform_func(src, dst, num);
 	}
     
-} // namepsace spy
+} // namespace spy

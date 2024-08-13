@@ -24,9 +24,9 @@ namespace spy::cpu {
 
         const Shape &shape_operand = operand.get_shape();
         auto [ne00, ne01, ne02, ne03] = shape_operand.elements;
-        const size_t num_row  = shape_operand.num_row();
+        const int64_t num_row  = shape_operand.num_row();
 
-        for (size_t row_idx = param.tid; row_idx < num_row; row_idx += param.concurrency) {
+        for (int64_t row_idx = param.tid; row_idx < num_row; row_idx += param.concurrency) {
             const int64_t i03 = row_idx / (ne01 * ne02);
             const int64_t i02 = row_idx % (ne01 * ne02) / ne01;
             const int64_t i01 = row_idx % ne01;

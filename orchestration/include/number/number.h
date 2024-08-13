@@ -6,8 +6,9 @@
 #pragma once
 
 #include <cstdint>
+#include <cmath>
 #include <string_view>
-#include <immintrin.h>
+#include <simde/simde-f16.h>
 
 #include "number/number_impl/type.h"
 #include "number/number_impl/common.h"
@@ -17,13 +18,9 @@
 
 namespace spy {
 
-#ifdef _MSC_VER
-inline float    spy_fp16_to_fp32(const uint16_t x) { return _mm_cvtss_f32(_mm_cvtph_ps(_mm_cvtsi32_si128(x))); }
-inline uint16_t spy_fp32_to_fp16(const float x) { return _mm_extract_epi16(_mm_cvtps_ph(_mm_set_ss(x), 0), 0); }
-#else
-inline float 	spy_fp16_to_fp32(const uint16_t x) { return _cvtsh_ss(x); }
-inline uint16_t spy_fp32_to_fp16(const float x) { return _cvtss_sh(x, 0); }
-#endif
+	inline float spy_fp16_to_fp32(uint16_t x) { return simde_float16_to_float32(simde_uint16_as_float16(x)); }
+
+	inline uint16_t spy_fp32_to_fp16(float x) { return simde_float16_as_uint16(simde_float16_from_float32(x)); }
 
 	/*
 	 * Utilities

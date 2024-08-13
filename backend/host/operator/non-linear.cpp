@@ -62,9 +62,9 @@ namespace spy::cpu {
         const auto &shape_operand = operand.get_shape();
 
         const auto [ne00, ne01, ne02, ne03] = shape_operand.elements;
-        const size_t num_row = ne01 * ne02 * ne03;
+        const int64_t num_row = ne01 * ne02 * ne03;
 
-        for (size_t row_idx = param.tid; row_idx < num_row; row_idx += param.concurrency) {
+        for (int64_t row_idx = param.tid; row_idx < num_row; row_idx += param.concurrency) {
             const int64_t i03 = row_idx / (ne01 * ne02);
             const int64_t i02 = row_idx % (ne01 * ne02) / ne01;
             const int64_t i01 = row_idx % ne01;
@@ -93,9 +93,9 @@ namespace spy::cpu {
 
         const auto [ne0, ne1, ne2, ne3] = shape_res.elements;
 
-        const size_t num_row = ne1 * ne2 * ne3;
+        const int64_t num_row = ne1 * ne2 * ne3;
 
-        for (size_t row_idx = param.tid; row_idx < num_row; row_idx += param.concurrency) {
+        for (int64_t row_idx = param.tid; row_idx < num_row; row_idx += param.concurrency) {
             const int64_t i3 = row_idx / (ne1 * ne2);
             const int64_t i2 = row_idx % (ne1 * ne2) / ne1;
             const int64_t i1 = row_idx % ne1;
@@ -204,9 +204,9 @@ namespace spy::cpu {
 
         const auto [ne0, ne1, ne2, ne3] = shape_res.elements;
 
-        const size_t num_row = ne1 * ne2 * ne3;
+        const int64_t num_row = ne1 * ne2 * ne3;
 
-        for (size_t row_idx = param.tid; row_idx < num_row; row_idx += param.concurrency) {
+        for (int64_t row_idx = param.tid; row_idx < num_row; row_idx += param.concurrency) {
             const int64_t i3 = row_idx / (ne1 * ne2);
             const int64_t i2 = row_idx % (ne1 * ne2) / ne1;
             const int64_t i1 = row_idx % ne1;

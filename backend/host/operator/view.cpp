@@ -42,10 +42,10 @@ namespace spy::cpu {
 		const auto [ne00, ne01, ne02, ne03] = shape_0.elements;
 		const auto [ne10, ne11, ne12, ne13] = shape_1.elements;
 
-        const size_t num_idx       = ne10 * ne11 * ne12;
-        const size_t src0_num_row  = shape_0.num_row();
-        const size_t src0_row_size = shape_0.row_size();
-        const size_t res_row_size  = shape_res.row_size();
+        const int64_t num_idx       = ne10 * ne11 * ne12;
+        const int64_t src0_num_row  = shape_0.num_row();
+        const int64_t src0_row_size = shape_0.row_size();
+        const int64_t res_row_size  = shape_res.row_size();
 
         const NumberType type_0   = shape_0.number_type;
         const NumberType type_res = shape_res.number_type;
@@ -53,7 +53,7 @@ namespace spy::cpu {
         const int32_t *row_idx_ptr = operand_1.get<int32_t>();
         uint8_t *dst_ptr 		   = result.get<uint8_t>();
 
-        for (size_t row_idx = param.tid; row_idx < num_idx; row_idx += param.concurrency) {
+        for (int64_t row_idx = param.tid; row_idx < num_idx; row_idx += param.concurrency) {
             const int64_t i12 = row_idx / (ne10 * ne11);
             const int64_t i11 = row_idx % (ne10 * ne11) / ne10; 
 
@@ -130,7 +130,7 @@ namespace spy::cpu {
                         }
                     }                     
                 } else if (result.is_continuous()) {
-                    const size_t dst_row_size = get_row_size(type_result, ne00);
+                    const int64_t dst_row_size = get_row_size(type_result, ne00);
                     uint8_t *dst_ptr = result.get<uint8_t>() + dst_row_size * row_idx;
                     
                     if (type_operand == type_result) {
@@ -292,11 +292,11 @@ namespace spy::cpu {
 
         char *dst_ptr = result.get<char>();
 
-        const size_t num_row  = shape_operand.num_row();
-        const size_t row_size = shape_operand.row_size();
+        const int64_t num_row  = shape_operand.num_row();
+        const int64_t row_size = shape_operand.row_size();
         
         if (!shape_operand.is_transposed()) {
-            for (size_t row_idx = param.tid; row_idx < num_row; row_idx += param.concurrency) {
+            for (int64_t row_idx = param.tid; row_idx < num_row; row_idx += param.concurrency) {
                 const int64_t i03 = row_idx / (ne01 * ne02);
                 const int64_t i02 = row_idx % (ne01 * ne02) / ne01;
                 const int64_t i01 = row_idx % ne01;
@@ -305,7 +305,7 @@ namespace spy::cpu {
                 std::memcpy(dst_ptr + row_idx * row_size, src_row, row_size);
             }				
         } else {
-            for (size_t row_idx = param.tid; row_idx < num_row; row_idx += param.concurrency) {
+            for (int64_t row_idx = param.tid; row_idx < num_row; row_idx += param.concurrency) {
                 const int64_t i03 = row_idx / (ne01 * ne02);
                 const int64_t i02 = row_idx % (ne01 * ne02) / ne01;
                 const int64_t i01 = row_idx % ne01;

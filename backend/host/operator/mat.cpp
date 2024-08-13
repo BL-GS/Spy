@@ -83,7 +83,7 @@ namespace spy::cpu {
         const auto [ne00, ne01, ne02, ne03] = shape_0.elements;
         const auto [ne10, ne11, ne12, ne13] = shape_1.elements;
 
-		const size_t num_dst         = shape_res.total_element();
+		const int64_t num_dst         = shape_res.total_element();
 
         const NumberType type_mid = target_buffer_type(type_0, type_1);
         const auto dot_func = NumberTypeMapper::product_map([](const auto T_type_0, const auto T_type_1){
@@ -99,8 +99,8 @@ namespace spy::cpu {
             uint8_t *    buffer_ptr  = buffer_span.data();
 
             // Init buffer
-            const int num_src1_row       = shape_1.num_row();
-            const size_t buffer_row_size = get_row_size(type_mid, ne10);
+            const int64_t num_src1_row    = shape_1.num_row();
+            const int64_t buffer_row_size = get_row_size(type_mid, ne10);
 
             spy_assert(num_src1_row * buffer_row_size <= buffer_size,
                 "The size of buffer is less than that needed (buffer: {}, need: {})", buffer_size, num_src1_row * buffer_row_size);
@@ -127,7 +127,7 @@ namespace spy::cpu {
             );
         }
 
-        for (size_t col_idx = param.tid; col_idx < num_dst; col_idx += param.concurrency) {
+        for (int64_t col_idx = param.tid; col_idx < num_dst; col_idx += param.concurrency) {
             const int64_t i03 = col_idx / (ne01 * ne11 * ne02);
             const int64_t i02 = col_idx % (ne01 * ne11 * ne02) / (ne01 * ne11);
             const int64_t i11 = col_idx % (ne01 * ne11) / ne01;
