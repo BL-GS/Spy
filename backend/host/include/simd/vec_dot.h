@@ -239,4 +239,4 @@ namespace spy::cpu {
 		}
 	};
 
-} // namespace spy
+}  // namespace spy::cpu

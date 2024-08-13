@@ -30,7 +30,7 @@ else()
 	add_definitions(-DNDEBUG)
 endif()
 
-add_cxx_flag("-Wall -Wextra")
+add_cxx_flag("-Wall -Wextra -Wall")
 
 set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
 

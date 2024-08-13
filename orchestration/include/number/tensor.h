@@ -44,12 +44,12 @@ namespace spy {
 				number_type(number_type), dim(dim), elements(num_element), bytes{0} {
 			spy_assert(dim <= MAX_DIM, "The dimension should be within the range (0, {}] (cur: {})", MAX_DIM, dim);
 
-			const size_t type_size = get_type_size(number_type);
+			const int64_t type_size = get_type_size(number_type);
 			// Expect the high dimension to be 1
 			std::fill(elements.begin() + dim, elements.end(), 1);
 			// Assign the accumulated size of tensor
 			bytes[0] = type_size;
-			size_t acc_bytes = get_row_size(number_type, elements[0]);
+			int64_t acc_bytes = get_row_size(number_type, elements[0]);
 			for (uint32_t i = 1; i < MAX_DIM; ++i) {
 				bytes[i]    = acc_bytes;
 				acc_bytes  *= elements[i];
@@ -59,18 +59,19 @@ namespace spy {
 		/*!
 		 * @brief By default, we generate a shape for contiguous structure
 		 */
-		Shape(const std::initializer_list<int64_t> &num_element, const NumberType number_type):
+		template <typename T_Element>
+		Shape(const std::initializer_list<T_Element> &num_element, const NumberType number_type):
 				number_type(number_type), dim(num_element.size()), elements{0}, bytes{0} {
 			spy_assert(dim <= MAX_DIM, "The dimension should be within the range (0, {}] (cur: {})", MAX_DIM, dim);
 
 			std::copy(num_element.begin(), num_element.end(), elements.begin());
-			for (size_t i = dim; i < MAX_DIM; ++i) {
+			for (uint32_t i = dim; i < MAX_DIM; ++i) {
 				// Expect the high dimension to be 1
 				elements[i] = 1;
 			}
 
-			const size_t type_size = get_type_size(number_type);
-			size_t acc_byte = get_row_size(number_type, elements[0]);
+			const int64_t type_size = get_type_size(number_type);
+			int64_t acc_byte = get_row_size(number_type, elements[0]);
 			bytes[0] = type_size;
 			for (uint32_t i = 1; i < MAX_DIM; ++i) {
 				// Assign the accumulated size of tensor
@@ -87,14 +88,15 @@ namespace spy {
 			std::fill(bytes.begin() + dim, bytes.end(), elements[dim - 1] * num_byte[dim - 1]);
 		}
 
-		Shape(const std::initializer_list<int64_t> &num_element, const std::initializer_list<int64_t> &num_byte, const NumberType number_type):
+		template<typename T_Element, typename T_Byte>
+		Shape(const std::initializer_list<T_Element> &num_element, const std::initializer_list<T_Byte> &num_byte, const NumberType number_type):
 				number_type(number_type), dim(num_element.size()), elements{0}, bytes{0} {
 			spy_assert(dim <= MAX_DIM, "The dimension should be within the range (0, {}] (cur: {})", MAX_DIM, dim);
 
 			std::copy(num_element.begin(), num_element.end(), elements.begin());
 			std::copy(num_byte.begin(), num_byte.end(), bytes.begin());
 
-			const size_t total_size = elements[dim - 1] * bytes[dim - 1];
+			const int64_t total_size = elements[dim - 1] * bytes[dim - 1];
 			for (uint32_t i = dim; i < MAX_DIM; ++i) {
 				elements[i] = 1;
 				bytes[i]    = total_size;
@@ -115,8 +117,8 @@ namespace spy {
 			DimensionArray new_elements;
 			DimensionArray new_bytes;
 
-			for (uint32_t i = 0; i < MAX_DIM; ++i) { new_elements[i] 	= elements[axis[i]]; }
-			for (uint32_t i = 0; i < MAX_DIM; ++i) { new_bytes[i] 	= bytes[axis[i]]; 	 }
+			for (uint32_t i = 0; i < MAX_DIM; ++i) { new_elements[i] = elements[axis[i]]; }
+			for (uint32_t i = 0; i < MAX_DIM; ++i) { new_bytes[i] 	 = bytes[axis[i]]; 	 }
 
 			dim 	 = 4;
 			elements = new_elements;
@@ -132,7 +134,7 @@ namespace spy {
 		/*!
 		 * @brief Get the total size of tensor
 		 */
-		int64_t total_size() 	const { 
+		int64_t total_size() 	const {
 			const size_t block_size = get_block_size(number_type);
 			int64_t size = 0;
 			size = bytes[0] * elements[0] / block_size;
@@ -148,17 +150,17 @@ namespace spy {
 		/*!
 		 * @brief Get the total number of elements
 		 */
-		int64_t total_element() 	const { return std::accumulate(elements.begin(), elements.end(), 1, std::multiplies<int64_t>()); }
+		int64_t total_element() 	const { return std::accumulate(elements.begin(), elements.end(), static_cast<int64_t>(1), std::multiplies<int64_t>()); }
 
 		/*!
 		 * @brief Get the accumulated number of elements in the specific dimension
 		 */
-		int64_t acc_element(uint32_t acc_dim)	const { return std::accumulate(elements.begin(), elements.begin() + acc_dim, 1, std::multiplies<int64_t>()); }
+		int64_t acc_element(size_t acc_dim)	const { return std::accumulate(elements.begin(), elements.begin() + acc_dim, static_cast<int64_t>(1), std::multiplies<int64_t>()); }
 
 		/*
 		 * @brief Get the total number of element in the sub-tensor
 		 */
-		int64_t num_sub_tensor(uint32_t sub_dim) const { return std::accumulate(elements.begin() + sub_dim, elements.end(), 1, std::multiplies<int64_t>()); }
+		int64_t num_sub_tensor(size_t sub_dim) const { return std::accumulate(elements.begin() + sub_dim, elements.end(), static_cast<int64_t>(1), std::multiplies<int64_t>()); }
 
 		/*!
 		 * @brief Get the number of rows in tensor
@@ -232,7 +234,7 @@ namespace spy {
 	
 			DimensionArray offset_array;
 			std::transform( index_array.begin(), index_array.end(), shape.bytes.begin(), 
-				offset_array.begin(), std::multiplies<size_t>()
+				offset_array.begin(), std::multiplies<int64_t>()
 			);
 			const size_t offset = std::reduce(offset_array.begin(), offset_array.end());
 			void *res_ptr = static_cast<uint8_t *>(data_ptr) + offset;
@@ -244,10 +246,10 @@ namespace spy {
 	public: /* Shape Information */
 		const Shape &	get_shape()       const { return shape; 					}
 		NumberType  	type() 			  const { return shape.number_type; 		}
-		uint32_t      	dim()         	  const { return shape.dim; 				}
+		int64_t      	dim()         	  const { return shape.dim; 				}
 		DimensionArray  elements()	  	  const { return shape.elements; 			}
 		DimensionArray  bytes()	  		  const { return shape.bytes; 				}
-		int64_t 		total_size()	  const { return shape.total_size(); 		}
+		int64_t			total_size()	  const { return shape.total_size(); 		}
 		int64_t			total_element()	  const { return shape.total_element(); 	}
 		int64_t         total_block()     const { return shape.total_block(); 		}
 

@@ -495,7 +495,7 @@ namespace spy {
             std::vector<HANDLE> handle_vec;
 
             handle_event_table.reserve(event_map_.size());
-            handle_vec.reserve(event_map.size());
+            handle_vec.reserve(event_map_.size());
 
             for (auto& pair : event_map_) {
                 auto& async_task            = pair.second;
@@ -557,7 +557,7 @@ namespace spy {
             std::vector<HANDLE> handle_vec;
 
             handle_event_table.reserve(event_map_.size());
-            handle_vec.reserve(event_map.size());
+            handle_vec.reserve(event_map_.size());
 
             for (auto& pair : event_map_) {
                 auto& async_task            = pair.second;

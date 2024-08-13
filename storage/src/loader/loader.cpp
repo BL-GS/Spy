@@ -2,7 +2,7 @@
 #include <memory>
 
 #include "loader/loader.h"
-#include "loader/policy/simple.h"
+#include "loader/simple_loader.h"
 
 namespace spy {
 

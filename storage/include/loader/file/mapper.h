@@ -72,7 +72,7 @@ namespace spy {
             const DWORD open_flag     = OPEN_EXISTING;
 
             HANDLE file_handle = CreateFile(filename.c_str(), prot, share_flag, nullptr, open_flag, flag, nullptr);
-            if (file_handle_ == INVALID_HANDLE_VALUE) {
+            if (file_handle == INVALID_HANDLE_VALUE) {
                 fprintf(stderr, "Failed reopening file: %s\n", llama_format_win_err().c_str());
                 return false;
             }
@@ -85,6 +85,10 @@ namespace spy {
 
             return true;
         }
+
+        void init_sync_handle(const std::string_view filename, bool write = false, bool existing = true, bool share = true) { }
+
+        void init_async_handle(const std::string_view filename, bool write = false, bool existing = true, bool share = true) { }
 
         void init_mapping() {
             mapping_handle_ = CreateFileMappingA(sync_file_handle_, NULL, PAGE_READONLY, 0, 0, NULL);
@@ -135,14 +139,14 @@ namespace spy {
             auto iter = view_map_.lower_bound(offset);
             if (iter == view_map_.end() || iter->first != offset) { 
                 if (iter == view_map_.begin()) {
-                    GGML_ASSERT(false, "Cannot find view");
+                    spy_assert(false, "Cannot find view");
                 }
                 --iter; 
             }
 
             const auto &view = iter->second;
             if (view->offset() > offset || view->offset() + view->size() < offset) {
-                GGML_ASSERT(false, "Cannot find view");
+                spy_assert(false, "Cannot find view");
             }
             return iter->second;
         }
