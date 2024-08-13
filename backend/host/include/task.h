@@ -170,7 +170,7 @@ namespace spy::cpu {
 
 		virtual ~ControlHeader() { if (callback) { callback(); } }
 
-		virtual void init(const OperatorEnvParam &param) { }
+		virtual void init([[maybe_unused]]const OperatorEnvParam &param) { }
 	};
 
 	struct MuxtexControlHeader: ControlHeader {

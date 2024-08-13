@@ -229,7 +229,7 @@ namespace spy::perf {
 
     inline void spy_end_event([[maybe_unused]]TraceEventType type) {}
 
-    inline void spy_begin_event([[maybe_unused]]TraceEventType type, [[maybe_unused]]std::string_view name, uint64_t track_id) {}
+    inline void spy_begin_event([[maybe_unused]]TraceEventType type, [[maybe_unused]]std::string_view name, [[maybe_unused]]uint64_t track_id) {}
 
     inline void spy_end_event([[maybe_unused]]TraceEventType type, [[maybe_unused]]uint64_t track_id) {}
 

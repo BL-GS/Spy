@@ -243,7 +243,6 @@ namespace spy {
 			params.track_ref_if_needed();
 
 			const Tensor &in  = input_data(0)->tensor;
-			const Tensor &pos = input_data(1)->tensor;
 
 			spy_assert(in.dim() >= 3, "invalid dimension of input tensor: {}(expect: >=3)", in.dim());
 

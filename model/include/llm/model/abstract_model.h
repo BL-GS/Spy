@@ -21,7 +21,7 @@ namespace spy {
     struct ModelMetadata {
         /* basic */
         std::string     model_name;
-        uint32_t        num_layer;
+        int32_t         num_layer;
         uint32_t        len_context__train;
 
         /* output */
@@ -75,7 +75,7 @@ namespace spy {
             metadata_.num_embedding     = context.find_gguf_value(LLMKey::EMBEDDING_LENGTH).get_value<uint32_t>();
             metadata_.num_ffn           = context.find_gguf_value(LLMKey::FEED_FORWARD_LENGTH).get_value<uint32_t>();
             metadata_.num_head          = context.find_gguf_value(LLMKey::ATTENTION_HEAD_COUNT).get_value<uint32_t>();
-            metadata_.num_layer         = context.find_gguf_value(LLMKey::BLOCK_COUNT).get_value<uint32_t>();
+            metadata_.num_layer         = static_cast<int32_t>(context.find_gguf_value(LLMKey::BLOCK_COUNT).get_value<uint32_t>());
 
             {
                 const auto num_vocab_option = context.find_gguf_value_option(LLMKey::VOCAB_SIZE);

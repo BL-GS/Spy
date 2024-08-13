@@ -30,7 +30,6 @@ namespace spy::cpu {
 		const auto &result  = op_node->output_data(0)->tensor;
 
         const auto &shape_operand = operand.get_shape();
-        const auto &shape_res     = result.get_shape();
 
         const auto [ne00, ne01, ne02, ne03] = shape_operand.elements;
         const int64_t num_row = ne01 * ne02 * ne03;
@@ -281,7 +280,6 @@ namespace spy::cpu {
         const auto &shape_res= result.get_shape();
 
         float theta_scale = std::pow(freq_base, -2.0F / num_dim);
-        const float inv_num_dim = -1.0F / num_dim;
 
         const float sin_sign = 1.0F;
 
@@ -304,7 +302,7 @@ namespace spy::cpu {
             if (mode != RopeType::GLM && mode != RopeType::Neox) {
                 const int32_t *pos_ptr = operand_1.get<const int32_t>({i2, 0, 0, 0});
                 float theta = static_cast<float>(*pos_ptr);
-                for (uint64_t i0 = 0; i0 < ne0; i0 += 2) {
+                for (int64_t i0 = 0; i0 < ne0; i0 += 2) {
                     rope_yarn(theta, freq_scale, corr_dims, i0, extend_factor, attention_factor, &cache[i0 + 0], &cache[i0 + 1]);
                     cache[i0 + 1] *= sin_sign;
                     theta 		  *= theta_scale;

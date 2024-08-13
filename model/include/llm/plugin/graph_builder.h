@@ -20,9 +20,18 @@ namespace spy {
     struct GraphBuilder {
     public:
         /// Listeners for updating params, which should be called after the member variables have been updated
-        std::vector<std::function<void()>> listener_list;
+        std::vector<std::function<void()>> listener_list{};
         /// Parameter storage
-        std::forward_list<std::any> param_list;
+        std::forward_list<std::any> param_list{};
+
+    public:
+        GraphBuilder() = default;
+
+        ~GraphBuilder() noexcept = default;
+
+        GraphBuilder(GraphBuilder &&other) = default;
+
+        GraphBuilder &operator=(GraphBuilder &&other) = default;
 
     public:
         template<class T, class ...Args>

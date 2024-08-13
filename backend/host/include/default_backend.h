@@ -151,7 +151,7 @@ namespace spy::cpu {
 			return new uint8_t[size];
 		}
 
-		void dealloc_memory(void *ptr, size_t size) override {
+		void dealloc_memory(void *ptr, [[maybe_unused]]size_t size) override {
 			delete[] static_cast<uint8_t *>(ptr);
 		}
 

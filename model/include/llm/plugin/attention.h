@@ -20,34 +20,42 @@ namespace spy {
         DataNode *bias_o          = nullptr;
     };
 
-	struct KVCache final: public GraphBuilder {
-	public:
-        const int64_t  num_embedding_k_gqa;
-        const int64_t  num_embedding_v_gqa;
-        const int64_t  num_context;
+    struct KVCacheData {
+        int64_t  num_embedding_k_gqa;
+        int64_t  num_embedding_v_gqa;
+        int64_t  num_context;
 
-        const NumberType k_cache_type;
-        const NumberType v_cache_type;
+        NumberType k_cache_type;
+        NumberType v_cache_type;
 
         int64_t num_past_token;
         
         DataNode * k_cache = nullptr;
         DataNode * v_cache = nullptr; 
+    };
+
+	struct KVCache final: public GraphBuilder, KVCacheData {
+    public:
+        KVCache() = default;
+
+        KVCache(const KVCacheData &data): KVCacheData(data) {}
+
+        KVCache(KVCache &&other) = default;
 
 	public:
 		void connect_KVCache(Graph &graph, int layer_id);
 	};
 
-    struct MultiHeadAttentionBlock final: public GraphBuilder {
+    struct MultiHeadAttentionBlockData {
         /* Hyper params */
-        const NormRMSParam norm_rms_param;
-        const RopeParam    rope_param_draft;
+        NormRMSParam norm_rms_param;
+        RopeParam    rope_param_draft;
 
-        const int64_t  num_embedding_head;
-        const int64_t  num_embedding_k_gqa;
-        const int64_t  num_embedding_v_gqa;
-        const int64_t  num_head_kv;
-        const int64_t  num_head;
+        int64_t  num_embedding_head;
+        int64_t  num_embedding_k_gqa;
+        int64_t  num_embedding_v_gqa;
+        int64_t  num_head_kv;
+        int64_t  num_head;
 
         int64_t  num_context;
         int64_t  num_token;
@@ -61,13 +69,22 @@ namespace spy {
         DataNode *k_cache;
         DataNode *v_cache;
 
-        const NumberType k_cache_type;
-        const NumberType v_cache_type;
+        NumberType k_cache_type;
+        NumberType v_cache_type;
 
         /* Input */
         DataNode *input_embedding;
         DataNode *input_pos;
+    };   
 
+    struct MultiHeadAttentionBlock final: public GraphBuilder, MultiHeadAttentionBlockData {
+        MultiHeadAttentionBlock() = default;
+
+        MultiHeadAttentionBlock(const MultiHeadAttentionBlockData &data): MultiHeadAttentionBlockData(data) {}
+
+        MultiHeadAttentionBlock(MultiHeadAttentionBlock &&other) = default;
+
+        MultiHeadAttentionBlock &operator=(MultiHeadAttentionBlock &&other) = default;
 
         DataNode *connect_attention(Graph &graph, int layer_id = -1, int expert_id = -1, bool enable_kvcache = true);
 

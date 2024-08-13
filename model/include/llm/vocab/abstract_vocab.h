@@ -44,7 +44,7 @@ namespace spy {
 		std::map<std::string, TokenID> special_tokens_cache;
 
 	public:
-		Vocab(const ModelMetaContext &context):
+		Vocab([[maybe_unused]]const ModelMetaContext &context):
 			special_bos_id(1), special_eos_id(2), special_unk_id(0), special_sep_id(-1), special_pad_id(-1),
 			linefeed_id(13), special_prefix_id(32007), special_middle_id(32009), special_suffix_id(32008), special_eot_id(32010),
 			special_add_bos(VocabSpecialAdd::Unknown), special_add_eos(VocabSpecialAdd::Unknown), add_space_prefix(true),
@@ -125,7 +125,7 @@ namespace spy {
 			if (add_eos_option.has_value()) { special_add_eos = add_eos_option->get_value<bool>() ? VocabSpecialAdd::Add : VocabSpecialAdd::NotAdd; }
 		}
 
-		void init_special_token_cache(const ModelMetaContext &context) {
+		void init_special_token_cache([[maybe_unused]] const ModelMetaContext &context) {
 			uint32_t special_tokens_count_by_type           = 0;
 			uint32_t special_tokens_count_from_verification = 0;
 			bool     special_tokens_definition_mismatch     = false;

@@ -136,7 +136,7 @@ namespace spy {
 		 */
 		int64_t total_size() 	const {
 			const size_t block_size = get_block_size(number_type);
-			size_t size = 0;
+			int64_t size = 0;
 			size = bytes[0] * elements[0] / block_size;
 			for (uint32_t i = 1; i < dim; ++i) { size += bytes[i] * (elements[i] - 1); }
 			return size;

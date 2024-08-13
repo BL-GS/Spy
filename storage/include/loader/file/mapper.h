@@ -299,7 +299,7 @@ namespace spy {
         ~FileViewBuilder() noexcept = default;
 
     public:
-        bool open_if_exist(const std::string &filename, bool write = false, bool use_overlapped = false) {
+        bool open_if_exist(const std::string &filename, bool write = false, [[maybe_unused]] bool use_overlapped = false) {
             init_handle(filename, write, true, false);
             return file_.valid();
         }
@@ -312,7 +312,7 @@ namespace spy {
             if (!file_.valid()) { init_handle(filename, write, existing, share); }
         }
 
-        void init_mapping(bool write = false) {
+        void init_mapping([[maybe_unused]] bool write = false) {
             if (!file_.valid()) { 
                 fprintf(stderr, "cannot create mapping on uninitialized file");
                 throw std::system_error(errno, std::system_category()); 

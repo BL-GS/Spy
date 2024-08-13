@@ -126,6 +126,7 @@ namespace spy {
             HyperParam hyper_param {
                 .num_context			= get_arg<uint32_t>("--num-context"),
 
+                .rope_type              = RopeType::None,
                 .rope_scaling_type      = HyperParam::parse_rope_scaling_type(get_arg<std::string>("--rope-scaling-type")),
                 .rope_pooling_type      = HyperParam::parse_pooling_type(get_arg<std::string>("--rope-pooling-type")),
                 .rope_freq_base 		= get_arg<float>("--rope-freq-base"),
@@ -134,7 +135,7 @@ namespace spy {
                 .yarn_attn_factor		= get_arg<float>("--yarn-attn-factor"),
                 .yarn_beta_fast			= get_arg<float>("--yarn-beta-fast"),
                 .yarn_beta_slow			= get_arg<float>("--yarn-beta-slow"),
-                .yarn_orig_ctx			= get_arg<uint32_t>("--yarn-orig-ctx")
+                .yarn_orig_ctx			= get_arg<uint32_t>("--yarn-orig-ctx"),
             };
             return hyper_param;
         }
