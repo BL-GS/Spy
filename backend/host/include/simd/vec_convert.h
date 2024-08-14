@@ -53,7 +53,7 @@ namespace spy::cpu {
 		static constexpr size_t TO_TYPE_SIZE    = ToMetadata::TYPE_SIZE;
 
 	public:
-		static void transform(const FromBlock * __restrict from_ptr, ToBlock * __restrict to_ptr, size_t num_from) {
+		static void transform(const FromBlock * __restrict from_ptr, ToBlock * __restrict to_ptr, int64_t num_from) {
 			 int64_t i = 0;
 			 for (; i + 7 < num_from; i += 8) {
 			 	simde__m256 x_vec  = simde_mm256_loadu_ps(from_ptr + i);
@@ -83,12 +83,12 @@ namespace spy::cpu {
 		static constexpr int NUM_FROM_UNIT = ToMetadata::NUM_BEFORE_DEQUANTIZATION;
 
 	public:
-		static void transform(const FromBlock * __restrict from_ptr, ToBlock * __restrict to_ptr, size_t num_from) {
-			const size_t num_from_block = num_from / NUM_FROM_UNIT;
-			const size_t num_left 		= num_from % NUM_FROM_UNIT;
+		static void transform(const FromBlock * __restrict from_ptr, ToBlock * __restrict to_ptr, int64_t num_from) {
+			const int64_t num_from_block = num_from / NUM_FROM_UNIT;
+			const int64_t num_left 		 = num_from % NUM_FROM_UNIT;
 			spy_assert(num_left == 0, "Expect the quantization source ({}) to be aligned with the target block ({}).", num_from, NUM_FROM_UNIT);
 
-			for (size_t i = 0; i < num_from_block; ++i) {
+			for (int64_t i = 0; i < num_from_block; ++i) {
 				float abs_max = 0.0F;
 				float max     = 0.0F;
 				for (int j = 0; j < NUM_FROM_UNIT; ++j) {
@@ -139,12 +139,12 @@ namespace spy::cpu {
 		static constexpr int NUM_FROM_UNIT = ToMetadata::NUM_BEFORE_DEQUANTIZATION;
 
 	public:
-		static void transform(const FromBlock * __restrict from_ptr, ToBlock * __restrict to_ptr, size_t num_from) {
-			const size_t num_from_block = num_from / NUM_FROM_UNIT;
-			const size_t num_left 		= num_from % NUM_FROM_UNIT;
+		static void transform(const FromBlock * __restrict from_ptr, ToBlock * __restrict to_ptr, int64_t num_from) {
+			const int64_t num_from_block = num_from / NUM_FROM_UNIT;
+			const int64_t num_left 		 = num_from % NUM_FROM_UNIT;
 			spy_assert(num_left == 0, "Expect the quantization source ({}) to be aligned with the target block ({}).", num_from, NUM_FROM_UNIT);
 
-			for (size_t i = 0; i < num_from_block; ++i) {
+			for (int64_t i = 0; i < num_from_block; ++i) {
 				float min = std::numeric_limits<float>::min();
 				float max = std::numeric_limits<float>::max();
 
@@ -194,12 +194,12 @@ namespace spy::cpu {
 		static constexpr int NUM_FROM_UNIT = ToMetadata::NUM_BEFORE_DEQUANTIZATION;
 
 	public:
-		static void transform(const FromBlock * __restrict from_ptr, ToBlock * __restrict to_ptr, size_t num_from) {
-			const size_t num_from_block = num_from / NUM_FROM_UNIT;
-			const size_t num_left 		= num_from % NUM_FROM_UNIT;
+		static void transform(const FromBlock * __restrict from_ptr, ToBlock * __restrict to_ptr, int64_t num_from) {
+			const int64_t num_from_block = num_from / NUM_FROM_UNIT;
+			const int64_t num_left 		 = num_from % NUM_FROM_UNIT;
 			spy_assert(num_left == 0, "Expect the quantization source ({}) to be aligned with the target block ({}).", num_from, NUM_FROM_UNIT);
 
-			for (size_t i = 0; i < num_from_block; ++i) {
+			for (int64_t i = 0; i < num_from_block; ++i) {
 				// Load elements into 4 AVX vectors
 				simde__m256 v0 = simde_mm256_loadu_ps( from_ptr );
 				simde__m256 v1 = simde_mm256_loadu_ps( from_ptr + 8 );
@@ -279,14 +279,14 @@ namespace spy::cpu {
 		static constexpr int NUM_FROM_UNIT = ToMetadata::NUM_BEFORE_DEQUANTIZATION;
 
 	public:
-		static void transform(const FromBlock * __restrict from_ptr, ToBlock * __restrict to_ptr, size_t num_from) {
+		static void transform(const FromBlock * __restrict from_ptr, ToBlock * __restrict to_ptr, int64_t num_from) {
             using namespace simd;
 
-			const size_t num_from_block = num_from / NUM_FROM_UNIT;
-			const size_t num_left 		= num_from % NUM_FROM_UNIT;
+			const int64_t num_from_block = num_from / NUM_FROM_UNIT;
+			const int64_t num_left 		 = num_from % NUM_FROM_UNIT;
 			spy_assert(num_left == 0, "Expect the quantization source ({}) to be aligned with the target block ({}).", num_from, NUM_FROM_UNIT);
 
-			for (size_t i = 0; i < num_from_block; ++i) {
+			for (int64_t i = 0; i < num_from_block; ++i) {
 				// Load elements into 4 AVX vectors
 				simde__m256 v0 = simde_mm256_loadu_ps( from_ptr );
 				simde__m256 v1 = simde_mm256_loadu_ps( from_ptr + 8 );
@@ -377,8 +377,8 @@ namespace spy::cpu {
 			}
 		}
 
-		static constexpr void transform(const FromType *from_ptr, ToType *to_ptr, size_t num) {
-			for (size_t i = 0; i < num; ++i) {
+		static constexpr void transform(const FromType *from_ptr, ToType *to_ptr, int64_t num) {
+			for (int64_t i = 0; i < num; ++i) {
 				transform(from_ptr + i, to_ptr + i * TO_NUM);
 			}
 		}
@@ -411,8 +411,8 @@ namespace spy::cpu {
 			}
 		}
 
-		static constexpr void transform(const FromType *from_ptr, ToType *to_ptr, size_t num) {
-			for (size_t i = 0; i < num; ++i) {
+		static constexpr void transform(const FromType *from_ptr, ToType *to_ptr, int64_t num) {
+			for (int64_t i = 0; i < num; ++i) {
 				transform(from_ptr + i, to_ptr + i * TO_NUM);
 			}
 		}
@@ -441,15 +441,15 @@ namespace spy::cpu {
 			}
 		}
 
-		static constexpr void transform(const FromType *from_ptr, ToType *to_ptr, size_t num) {
-			for (size_t i = 0; i < num; ++i) {
+		static constexpr void transform(const FromType *from_ptr, ToType *to_ptr, int64_t num) {
+			for (int64_t i = 0; i < num; ++i) {
 				transform(from_ptr + i, to_ptr + i * TO_NUM);
 			}
 		}
 	};
 
 	template<NumberType T_from, NumberType T_to>
-	inline void quantize_inner(const void *src, void *dst, size_t num) {
+	inline void quantize_inner(const void *src, void *dst, int64_t num) {
 		using FromType = NumberMetadata<T_from>::BlockType;
 		using ToType   = NumberMetadata<T_to>::BlockType;
 
@@ -460,7 +460,7 @@ namespace spy::cpu {
 		);
 	}
 
-	inline static void auto_quantize_inner(NumberType type_0, const void *src, NumberType type_1, void *dst, size_t num) {
+	inline static void auto_quantize_inner(NumberType type_0, const void *src, NumberType type_1, void *dst, int64_t num) {
 		const auto transform_func = NumberTypeMapper::product_map([](const auto T_type_0, const auto T_type_1){
 			return quantize_inner<T_type_0, T_type_1>;
 		}, type_0, type_1);

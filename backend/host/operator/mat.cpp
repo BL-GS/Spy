@@ -102,8 +102,8 @@ namespace spy::cpu {
             const int64_t num_src1_row    = shape_1.num_row();
             const int64_t buffer_row_size = get_row_size(type_mid, ne10);
 
-            spy_assert(num_src1_row * buffer_row_size <= buffer_size,
-                "The size of buffer is less than that needed (buffer: {}, need: {})", buffer_size, num_src1_row * buffer_row_size);
+            spy_assert(static_cast<size_t>(num_src1_row * buffer_row_size) <= buffer_size,
+                "The size of buffer is liess than that needed (buffer: {}, need: {})", buffer_size, num_src1_row * buffer_row_size);
 
 			while (true) {
 				const int cur_src1_row = --header_ptr->src1_quantize_counter;
