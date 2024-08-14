@@ -2,7 +2,7 @@
 
 #include <simde/x86/avx2.h>
 
-#include "number/number.h"
+#include "number/lookup_table.h"
 #include "simd/vec_util.h"
 
 namespace spy::cpu {

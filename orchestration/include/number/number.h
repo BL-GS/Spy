@@ -18,10 +18,6 @@
 
 namespace spy {
 
-	inline float spy_fp16_to_fp32(uint16_t x) { return simde_float16_to_float32(simde_uint16_as_float16(x)); }
-
-	inline uint16_t spy_fp32_to_fp16(float x) { return simde_float16_as_uint16(simde_float16_from_float32(x)); }
-
 	/*
 	 * Utilities
 	 */

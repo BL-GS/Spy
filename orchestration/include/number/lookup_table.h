@@ -16,11 +16,6 @@ namespace spy {
         using GeluTable = GeluLookupTable<NumberType::FP16, NumberType::FP32>;
         using ExpTable  = ExpLookupTable<NumberType::FP16, NumberType::FP32>;
 
-        static_assert(LookupTableConcept<FP32Table>);
-        static_assert(LookupTableConcept<SiluTable>);
-        static_assert(LookupTableConcept<GeluTable>);
-        static_assert(LookupTableConcept<ExpTable >);
-
 	public:
         FP32Table fp32_table;
         SiluTable silu_table;
@@ -53,5 +48,9 @@ namespace spy {
 	};
 	
 	extern const FP16LookupTable LOOK_UP_TABLE;
+
+	inline float spy_fp16_to_fp32(uint16_t x) { return LOOK_UP_TABLE.fp32(x); }
+
+	inline uint16_t spy_fp32_to_fp16(float x) { return simde_float16_as_uint16(simde_float16_from_float32(x)); }
     
 } // namespace spy

@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <cmath>
 #include <array>
+#include <simde/simde-f16.h>
 
 #include "number/lookup_table_impl/type.h"
 
@@ -40,7 +41,7 @@ namespace spy {
     public:
         NonLinearLookupTable() {
             for (Key k = 0; k < MAX_KEY; ++k) { 
-                const float float_key = spy_fp16_to_fp32(k);
+                const float float_key = simde_float16_to_float32(simde_uint16_as_float16(k));
                 table[k] = float_key / (1.0F + std::exp(-float_key)); 
             }
         }
@@ -86,7 +87,7 @@ namespace spy {
             constexpr float SQRT_2_OVER_PI = 0.79788456080286535587989211986876F;
 			constexpr float GELU_COEF_A    = 0.044715F;
             for (Key k = 0; k < MAX_KEY; ++k) { 
-                const float float_key = spy_fp16_to_fp32(k);
+                const float float_key = simde_float16_to_float32(simde_uint16_as_float16(k));
                 table[k] = 0.5F * float_key * (1.0F + tanhf(SQRT_2_OVER_PI * float_key * (1.0F + GELU_COEF_A * float_key * float_key))); 
             }
         }
@@ -132,7 +133,7 @@ namespace spy {
     public:
         NonLinearLookupTable() {
             for (Key k = 0; k < MAX_KEY; ++k) { 
-                const float float_key = spy_fp16_to_fp32(k);
+                const float float_key = simde_float16_to_float32(simde_uint16_as_float16(k));
                 table[k] = std::exp(float_key); 
             }
         }

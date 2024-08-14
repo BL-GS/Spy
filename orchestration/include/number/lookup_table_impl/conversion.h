@@ -2,8 +2,7 @@
 
 #include <cstdint>
 #include <array>
-
-#include "number/number.h"
+#include <simde/simde-f16.h>
 
 /* 
  * Lookup table for number conversation
@@ -38,7 +37,7 @@ namespace spy {
 
     public:
         ConversationLookupTable() {
-            for (Key k = 0; k < MAX_KEY; ++k) { table[k] = spy_fp16_to_fp32(k); }
+            for (Key k = 0; k < MAX_KEY; ++k) { table[k] = simde_float16_to_float32(simde_uint16_as_float16(k)); }
         }
 
     public:
