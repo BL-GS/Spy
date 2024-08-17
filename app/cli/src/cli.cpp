@@ -3,7 +3,7 @@
 #include <string>
 
 #include "util/log/logger.h"
-#include "backend/config.h"
+#include "backend/backend.h"
 #include "cli.h"
 #include "cmdline.h"
 

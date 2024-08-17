@@ -2,7 +2,7 @@
 
 #include "operator/type.h"
 #include "backend/type.h"
-#include "backend/config.h"
+#include "backend/backend.h"
 
 namespace spy::cpu {
 

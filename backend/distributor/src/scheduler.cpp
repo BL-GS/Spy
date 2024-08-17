@@ -2,7 +2,7 @@
 
 #define BACKEND_SCHEDULER_HEADER_MACRO
 
-#include "backend/config.h"
+#include "backend/backend.h"
 #include "scheduler/scheduler.h"
 #include "scheduler/default_scheduler.h"
 

@@ -129,19 +129,29 @@ namespace spy {
 		}
 	};
 
-	namespace cpu { void init_backend(BackendFactory &); }
 
-#ifdef SPY_BACKEND_CUDA
-	namespace gpu { void init_backend(BackendFactory &); }
-#endif
-
-	inline BackendFactory::BackendFactory() {
-		cpu::init_backend(*this);
-#ifdef SPY_BACKEND_CUDA
-		gpu::init_backend(*this);
-#endif
-	}
 
 }  // namespace spy
 
 SPY_ENUM_FORMATTER(spy::OperatorStatus);
+
+
+/*!
+ * @brief Register backends
+ */
+namespace spy {
+
+	namespace cpu { void init_backend(BackendFactory &); }
+
+	#ifdef SPY_BACKEND_CUDA
+	namespace gpu { void init_backend(BackendFactory &); }
+	#endif
+
+	inline BackendFactory::BackendFactory() {
+		cpu::init_backend(*this);
+	#ifdef SPY_BACKEND_CUDA
+		gpu::init_backend(*this);
+	#endif
+	}
+
+} // namespace

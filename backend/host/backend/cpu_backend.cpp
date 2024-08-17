@@ -15,7 +15,7 @@
 #endif // _WIN32
 
 #include "operator_impl.h"
-#include "abstract_backend.h"
+#include "cpu_backend.h"
 #include "task.h"
 
 namespace spy::cpu {

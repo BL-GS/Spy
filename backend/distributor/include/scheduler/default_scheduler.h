@@ -17,7 +17,7 @@
 #include "graph/op_node.h"
 #include "graph/data_node.h"
 #include "graph/graph.h"
-#include "backend/config.h"
+#include "backend/backend.h"
 #include "loader/loader.h"
 #include "scheduler/common.h"
 #include "scheduler/scheduler.h"

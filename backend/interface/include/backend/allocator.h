@@ -10,7 +10,7 @@
 #include <array>
 
 #include "util/log/logger.h"
-#include "backend/config.h"
+#include "backend/backend.h"
 
 namespace spy {
 	template<BackendType T_backend>

@@ -7,7 +7,7 @@
 #include "llm/sampler/sampler.h"
 #include "llm/model/model.h"
 #include "distributor/distributor.h"
-#include "backend/config.h"
+#include "backend/backend.h"
 #include "perf/event.h"
 
 namespace spy {

@@ -6,7 +6,7 @@
 #include <memory>
 
 #include "util/log/logger.h"
-#include "backend/config.h"
+#include "backend/backend.h"
 #include "default_backend.h"
 
 namespace spy::cpu {

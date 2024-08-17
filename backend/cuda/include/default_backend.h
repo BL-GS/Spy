@@ -13,7 +13,7 @@
 #include <thread>
 #include <functional>
 
-#include "abstract_backend.h"
+#include "cuda_backend.h"
 #include "gpu_device.h"
 #include "task.h"
 

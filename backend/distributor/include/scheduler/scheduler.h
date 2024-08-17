@@ -3,7 +3,7 @@
 #include <memory>
 
 #include "graph/graph.h"
-#include "backend/config.h"
+#include "backend/backend.h"
 #include "scheduler/common.h"
 
 namespace spy {

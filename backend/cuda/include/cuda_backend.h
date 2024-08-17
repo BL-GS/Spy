@@ -1,6 +1,6 @@
 #pragma once
 
-#include "backend/config.h"
+#include "backend/backend.h"
 #include "gpu_device.h"
 #include "operator/type.h"
 #include "task.h"
