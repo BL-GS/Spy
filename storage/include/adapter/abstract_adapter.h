@@ -18,7 +18,7 @@ namespace spy {
          * @param filename the path to the file
          * @return The metadata of the model file
          */
-        virtual ModelMetaContext init_from_file(const std::string_view filename) = 0;
+        virtual ModelMetaContext init_from_file(std::string_view filename) = 0;
     };
 
 } // namespace spy

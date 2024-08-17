@@ -40,7 +40,7 @@ namespace spy {
     public:
         DefaultGraphScheduler(Backend *backend_ptr): GraphScheduler(backend_ptr) {}
 
-        virtual ~DefaultGraphScheduler() = default;
+        ~DefaultGraphScheduler() override = default;
 
     public:
         void execute(Graph &graph, GraphControlHeader &control_header) override {

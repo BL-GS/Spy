@@ -13,7 +13,7 @@ namespace spy {
 	public:
 		GGUFAdapter() = default;
 
-		virtual ~GGUFAdapter() = default;
+		~GGUFAdapter() override = default;
 
 	public:
 		ModelMetaContext init_from_file(std::string_view filename) override;
