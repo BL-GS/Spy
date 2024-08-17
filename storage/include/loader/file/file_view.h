@@ -11,6 +11,7 @@
 #include <stdexcept>
 #include <system_error>
 
+#include "util/log/logger.h"
 #include "loader/file/exception.h"
 
 #ifdef __has_include
@@ -603,7 +604,7 @@ namespace spy {
 		FileMappingView(const int descriptor, int64_t offset, size_t size, bool write = false) {
 			// Do not call mmap if size == 0
 			if (size == 0) {
-				offset_ = 0;
+				view_offset = 0;
 				return;
 			}
 
@@ -613,28 +614,28 @@ namespace spy {
 			const int64_t aligned_offset = offset / ALIGNED_GRANULARITY * ALIGNED_GRANULARITY;
 			const size_t  aligned_size   = size + (offset - aligned_offset);
 
-            offset_      = offset - aligned_offset;
-            size_        = aligned_size;
-            file_offset_ = offset;
+            view_offset = offset - aligned_offset;
+            view_size   = aligned_size;
+            file_offset = offset;
 
 			// mmap
-			addr_ = mmap(
+			view_addr= static_cast<std::byte *>(mmap(
 				nullptr, 
 				aligned_size, 
 				prot, 
 				MAP_SHARED, 
 				descriptor, 
 				aligned_offset
-			);
-			if (addr_ == MAP_FAILED) { 
+			));
+			if (view_addr== MAP_FAILED) { 
                 fprintf(stderr, "failed mmaping file");
                 throw std::system_error(errno, std::system_category()); 
             }
 		}
 
 		~FileMappingView() noexcept override {
-			if (addr_ != nullptr) {
-				munmap(addr_, size_);
+			if (view_addr!= nullptr) {
+				munmap(view_addr, view_size);
 			}
 		}
 
@@ -643,10 +644,10 @@ namespace spy {
 		}
 
 		FileMappingView &operator = (FileMappingView &&other) noexcept {
-            offset_      = other.offset_;
-            size_        = other.size_;
-            file_offset_ = other.file_offset_;
-            addr_        = other.addr_;
+            view_offset = other.view_offset;
+            view_size   = other.view_size;
+            file_offset = other.file_offset;
+            view_addr   = other.view_addr;
 			other.reset();
 			return *this;
 		}
@@ -663,10 +664,10 @@ namespace spy {
 
 	private:
 		void reset() {
-            offset_      = 0;
-            size_        = 0;
-            addr_        = nullptr;
-            file_offset_ = 0;
+            view_offset = 0;
+            view_size   = 0;
+            view_addr   = nullptr;
+            file_offset = 0;
 		}
 	};
 
@@ -687,7 +688,7 @@ namespace spy {
 	public:
 		int read(void *dst, int64_t offset, size_t size) override {
 			// Move the pointer of file descriptor
-			const int64_t cur_offset = lseek(descriptor_, this->offset_ + offset, SEEK_SET);
+			const int64_t cur_offset = lseek(descriptor_, this->view_offset + offset, SEEK_SET);
 			if (cur_offset == -1) {
                 fprintf(stderr, "failed to seek file");
 				throw std::system_error(errno, std::system_category());
@@ -699,7 +700,7 @@ namespace spy {
 
 		int write(const void *src, int64_t offset, size_t size) override {
 			// Move the pointer of file descriptor
-			const int64_t cur_offset = lseek(descriptor_, this->offset_ + offset, SEEK_SET);
+			const int64_t cur_offset = lseek(descriptor_, this->view_offset + offset, SEEK_SET);
 			if (cur_offset == -1) {
                 fprintf(stderr, "failed to seek file");
 				throw std::system_error(errno, std::system_category());
@@ -752,7 +753,7 @@ namespace spy {
             AIOPointer aiocb_ptr = std::make_unique<aiocb>();
             std::memset(aiocb_ptr.get(), 0, sizeof(aiocb));
 
-            offset += this->offset_;
+            offset += this->view_offset;
 
 			aiocb_ptr->aio_fildes = descriptor_;
 			aiocb_ptr->aio_nbytes = size;
@@ -775,7 +776,7 @@ namespace spy {
             AIOPointer aiocb_ptr = std::make_unique<aiocb>();
             std::memset(aiocb_ptr.get(), 0, sizeof(aiocb));
 
-            offset += this->offset_;
+            offset += this->view_offset;
 
 			aiocb_ptr->aio_fildes = descriptor_;
 			aiocb_ptr->aio_nbytes = size;
@@ -798,7 +799,7 @@ namespace spy {
             AIOPointer aiocb_ptr = std::make_unique<aiocb>();
             std::memset(aiocb_ptr.get(), 0, sizeof(aiocb));
 
-            offset += this->offset_;
+            offset += this->view_offset;
 
 			aiocb_ptr->aio_fildes = descriptor_;
 			aiocb_ptr->aio_nbytes = size;
@@ -821,7 +822,7 @@ namespace spy {
             AIOPointer aiocb_ptr = std::make_unique<aiocb>();
             std::memset(aiocb_ptr.get(), 0, sizeof(aiocb));
 
-            offset += this->offset_;
+            offset += this->view_offset;
 
 			aiocb_ptr->aio_fildes = descriptor_;
 			aiocb_ptr->aio_nbytes = size;
