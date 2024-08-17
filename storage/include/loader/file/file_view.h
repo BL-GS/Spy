@@ -526,7 +526,7 @@ namespace spy {
                         spy_error("failed waiting for event: {}", system_error());
                         break;
                     }                      
-                    throw SpyOSFileException("failed waiting for event");;
+                    throw SpyOSFileException("failed waiting for event");
                 }
             }
 

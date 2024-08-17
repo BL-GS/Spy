@@ -84,8 +84,6 @@ namespace spy {
         void build_attention(ModelMetaContext &context, Graph &graph, int layer_id);
 
         void build_ffn(ModelMetaContext &context, Graph &graph, int layer_id);
-
-		void build_kv_cache(ModelMetaContext &context, Graph &graph, int layer_id);
 	};
 
 }  // namespace spy
