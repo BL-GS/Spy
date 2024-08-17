@@ -57,7 +57,7 @@ namespace spy {
 
 		DataNode(const DataNode &other) = default;
 
-		~DataNode() noexcept = default;
+		~DataNode() noexcept override = default;
 
     public:
         void set_prop(const DataNodeProperty &new_prop) { node_prop = new_prop; }
@@ -68,8 +68,6 @@ namespace spy {
 
     public:
         bool is_view() const { return view_src != nullptr; }
-
-        std::string get_tensor_name() const;
 
         std::map<std::string_view, std::string> property() const override;
 	};

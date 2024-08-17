@@ -17,7 +17,7 @@ namespace spy {
 	public:
 	    OperatorDefinition(): OperatorBinaryNode(TYPE) {}
 
-		~OperatorDefinition() noexcept = default;
+		~OperatorDefinition() noexcept override = default;
     };
 	using AddOpDef = OperatorDefinition<OperatorType::Add>;
 
@@ -30,7 +30,7 @@ namespace spy {
 	public:
 	    OperatorDefinition(): OperatorBinaryNode(TYPE) {}
 
-	    ~OperatorDefinition() noexcept = default;
+	    ~OperatorDefinition() noexcept override = default;
     };
 	using SubOpDef = OperatorDefinition<OperatorType::Sub>;
 
@@ -43,7 +43,7 @@ namespace spy {
 	public:
 	    OperatorDefinition(): OperatorBinaryNode(TYPE) {}
 
-	    ~OperatorDefinition() noexcept = default;
+	    ~OperatorDefinition() noexcept override = default;
     };
 	using MulOpDef = OperatorDefinition<OperatorType::Mul>;
 
@@ -56,7 +56,7 @@ namespace spy {
 	public:
 	    OperatorDefinition(): OperatorBinaryNode(TYPE) {}
 
-	    ~OperatorDefinition() noexcept = default;
+	    ~OperatorDefinition() noexcept override = default;
     };
 	using DivOpDef = OperatorDefinition<OperatorType::Div>;
 

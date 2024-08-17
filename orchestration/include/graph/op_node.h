@@ -20,7 +20,7 @@ namespace spy {
 
 		OperatorNode(const OperatorNode &other) = default;
 
-		virtual ~OperatorNode() noexcept = default;
+		~OperatorNode() noexcept override = default;
 
 	public: /* Assertion */
 		template<class ...Args>

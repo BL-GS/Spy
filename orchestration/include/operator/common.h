@@ -14,7 +14,7 @@ namespace spy {
 	public:
 		OperatorUnaryNode(OperatorType type): OperatorNode(type) {}
 
-		~OperatorUnaryNode() noexcept = default;
+		~OperatorUnaryNode() noexcept override = default;
 
 	public:
 		auto &set_name(std::string_view name) {
@@ -40,7 +40,7 @@ namespace spy {
 		}
 
 
-		/*! 
+		/*!
 		 * @brief Validate the metadata of inputs and propagate to generate the metadata of the output nodes
 		 */
 		void propagate() override {
@@ -61,7 +61,7 @@ namespace spy {
 	public:
 		OperatorBinaryNode(OperatorType type): OperatorNode(type) {}
 
-		~OperatorBinaryNode() noexcept = default;
+		~OperatorBinaryNode() noexcept override = default;
 
 	public:
 		auto &set_name(std::string_view name) {

@@ -39,8 +39,6 @@ namespace spy {
 			requires std::is_base_of_v<BasicNode, T_Node>
 		T_Node &alloc_node(Args &&...args) const;
 
-		void propagate() const;
-
 	public:
 		std::map<std::string_view, std::string> property() const override;
 

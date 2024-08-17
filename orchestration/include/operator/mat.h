@@ -22,7 +22,7 @@ namespace spy {
 	public:
 	    OperatorDefinition(): OperatorNode(TYPE) {}
 
-	    ~OperatorDefinition() noexcept = default;
+	    ~OperatorDefinition() noexcept override = default;
 
 	public: /* Interface for graph deduction and data propagation */
 		auto &set_name(std::string_view name) {

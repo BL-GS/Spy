@@ -22,7 +22,7 @@ namespace spy {
 	public:
 	    OperatorDefinition(): OperatorNode(TYPE) {}
 
-	    ~OperatorDefinition() noexcept = default;
+	    ~OperatorDefinition() noexcept override = default;
 
 	public: /* Interface for graph deduction */
 		auto &set_name(std::string_view name) {
@@ -75,7 +75,7 @@ namespace spy {
 	public:
 		OperatorDefinition(): OperatorNode(TYPE) {}
 
-	    ~OperatorDefinition() noexcept = default;
+	    ~OperatorDefinition() noexcept override = default;
 
 	public: /* Interface for graph deduction */
 		auto &set_name(std::string_view name) {
@@ -151,7 +151,7 @@ namespace spy {
 	public:
 	    OperatorDefinition(): OperatorNode(TYPE) {}
 
-	    ~OperatorDefinition() noexcept = default;
+	    ~OperatorDefinition() noexcept override = default;
 
 	public: /* Interface for graph deduction */
 		auto &set_name(std::string_view name) {
@@ -204,7 +204,7 @@ namespace spy {
 	public:
 	    OperatorDefinition(): OperatorNode(TYPE) {}
 
-	    ~OperatorDefinition() noexcept = default;
+	    ~OperatorDefinition() noexcept override = default;
 
 	public: /* Interface for graph deduction */
 		auto &set_name(std::string_view name) {
@@ -275,7 +275,7 @@ namespace spy {
 
 		OperatorDefinition(ParameterRefPointer ref_ptr): OperatorNode(TYPE), params(ref_ptr) {}
 
-	    ~OperatorDefinition() noexcept = default;
+	    ~OperatorDefinition() noexcept override = default;
 
 	public: /* Interface for graph deduction */
 		auto &set_name(std::string_view name) {
@@ -351,7 +351,7 @@ namespace spy {
 
 		OperatorDefinition(ParameterRefPointer ref_ptr): OperatorNode(TYPE), params(ref_ptr) {}
 
-	    ~OperatorDefinition() noexcept = default;
+	    ~OperatorDefinition() noexcept override = default;
 
 	public: /* Interface for graph deduction */
 		auto &set_name(std::string_view name) {
@@ -407,7 +407,7 @@ namespace spy {
 	public:
 	    OperatorDefinition(): OperatorNode(TYPE) {}
 
-	    ~OperatorDefinition() noexcept = default;
+	    ~OperatorDefinition() noexcept override = default;
 
 	public: /* Interface for graph deduction */
 		auto &set_name(std::string_view name) {
@@ -478,7 +478,7 @@ namespace spy {
 
 		OperatorDefinition(ParameterRefPointer ref_ptr): OperatorNode(TYPE), params(ref_ptr) {}
 
-	    ~OperatorDefinition() noexcept = default;
+	    ~OperatorDefinition() noexcept override = default;
 
 	public: /* Interface for graph deduction */
 		auto &set_name(std::string_view name) {
@@ -540,7 +540,7 @@ namespace spy {
 	public:
 	    OperatorDefinition(): OperatorNode(TYPE) {}
 
-	    ~OperatorDefinition() noexcept = default;
+	    ~OperatorDefinition() noexcept override = default;
 
 	public: /* Interface for graph deduction */
 		auto &set_name(std::string_view name) {
