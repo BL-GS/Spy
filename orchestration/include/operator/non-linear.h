@@ -62,36 +62,34 @@ namespace spy {
 	    ~OperatorDefinition() noexcept = default;
 
 	public: /* Interface for graph deduction */
-	    /*!
-         * @brief Resolve input nodes and generate output nodes
-		 * @param input_node_ptr The input tensor
-		 * @param pos_node_ptr The position for rotation
-         * @return Output nodes
-         */
-		DataNode *deduce(Graph &graph, const DataNodeProperty &prop, DataNode *input_node_ptr, DataNode *mask_node_ptr) {
+		auto &set_name(std::string_view name) {
+			this->name = fmt::format("{}: {}", magic_enum::enum_name(TYPE), name);
+			return *this;
+		}
+
+		auto &set_input(DataNode *input_node_ptr, DataNode *mask_node_ptr) {
 			add_input(input_node_ptr, mask_node_ptr);
-			DataNode *output_node_ptr = std::addressof(graph.alloc_node<DataNode>());
-			output_node_ptr->name = name + "-out";
-			output_node_ptr->set_prop(prop);
-			add_output(output_node_ptr);
-			return output_node_ptr;
+			return *this;
+		}
+
+		auto &set_input(DataNode *input_node_ptr) {
+			add_input(input_node_ptr);
+			return *this;
 		}
 
 	    /*!
          * @brief Resolve input nodes and generate output nodes
-		 * @param input_node_ptr The input tensor
          * @return Output nodes
          */
-		DataNode *deduce(Graph &graph, const DataNodeProperty &prop, DataNode *input_node_ptr) {
-			add_input(input_node_ptr);
+		DataNode *deduce(Graph &graph, const DataNodeProperty &prop) {
 			DataNode *output_node_ptr = std::addressof(graph.alloc_node<DataNode>());
-			output_node_ptr->name = name + "-out";
+		    output_node_ptr->name = name + "-out";
 			output_node_ptr->set_prop(prop);
 			add_output(output_node_ptr);
 			return output_node_ptr;
 		}
 
-		/*! 
+		/*!
 		 * @brief Validate the metadata of inputs and propagate to generate the metadata of the output nodes
 		 * @return Output nodes
 		 */
@@ -136,12 +134,21 @@ namespace spy {
 	    ~OperatorDefinition() noexcept = default;
 
 	public:
+		auto &set_name(std::string_view name) {
+			this->name = fmt::format("{}: {}", magic_enum::enum_name(TYPE), name);
+			return *this;
+		}
+
+		auto &set_input(DataNode *in_node_ptr) {
+			add_input(in_node_ptr);
+			return *this;
+		}
+
         /*!
          * @brief Resolve input nodes and generate output nodes
          * @return Output nodes
          */
-		DataNode *deduce(Graph &graph, const DataNodeProperty &prop, DataNode *in_node_ptr) {
-			add_input(in_node_ptr);
+		DataNode *deduce(Graph &graph, const DataNodeProperty &prop) {
 			DataNode *output_node_ptr = std::addressof(graph.alloc_node<DataNode>());
 			output_node_ptr->name = name + "-out";
 			output_node_ptr->set_prop(prop);
@@ -149,8 +156,7 @@ namespace spy {
 			return output_node_ptr;
 		}
 
-
-		/*! 
+		/*!
 		 * @brief Validate the metadata of inputs and propagate to generate the metadata of the output nodes
 		 * @return Output nodes
 		 */
@@ -218,16 +224,28 @@ namespace spy {
 	    ~OperatorDefinition() noexcept = default;
 
 	public: /* Interface for graph deduction */
-	    /*!
-         * @brief Resolve input nodes and generate output nodes
+		auto &set_name(std::string_view name) {
+			this->name = fmt::format("{}: {}", magic_enum::enum_name(TYPE), name);
+			return *this;
+		}
+
+		/*!
+		 * @brief make input of the operator
 		 * @param input_node_ptr The input tensor
 		 * @param pos_node_ptr The position for rotation
+		 */
+		auto &set_input(DataNode *input_node_ptr, DataNode *pos_node_ptr) {
+			add_input(input_node_ptr, pos_node_ptr);
+			return *this;
+		}
+
+	    /*!
+         * @brief Resolve input nodes and generate output nodes
          * @return Output nodes
          */
-		DataNode *deduce(Graph &graph, const DataNodeProperty &prop, DataNode *input_node_ptr, DataNode *pos_node_ptr) {
-			add_input(input_node_ptr, pos_node_ptr);
+		DataNode *deduce(Graph &graph, const DataNodeProperty &prop) {
 			DataNode *output_node_ptr = std::addressof(graph.alloc_node<DataNode>());
-			output_node_ptr->name = name + "-out";
+		    output_node_ptr->name = name + "-out";
 			output_node_ptr->set_prop(prop);
 			add_output(output_node_ptr);
 			return output_node_ptr;

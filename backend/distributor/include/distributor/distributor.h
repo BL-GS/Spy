@@ -6,7 +6,7 @@
 namespace spy {
 
     class Backend;
-    class Graph;
+    struct Graph;
     class ModelLoader;
 
     class GraphDistributor {

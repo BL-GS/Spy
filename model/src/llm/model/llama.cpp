@@ -191,10 +191,10 @@ namespace spy {
             DataNode *attn_out = cur_attention_block.connect_attention(graph, layer_id, -1, true);
 
             /* Feed-forward network */
-            DataNode *ffn_inp  = make_stream<OperatorType::Add>(graph, "ffn_input",
-                layer_prop,
-                attn_out, input_embedding
-            );
+            DataNode *ffn_inp  = make_stream<OperatorType::Add>(graph)
+                .set_name("ffn_input")
+                .set_input(attn_out, input_embedding)
+	            .deduce(graph, layer_prop);
             FFNBlock &cur_ffn_block = ffn_block_array.emplace_back(FFNBlock{{
                 .norm_rms_param	  = NormRMSParam{ .eps = metadata_.ffn_norm_rms_eps },
                 .weight			  = layer,
@@ -203,10 +203,10 @@ namespace spy {
             DataNode *ffn_out  = cur_ffn_block.connect_ffn(graph, layer_id);
 
             /* Output */
-            DataNode *logit_out = make_stream<OperatorType::Add>(graph, "logit_output",
-                layer_prop,
-                ffn_inp, ffn_out
-            );
+            DataNode *logit_out = make_stream<OperatorType::Add>(graph)
+                .set_name("logit_output")
+                .set_input(ffn_inp, ffn_out)
+	            .deduce(graph, layer_prop);
 
             input_embedding = logit_out;
         }

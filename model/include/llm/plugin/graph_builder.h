@@ -59,22 +59,19 @@ namespace spy {
         /*!
          * @brief Create a operation stream with inputs and create the output `Variable` tensor accordingly.
          */
-        template<OperatorType T_op_type, class ...Args>
-        static auto make_stream(Graph &graph, const std::string_view name, const DataNodeProperty &prop, Args &&...inputs) {
+        template<OperatorType T_op_type>
+        static auto &make_stream(Graph &graph) {
             auto &op_node = graph.alloc_node<OperatorDefinition<T_op_type>>();
-            op_node.name = name;
-            return op_node.deduce(graph, prop, std::forward<Args>(inputs)...);
+			return op_node;
         }
 
         /*!
          * @brief Create a operation stream with inputs and create the output `Variable` tensor accordingly.
          */
         template<OperatorType T_op_type, class ...Args>
-        static auto make_augmented_stream(Graph &graph, const std::string_view name, const DataNodeProperty &prop,
-									const OperatorDefinition<T_op_type>::Param &param, Args &&...inputs) {
+        static auto &make_augmented_stream(Graph &graph, const OperatorDefinition<T_op_type>::Param &param) {
             auto &op_node = graph.alloc_node<OperatorDefinition<T_op_type>>(param);
-            op_node.name = name;
-            return op_node.deduce(graph, prop, std::forward<Args>(inputs)...);
+			return op_node;
         }
 
         /*!
@@ -82,28 +79,13 @@ namespace spy {
          * @param func A function for creating a latest parameter.
          */
         template<OperatorType T_op_type, class T_Func, class ...Args>
-        auto make_dynamic_stream(Graph &graph, const std::string_view name, const DataNodeProperty &prop,
-									T_Func &&func, Args &&...inputs) {
+        auto &make_dynamic_stream(Graph &graph, T_Func &&func) {
             using Param = OperatorDefinition<T_op_type>::Param;
 
             Param &param = add_param_listener<Param>(std::forward<T_Func>(func));
             // pass the pointer of parameter as consequent reference
             auto &op_node = graph.alloc_node<OperatorDefinition<T_op_type>>(std::addressof(param));
-            op_node.name = name;
-            return op_node.deduce(graph, prop, std::forward<Args>(inputs)...);
-        }
-
-        /*!
-         * @brief Create a tensor 
-         * @note The scheduler SHOULD NOT allocate or deallocate it at runtime.
-         * @note The user should set the data_ptr_ of tensor manually before executing.
-         */
-        static DataNode *create_tensor(Graph &graph, const std::string_view name,
-                const Shape &shape, const DataNodeProperty &prop, void *data_ptr) {
-            
-            DataNode &data_node = graph.alloc_node<DataNode>(prop, shape, data_ptr);
-            data_node.name = name;
-            return std::addressof(data_node);
+			return op_node;
         }
 
 	    /*!

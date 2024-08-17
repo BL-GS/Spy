@@ -25,12 +25,21 @@ namespace spy {
 	    ~OperatorDefinition() noexcept = default;
 
 	public: /* Interface for graph deduction */
+		auto &set_name(std::string_view name) {
+			this->name = fmt::format("{}: {}", magic_enum::enum_name(TYPE), name);
+			return *this;
+		}
+
+		auto &set_input(DataNode *in_node_ptr) {
+			add_input(in_node_ptr);
+			return *this;
+		}
+
         /*!
          * @brief Resolve input nodes and generate output nodes
          * @return Output nodes
          */
-		DataNode *deduce(Graph &graph, const DataNodeProperty &prop, DataNode *in_node_ptr) {
-			add_input(in_node_ptr);
+		DataNode *deduce(Graph &graph, const DataNodeProperty &prop) {
 			DataNode *output_node_ptr = std::addressof(graph.alloc_node<DataNode>());
 			output_node_ptr->name = name + "-out";
 			output_node_ptr->set_prop(prop);
@@ -69,12 +78,21 @@ namespace spy {
 	    ~OperatorDefinition() noexcept = default;
 
 	public: /* Interface for graph deduction */
+		auto &set_name(std::string_view name) {
+			this->name = fmt::format("{}: {}", magic_enum::enum_name(TYPE), name);
+			return *this;
+		}
+
+		auto &set_input(DataNode *in_node_ptr, DataNode *index_node_ptr) {
+			add_input(in_node_ptr, index_node_ptr);
+			return *this;
+		}
+
         /*!
          * @brief Resolve input nodes and generate output nodes
          * @return Output nodes
          */
-		DataNode *deduce(Graph &graph, const DataNodeProperty &prop, DataNode *in_node_ptr, DataNode *index_node_ptr) {
-			add_input(in_node_ptr, index_node_ptr);
+		DataNode *deduce(Graph &graph, const DataNodeProperty &prop) {
 			DataNode *output_node_ptr = std::addressof(graph.alloc_node<DataNode>());
 			output_node_ptr->name = name + "-out";
 			output_node_ptr->set_prop(prop);
@@ -136,12 +154,21 @@ namespace spy {
 	    ~OperatorDefinition() noexcept = default;
 
 	public: /* Interface for graph deduction */
+		auto &set_name(std::string_view name) {
+			this->name = fmt::format("{}: {}", magic_enum::enum_name(TYPE), name);
+			return *this;
+		}
+
+		auto &set_input(DataNode *in_node_ptr) {
+			add_input(in_node_ptr);
+			return *this;
+		}
+
         /*!
          * @brief Resolve input nodes and generate output nodes
          * @return Output nodes
          */
-		DataNode *deduce(Graph &graph, const DataNodeProperty &prop, DataNode *in_node_ptr) {
-			add_input(in_node_ptr);
+		DataNode *deduce(Graph &graph, const DataNodeProperty &prop) {
 			DataNode *output_node_ptr = std::addressof(graph.alloc_node<DataNode>());
 			output_node_ptr->name = name + "-out";
 			output_node_ptr->set_prop(prop);
@@ -180,12 +207,21 @@ namespace spy {
 	    ~OperatorDefinition() noexcept = default;
 
 	public: /* Interface for graph deduction */
+		auto &set_name(std::string_view name) {
+			this->name = fmt::format("{}: {}", magic_enum::enum_name(TYPE), name);
+			return *this;
+		}
+
+		auto &set_input(DataNode *src_node_ptr, DataNode *dst_node_ptr) {
+			add_input(src_node_ptr, dst_node_ptr);
+			return *this;
+		}
+
         /*!
          * @brief Resolve input nodes and generate output nodes
          * @return Output nodes
          */
-		DataNode *deduce(Graph &graph, const DataNodeProperty &prop, DataNode *src_node_ptr, DataNode *dst_node_ptr) {
-			add_input(src_node_ptr, dst_node_ptr);
+		DataNode *deduce(Graph &graph, const DataNodeProperty &prop) {
 			DataNode *output_node_ptr = std::addressof(graph.alloc_node<DataNode>());
 			output_node_ptr->name = name + "-out";
 			output_node_ptr->set_prop(prop);
@@ -242,12 +278,21 @@ namespace spy {
 	    ~OperatorDefinition() noexcept = default;
 
 	public: /* Interface for graph deduction */
+		auto &set_name(std::string_view name) {
+			this->name = fmt::format("{}: {}", magic_enum::enum_name(TYPE), name);
+			return *this;
+		}
+
+		auto &set_input(DataNode *in_node_ptr) {
+			add_input(in_node_ptr);
+			return *this;
+		}
+
         /*!
          * @brief Resolve input nodes and generate output nodes
          * @return Output nodes
          */
-		DataNode *deduce(Graph &graph, const DataNodeProperty &prop, DataNode *in_node_ptr) {
-			add_input(in_node_ptr);
+		DataNode *deduce(Graph &graph, const DataNodeProperty &prop) {
 			DataNode *output_node_ptr = std::addressof(graph.alloc_node<DataNode>());
 			output_node_ptr->name = name + "-out";
 			output_node_ptr->set_prop(prop);
@@ -309,12 +354,21 @@ namespace spy {
 	    ~OperatorDefinition() noexcept = default;
 
 	public: /* Interface for graph deduction */
+		auto &set_name(std::string_view name) {
+			this->name = fmt::format("{}: {}", magic_enum::enum_name(TYPE), name);
+			return *this;
+		}
+
+		auto &set_input(DataNode *in_node_ptr) {
+			add_input(in_node_ptr);
+			return *this;
+		}
+
         /*!
          * @brief Resolve input nodes and generate output nodes
          * @return Output nodes
          */
-		DataNode *deduce(Graph &graph, const DataNodeProperty &prop, DataNode *in_node_ptr) {
-			add_input(in_node_ptr);
+		DataNode *deduce(Graph &graph, const DataNodeProperty &prop) {
 			DataNode *output_node_ptr = std::addressof(graph.alloc_node<DataNode>());
 			output_node_ptr->name = name + "-out";
 			output_node_ptr->set_prop(prop);
@@ -356,12 +410,21 @@ namespace spy {
 	    ~OperatorDefinition() noexcept = default;
 
 	public: /* Interface for graph deduction */
+		auto &set_name(std::string_view name) {
+			this->name = fmt::format("{}: {}", magic_enum::enum_name(TYPE), name);
+			return *this;
+		}
+
+		auto &set_input(DataNode *in_node_ptr) {
+			add_input(in_node_ptr);
+			return *this;
+		}
+
         /*!
          * @brief Resolve input nodes and generate output nodes
          * @return Output nodes
          */
-		DataNode *deduce(Graph &graph, const DataNodeProperty &prop, DataNode *in_node_ptr) {
-			add_input(in_node_ptr);
+	DataNode *deduce(Graph &graph, const DataNodeProperty &prop) {
 			DataNode *output_node_ptr = std::addressof(graph.alloc_node<DataNode>());
 			output_node_ptr->name = name + "-out";
 			output_node_ptr->set_prop(prop);
@@ -418,12 +481,21 @@ namespace spy {
 	    ~OperatorDefinition() noexcept = default;
 
 	public: /* Interface for graph deduction */
+		auto &set_name(std::string_view name) {
+			this->name = fmt::format("{}: {}", magic_enum::enum_name(TYPE), name);
+			return *this;
+		}
+
+		auto &set_input(DataNode *in_node_ptr) {
+			add_input(in_node_ptr);
+			return *this;
+		}
+
         /*!
          * @brief Resolve input nodes and generate output nodes
          * @return Output nodes
          */
-		DataNode *deduce(Graph &graph, const DataNodeProperty &prop, DataNode *in_node_ptr) {
-			add_input(in_node_ptr);
+		DataNode *deduce(Graph &graph, const DataNodeProperty &prop) {
 			DataNode *output_node_ptr = std::addressof(graph.alloc_node<DataNode>());
 			output_node_ptr->name = name + "-out";
 			output_node_ptr->set_prop(prop);
@@ -471,12 +543,21 @@ namespace spy {
 	    ~OperatorDefinition() noexcept = default;
 
 	public: /* Interface for graph deduction */
+		auto &set_name(std::string_view name) {
+			this->name = fmt::format("{}: {}", magic_enum::enum_name(TYPE), name);
+			return *this;
+		}
+
+		auto &set_input(DataNode *in_node_ptr) {
+			add_input(in_node_ptr);
+			return *this;
+		}
+
         /*!
          * @brief Resolve input nodes and generate output nodes
          * @return Output nodes
          */
-		DataNode *deduce(Graph &graph, const DataNodeProperty &prop, DataNode *in_node_ptr) {
-			add_input(in_node_ptr);
+		DataNode *deduce(Graph &graph, const DataNodeProperty &prop) {
 			DataNode *output_node_ptr = std::addressof(graph.alloc_node<DataNode>());
 			output_node_ptr->name = name + "-out";
 			output_node_ptr->set_prop(prop);

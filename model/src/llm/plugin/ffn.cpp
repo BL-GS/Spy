@@ -9,34 +9,34 @@ namespace spy {
             .expert_id = expert_id
         };
 
-        DataNode *ffn_norm          = make_augmented_stream<OperatorType::NormRMS>(graph, "ffn_norm",
-            default_prop, norm_rms_param,
-            ffn_input
-        );
-        DataNode *ffn_norm_weighted = make_stream<OperatorType::Mul>(graph, "ffn_norm_linear",
-            default_prop,
-            ffn_norm, weight.ffn_norm
-        );
-        DataNode *ffn_up            = make_stream<OperatorType::MatMul>(graph, "ffn_up",
-            default_prop,
-            weight.ffn_up, ffn_norm_weighted
-        );
-        DataNode *ffn_gate          = make_stream<OperatorType::MatMul>(graph, "ffn_gate",
-            default_prop,
-            weight.ffn_gate, ffn_norm_weighted
-        );
-        DataNode *ffn_gate_silu     = make_stream<OperatorType::Silu>(graph, "ffn_gate_activate",
-            default_prop,
-            ffn_gate
-        );
-        DataNode *ffn_par           = make_stream<OperatorType::Mul>(graph, "ffn_par",
-            default_prop,
-            ffn_up, ffn_gate_silu
-        );
-        DataNode *ffn_down          = make_stream<OperatorType::MatMul>(graph, "ffn_down",
-            default_prop,
-            weight.ffn_down, ffn_par
-        );
+        DataNode *ffn_norm          = make_augmented_stream<OperatorType::NormRMS>(graph, norm_rms_param)
+            .set_name("ffn_norm")
+            .set_input(ffn_input)
+			.deduce(graph, default_prop);
+        DataNode *ffn_norm_weighted = make_stream<OperatorType::Mul>(graph)
+            .set_name("ffn_norm_linear")
+            .set_input(ffn_norm, weight.ffn_norm)
+			.deduce(graph, default_prop);
+        DataNode *ffn_up            = make_stream<OperatorType::MatMul>(graph)
+            .set_name("ffn_up")
+            .set_input(weight.ffn_up, ffn_norm_weighted)
+			.deduce(graph, default_prop);
+        DataNode *ffn_gate          = make_stream<OperatorType::MatMul>(graph)
+            .set_name("ffn_gate")
+            .set_input(weight.ffn_gate, ffn_norm_weighted)
+			.deduce(graph, default_prop);
+        DataNode *ffn_gate_silu     = make_stream<OperatorType::Silu>(graph)
+            .set_name("ffn_gate_activate")
+            .set_input(ffn_gate)
+			.deduce(graph, default_prop);
+        DataNode *ffn_par           = make_stream<OperatorType::Mul>(graph)
+            .set_name("ffn_par")
+            .set_input(ffn_up, ffn_gate_silu)
+			.deduce(graph, default_prop);
+        DataNode *ffn_down          = make_stream<OperatorType::MatMul>(graph)
+            .set_name("ffn_down")
+            .set_input(weight.ffn_down, ffn_par)
+			.deduce(graph, default_prop);
 
         return ffn_down;
     }

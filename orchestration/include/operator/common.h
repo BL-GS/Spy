@@ -1,5 +1,8 @@
 #pragma once
 
+#include <magic_enum.hpp>
+#include <fmt/core.h>
+
 #include "util/log/logger.h"
 #include "graph/data_node.h"
 #include "graph/op_node.h"
@@ -14,12 +17,21 @@ namespace spy {
 		~OperatorUnaryNode() noexcept = default;
 
 	public:
+		auto &set_name(std::string_view name) {
+			this->name = fmt::format("{}: {}", magic_enum::enum_name(op_type), name);
+			return *this;
+		}
+
+		auto &set_input(DataNode *in_node_ptr) {
+			add_input(in_node_ptr);
+			return *this;
+		}
+
         /*!
          * @brief Resolve input nodes and generate output nodes
          * @return Output nodes
          */
-		DataNode *deduce(Graph &graph, const DataNodeProperty &prop, DataNode *in_node_ptr) {
-			add_input(in_node_ptr);
+		DataNode *deduce(Graph &graph, const DataNodeProperty &prop) {
 			DataNode *output_node_ptr = std::addressof(graph.alloc_node<DataNode>());
 			output_node_ptr->name = name + "-out";
 			output_node_ptr->set_prop(prop);
@@ -52,12 +64,21 @@ namespace spy {
 		~OperatorBinaryNode() noexcept = default;
 
 	public:
+		auto &set_name(std::string_view name) {
+			this->name = fmt::format("{}: {}", magic_enum::enum_name(op_type), name);
+			return *this;
+		}
+
+		auto &set_input(DataNode *lhs_ptr, DataNode *rhs_ptr) {
+			add_input(lhs_ptr, rhs_ptr);
+			return *this;
+		}
+
         /*!
          * @brief Resolve input nodes and generate output nodes
          * @return Output nodes
          */
-		DataNode *deduce(Graph &graph, const DataNodeProperty &prop, DataNode *lhs_ptr, DataNode *rhs_ptr) {
-			add_input(lhs_ptr, rhs_ptr);
+		DataNode *deduce(Graph &graph, const DataNodeProperty &prop) {
 			DataNode *output_node_ptr = std::addressof(graph.alloc_node<DataNode>());
 			output_node_ptr->name = name + "-out";
 			output_node_ptr->set_prop(prop);
@@ -67,7 +88,7 @@ namespace spy {
 
 		/*! 
 		 * @brief Validate the metadata of inputs and propagate to generate the metadata of the output nodes
-		 * @return Ouput nodes
+		 * @return Output nodes
 		 */
 		void propagate() override {
 			assert_num_input(2);

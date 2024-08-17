@@ -279,7 +279,7 @@ MacroBlockEnd:   ''
 # 空行保持, 建议为1
 MaxEmptyLinesToKeep: 1
 # Namespace内的对齐, 直接使用None即可, 即所有namespace内(包括内嵌的)都不indent
-NamespaceIndentation: None
+NamespaceIndentation: All
 # Obj-C语言设置, 跳过
 ObjCBinPackProtocolList: Auto
 ObjCBlockIndentWidth: 4

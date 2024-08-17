@@ -24,9 +24,18 @@ namespace spy {
 
 	    ~OperatorDefinition() noexcept = default;
 
-	public: /* Interface for graph deduction and data propogation */
-		DataNode * deduce(Graph &graph, const DataNodeProperty &prop, DataNode *lhs_ptr, DataNode *rhs_ptr) {
+	public: /* Interface for graph deduction and data propagation */
+		auto &set_name(std::string_view name) {
+			this->name = fmt::format("{}: {}", magic_enum::enum_name(TYPE), name);
+			return *this;
+		}
+
+		auto &set_input(DataNode *lhs_ptr, DataNode *rhs_ptr) {
 			add_input(lhs_ptr, rhs_ptr);
+			return *this;
+		}
+
+		DataNode * deduce(Graph &graph, const DataNodeProperty &prop) {
 			DataNode *output_node_ptr = std::addressof(graph.alloc_node<DataNode>());
 			output_node_ptr->name = name + "-out";
 			output_node_ptr->set_prop(prop);
