@@ -73,7 +73,7 @@ namespace spy {
 
             HANDLE file_handle = CreateFile(filename.data(), prot, share_flag, nullptr, open_flag, flag, nullptr);
             if (file_handle == INVALID_HANDLE_VALUE) {
-                fprintf(stderr, "Failed reopening file: %s\n", llama_format_win_err().c_str());
+                spy_error("failed reopening file: {}", system_error());
                 return false;
             }
 
@@ -92,8 +92,8 @@ namespace spy {
 
         void init_mapping() {
             mapping_handle_ = CreateFileMappingA(sync_file_handle_, NULL, PAGE_READONLY, 0, 0, NULL);
-            if (mapping_handle_ == nullptr) { 
-                fprintf(stderr, "Failed mapping file: %s\n", llama_format_win_err().c_str());
+            if (mapping_handle_ == nullptr) {
+				throw SpyOSFileException("failed mmaping file");
             }
         }
 
@@ -119,7 +119,7 @@ namespace spy {
 
     public:
         /*!
-         * Creare a view of a portion of the file. It may use mapping or buffer for creating the view.
+         * Create a view of a portion of the file. It may use mapping or buffer for creating the view.
          * When the OS cannot allocate the address space of mapping, it turns to the buffer method.
          */
         template<class T_View>
@@ -138,16 +138,12 @@ namespace spy {
         std::unique_ptr<FileView> &get_view(size_t offset) {
             auto iter = view_map_.lower_bound(offset);
             if (iter == view_map_.end() || iter->first != offset) { 
-                if (iter == view_map_.begin()) {
-                    spy_assert(false, "Cannot find view");
-                }
-                --iter; 
+                spy_assert(iter != view_map_.begin(), "cannot find view");
+                --iter;
             }
 
             const auto &view = iter->second;
-            if (view->offset() > offset || view->offset() + view->size() < offset) {
-                spy_assert(false, "Cannot find view");
-            }
+            spy_assert(view->view_offset <= offset && view->view_offset + view->view_size >= offset, "cannot find view");
             return iter->second;
         }
     };

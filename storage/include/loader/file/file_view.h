@@ -11,6 +11,8 @@
 #include <stdexcept>
 #include <system_error>
 
+#include "loader/file/exception.h"
+
 #ifdef __has_include
 	#if __has_include(<unistd.h>)
 		#include <unistd.h>
@@ -37,157 +39,136 @@
 
 namespace spy {
 
-#ifdef _WIN32
-    constexpr size_t ALIGNED_GRANULARITY = 64 * 1024; // 64K
-
-    inline static size_t windows_granularity() {
-        SYSTEM_INFO si;
-        GetSystemInfo(&si);
-        return (size_t)si.dwPageSize;
-    }
-
-    inline static std::string llama_format_win_err(DWORD err) {
-        LPSTR buf;
-        size_t size = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-            NULL, err, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&buf, 0, NULL);
-        if (!size) {
-            return "FormatMessageA failed";
-        }
-        std::string ret(buf, size);
-        LocalFree(buf);
-
-
-        return ret;
-    }
-
-    inline static std::string llama_format_win_err() {
-        return llama_format_win_err(GetLastError());
-    }
-#endif
-
     struct FileView {
-    protected:
-        int64_t offset_;
-
-        size_t size_;
+	public:
+		/// The inherent offset of the view, which should be added into that of user
+        int64_t view_offset = 0;
+		/// The size of the view
+        size_t  view_size   = 0;
 
     public:
-        FileView(): offset_(0), size_(0) {}
+		FileView() = default;
 
-        FileView(int64_t offset, size_t size): offset_(offset), size_(size) {}
+        FileView(int64_t offset, size_t size): view_offset(offset), view_size(size) {}
 
         FileView(const FileView &other) = default;
+
+		FileView(FileView &&other) noexcept = default;
 
         virtual ~FileView() noexcept = default;
 
     public:
-
         virtual int read(void *dst, int64_t offset, size_t size)        = 0;
 
         virtual int write(const void *src, int64_t offset, size_t size) = 0;
-
-     public:
-        int64_t offset() const { return offset_; }
-
-        size_t   size() const { return size_;   }
     };
 
     struct FileSpanView: FileView {
-    protected:
-        int64_t file_offset_;
-        void *  addr_;
+	public:
+		/// The start address of the view
+        std::byte * view_addr   = nullptr;
+		/// The offset of the view to the file
+		int64_t     file_offset = 0;
 
     public:
-        FileSpanView(): file_offset_(0), addr_(nullptr) {}
+		FileSpanView() = default;
 
-        FileSpanView(int64_t offset, size_t size, void *addr): FileView(offset, size), file_offset_(0), addr_(addr) {}
+        FileSpanView(int64_t offset, int64_t size, void *addr): FileView(offset, size), view_addr(static_cast<std::byte *>(addr)) {}
 
         FileSpanView(const FileSpanView &other) = default;
+
+		FileSpanView(FileSpanView &&other) noexcept = default;
 
          ~FileSpanView() noexcept override = default;
 
     public:
         int read(void *dst, int64_t offset, size_t size) override {
-            std::memcpy(dst, static_cast<uint8_t *>(addr_) + offset, size);
+	        spy_assert_debug(offset > 0, "out of range read");
+	        spy_assert_debug(offset + size <= view_size, "out of range read");
+            std::memcpy(dst, view_addr + view_offset + offset, size);
             return -1;
         }
 
         int write(const void *src, int64_t offset, size_t size) override {
-            std::memcpy(static_cast<uint8_t *>(addr_) + offset, src, size);
+	        spy_assert_debug(offset > 0, "out of range write");
+			spy_assert_debug(offset + size <= view_size, "out of range write");
+            std::memcpy(view_addr + view_offset + offset, src, size);
             return -1;
         }
 
-    public:
-        void *deref()               const { return addr_; }
-
-        void *deref(int64_t offset) const { return static_cast<uint8_t *>(addr_) + offset_ + offset; }
-
-        int64_t file_offset()       const { return file_offset_; }
+        std::byte *deref(int64_t offset) const {
+			return view_addr + view_offset + offset;
+		}
     };
 
 #ifdef _WIN32
 
     struct FileMappingView final: public FileSpanView {
+	public:
+		static constexpr size_t ALIGNED_GRANULARITY = 64 * 1024; // 64K
+
     public:
         FileMappingView() = default;
 
         FileMappingView(const HANDLE mapping_handle, int64_t offset, size_t size, bool write = false) {
             // Do not call mmap if size == 0
             if (size == 0) {
-                offset_ = 0;
+                view_offset = 0;
                 return;
             }
 
             const auto prot  = write ? FILE_MAP_WRITE | FILE_MAP_READ : FILE_MAP_READ;
 
             // Align offset and size by the granularity of OS
-            const size_t aligned_offset = offset / ALIGNED_GRANULARITY * ALIGNED_GRANULARITY;
-            const size_t aligned_size   = size + (offset - aligned_offset);
+            const size_t  aligned_offset = static_cast<size_t>(offset) / ALIGNED_GRANULARITY * ALIGNED_GRANULARITY;
+            const size_t  aligned_size   = size + (offset - aligned_offset);
 
-            offset_      = offset - aligned_offset;
-            size_        = aligned_size;
-            file_offset_ = offset;
+            view_offset = offset - aligned_offset;
+            view_size   = aligned_size;
+            file_offset = offset;
 
             // mmap
             {
                 constexpr size_t offset_mask    = 0xFFFFFFFF;
                 const DWORD offset_high         = (aligned_offset >> 32U) & offset_mask;
                 const DWORD offset_low          = aligned_offset & offset_mask;
-                addr_ = static_cast<uint8_t*>(MapViewOfFile(mapping_handle, prot, offset_high, offset_low, aligned_size));
-                DWORD error = GetLastError();
+                view_addr = static_cast<std::byte *>(MapViewOfFile(mapping_handle, prot, offset_high, offset_low, aligned_size));
 
-                if (addr_ == nullptr) {
-                    fprintf(stderr, "Failed mmap file: %s\n", llama_format_win_err().c_str());
-                    throw std::runtime_error(std::string("MapViewOfFile failed: ") + llama_format_win_err());
+                if (view_addr == nullptr) {
+                    spy_error("failed mmap file (MapViewOfFile): {}", system_error());
+                    throw SpyOSFileException("failed MapViewOfFile");
                 }
             }
         }
 
         ~FileMappingView() noexcept override {
-            if (addr_ != nullptr) {
-                if (UnmapViewOfFile(addr_) == 0) {
-                    fprintf(stderr, "warning: UnmapViewOfFile failed\n");
-                }
+            if (view_addr != nullptr) {
+                if (UnmapViewOfFile(view_addr) == 0) { spy_warn("failed UnmapViewOfFile"); }
             }
         }
 
-        FileMappingView(FileMappingView&& other) noexcept : FileSpanView(other) {
-            other.offset_      = 0;
-            other.size_        = 0;
-            other.addr_        = nullptr;
-            other.file_offset_ = 0;
+        FileMappingView(FileMappingView&& other) noexcept {
+			view_offset      = other.view_offset;
+			view_size        = other.view_size;
+			view_addr        = other.view_addr;
+			file_offset      = other.file_offset;
+
+            other.view_offset      = 0;
+            other.view_size        = 0;
+            other.view_addr        = nullptr;
+            other.file_offset      = 0;
         }
 
         FileMappingView &operator = (FileMappingView &&other) noexcept {
-            offset_      = other.offset_;
-            size_        = other.size_;
-            addr_        = other.addr_;
-            file_offset_ = other.file_offset_;
+            view_offset      = other.view_offset;
+            view_size        = other.view_size;
+            view_addr        = other.view_addr;
+            file_offset      = other.file_offset;
 
-            other.offset_      = 0;
-            other.size_        = 0;
-            other.addr_        = nullptr;
-            other.file_offset_ = 0;
+            other.view_offset      = 0;
+            other.view_size        = 0;
+            other.view_addr        = nullptr;
+            other.file_offset      = 0;
 
             return *this;
         }
@@ -208,10 +189,10 @@ namespace spy {
                 // advise the kernel to preload the mapped memory
                 WIN32_MEMORY_RANGE_ENTRY range;
 
-                range.VirtualAddress = static_cast<uint8_t *>(addr_) + aligned_offset;
+                range.VirtualAddress = view_addr + aligned_offset;
                 range.NumberOfBytes  = static_cast<SIZE_T>(aligned_size);
                 if (pPrefetchVirtualMemory(GetCurrentProcess(), 1, &range, 0) == 0) {
-                    fprintf(stderr, "warning: PrefetchVirtualMemory failed: %s\n", llama_format_win_err().c_str());
+                    spy_warn("failed PrefetchVirtualMemory");
                 }
             }
         }
@@ -233,13 +214,13 @@ namespace spy {
 
     public:
         int read(void *dst, int64_t offset, size_t size) override {
-            SetFilePointer(file_handle_, offset + this->offset_, nullptr, FILE_BEGIN);
+            SetFilePointer(file_handle_, offset + this->view_offset, nullptr, FILE_BEGIN);
             BOOL ret = ReadFile(file_handle_, dst, size, nullptr, nullptr);
             return ret ? 0 : -1;
         }
 
         int write(const void *src, int64_t offset, size_t size) override {
-            SetFilePointer(file_handle_, offset + this->offset_, nullptr, FILE_BEGIN); 
+            SetFilePointer(file_handle_, offset + this->view_offset, nullptr, FILE_BEGIN);
             BOOL ret = WriteFile(file_handle_, src, size, nullptr, nullptr);
             return ret ? 0 : -1;
         }
@@ -284,7 +265,7 @@ namespace spy {
             std::unique_ptr<OVERLAPPED> overlapped_ptr = std::make_unique<OVERLAPPED>();
             std::memset(overlapped_ptr.get(), 0, sizeof(OVERLAPPED));
 
-            offset += this->offset_;
+            offset += this->view_offset;
 
             constexpr DWORD offset_mask = 0xFFFFFFFF;
             overlapped_ptr->Offset      = offset & offset_mask;
@@ -310,15 +291,15 @@ namespace spy {
                         continue;
 
                     default:
-                        fprintf(stderr, "Failed reading the file: %s\n", llama_format_win_err().c_str());
+						spy_error("failed reading the file: {}", system_error());
                         return -1;
                     }
                 } else {
-                    // The content has been loaded or can be read rapidlly
+                    // The content has been loaded or can be read rapidly
                     return 0;
                 }
             }
-            fprintf(stderr, "Retry overlapped read for too many times(%d), try to set less io_thread by `--io-thread <num>`\n", MAX_RETRY_TIMES);
+            spy_error("retry overlapped read for too many times({}), try to set less io_thread by `--io-thread <num>`\n", MAX_RETRY_TIMES);
             return -1;
         }
 
@@ -326,7 +307,7 @@ namespace spy {
             std::unique_ptr<OVERLAPPED> overlapped_ptr = std::make_unique<OVERLAPPED>();
             std::memset(overlapped_ptr.get(), 0, sizeof(OVERLAPPED));
 
-            offset += this->offset_;
+            offset += this->view_offset;
 
             constexpr DWORD offset_mask = 0xFFFFFFFF;
             overlapped_ptr->Offset      = offset & offset_mask;
@@ -352,16 +333,16 @@ namespace spy {
                         continue;
 
                     default:
-                        fprintf(stderr, "Failed reading the file: %s\n", llama_format_win_err().c_str());
+						spy_error("failed reading the file: {}", system_error());
                         return -1;
                     }
                 } else {
-                    // The content has been loaded or can be read rapidlly
+                    // The content has been loaded or can be read rapidly
                     if (callback) { callback(); }
                     return 0;
                 }
             }
-            fprintf(stderr, "Retry overlapped read for too many times(%d), try to set less io_thread by `--io-thread <num>`\n", MAX_RETRY_TIMES);
+            spy_error("retry overlapped read for too many times({}), try to set less io_thread by `--io-thread <num>`\n", MAX_RETRY_TIMES);
             return -1;
         }
 
@@ -369,7 +350,7 @@ namespace spy {
             std::unique_ptr<OVERLAPPED> overlapped_ptr = std::make_unique<OVERLAPPED>();
             std::memset(overlapped_ptr.get(), 0, sizeof(OVERLAPPED));
 
-            offset += this->offset_;
+            offset += this->view_offset;
 
             constexpr DWORD offset_mask = 0xFFFFFFFF;
             overlapped_ptr->Offset       = offset & offset_mask;
@@ -397,15 +378,15 @@ namespace spy {
                         continue;
 
                     default:
-                        fprintf(stderr, "Failed reading the file: %s\n", llama_format_win_err().c_str());
+                        spy_error("failed writing the file: {}", system_error());
                         return -1;
                     }
                 } else {
-                    // The content has been loaded or can be write rapidlly
+                    // The content has been loaded or can be written rapidly
                     return 0;                    
                 }
             }
-            fprintf(stderr, "Retry overlapped write for too many times(%d), try to set less io_thread by `--io-thread <num>`\n", MAX_RETRY_TIMES);
+            spy_error("retry overlapped write for too many times({}), try to set less io_thread by `--io-thread <num>`\n", MAX_RETRY_TIMES);
             return -1;
         }
 
@@ -413,7 +394,7 @@ namespace spy {
             std::unique_ptr<OVERLAPPED> overlapped_ptr = std::make_unique<OVERLAPPED>();
             std::memset(overlapped_ptr.get(), 0, sizeof(OVERLAPPED));
 
-            offset += this->offset_;
+            offset += this->view_offset;
 
             constexpr DWORD offset_mask = 0xFFFFFFFF;
             overlapped_ptr->Offset       = offset & offset_mask;
@@ -441,16 +422,16 @@ namespace spy {
                         continue;
 
                     default:
-                        fprintf(stderr, "Failed reading the file: %s\n", llama_format_win_err().c_str());
+						spy_error("failed reading the file: {}", system_error());
                         return -1;
                     }
                 } else {
-                    // The content has been loaded or can be write rapidlly
+                    // The content has been loaded or can be written rapidly
                     callback();
                     return 0;                    
                 }
             }
-            fprintf(stderr, "Retry overlapped write for too many times(%d), try to set less io_thread by `--io-thread <num>`\n", MAX_RETRY_TIMES);
+            spy_error("retry overlapped write for too many times({}), try to set less io_thread by `--io-thread <num>`\n", MAX_RETRY_TIMES);
             return -1;
          }
 
@@ -481,11 +462,11 @@ namespace spy {
                 return false;
 
             case WAIT_ABANDONED:
-                fprintf(stderr, "Waiting for an abandoned event...\n");
+                spy_warn("waiting for an abandoned event...");
                 return false;
 
             default:
-                fprintf(stderr, "Failed waiting for an event: %s\n", llama_format_win_err().c_str());
+				spy_error("failed waiting for an event: {}", system_error());
                 return false; 
             }
         }
@@ -523,9 +504,9 @@ namespace spy {
                         const BOOL success = GetOverlappedResult(file_handle_, overlapped_ptr.get(), &transfer_number, TRUE);                     
 
                         if (!success) {
-                            fprintf(stderr, "Failed get overlapped result: %s\n", llama_format_win_err().c_str());
-                            fprintf(stderr, "Consider using `--io-thread <num>` to decrease the number of concurrent I/O task. (default: 4)\n");
-                            throw std::runtime_error("Failed get overlapped result");
+                            spy_error("failed get overlapped result: {}", system_error());
+                            spy_error("consider using `--io-thread <num>` to decrease the number of concurrent I/O task. (default: 4)");
+                            throw SpyOSFileException("failed get overlapped result");
                         } else {
                             if (callback) { callback(); }
                             CloseHandle(overlapped_ptr->hEvent); 
@@ -538,14 +519,14 @@ namespace spy {
                     switch (ret) {
 
                     case WAIT_ABANDONED:
-                        fprintf(stderr, "Wait for overlapped abandoned...\n");
+                        spy_error("wait for overlapped abandoned...");
                         break;
 
                     default:
-                        fprintf(stderr, "Failed waiting for event: %s\n", llama_format_win_err().c_str());
+                        spy_error("failed waiting for event: {}", system_error());
                         break;
                     }                      
-                    throw std::runtime_error("Failed waiting for event");;
+                    throw SpyOSFileException("failed waiting for event");;
                 }
             }
 
@@ -583,9 +564,9 @@ namespace spy {
                     const BOOL success = GetOverlappedResult(file_handle_, overlapped_ptr.get(), &transfer_number, TRUE);
  
                     if (!success) {
-                        fprintf(stderr, "Failed get overlapped result: %s\n", llama_format_win_err().c_str());
-                        fprintf(stderr, "Consider using `--io-thread <num>` to decrease the number of concurrent I/O task. (default: 4)\n");
-                        throw std::runtime_error("Failed get overlapped result");
+                        spy_error("failed get overlapped result: {}", system_error());
+                        spy_error("consider using `--io-thread <num>` to decrease the number of concurrent I/O task. (default: 4)\n");
+                        throw SpyOSFileException("failed get overlapped result");
                     } else {
                         if (callback) { callback(); }
                         CloseHandle(overlapped_ptr->hEvent);   
@@ -597,14 +578,14 @@ namespace spy {
                 switch (ret) {
 
                 case WAIT_ABANDONED:
-                    fprintf(stderr, "Wait for overlapped abandoned...\n");
+                    spy_error("wait for overlapped abandoned...");
                     break;
 
                 default:
-                    fprintf(stderr, "Failed waiting for event: %s\n", llama_format_win_err().c_str());
+                    spy_error("failed waiting for event: {}", system_error());
                     break;
                 }                      
-                throw std::runtime_error("Failed waiting for event");
+                throw SpyOSFileException("failed waiting for event");
                 return -1;
             }
         }

@@ -22,7 +22,7 @@ namespace spy {
 			auto prev_iter = view_map.lower_bound(range_start);
 			auto next_iter = prev_iter--;
 
-			// If all view has larger start address than the new one
+			// If all views have a larger start address than the new one
 			if (next_iter == view_map.begin()) {
 				const size_t next_start = next_iter->first;
 				// Check whetheer overlap

@@ -127,16 +127,19 @@ namespace spy::cpu {
             );
         }
 
-        for (int64_t col_idx = param.tid; col_idx < num_dst; col_idx += param.concurrency) {
-            const int64_t i03 = col_idx / (ne01 * ne11 * ne02);
-            const int64_t i02 = col_idx % (ne01 * ne11 * ne02) / (ne01 * ne11);
-            const int64_t i11 = col_idx % (ne01 * ne11) / ne01;
-            const int64_t i01 = col_idx % (ne01 * ne11) % ne01;
+        constexpr int64_t blk_size = 16;
+        for (int64_t block_idx = param.tid * blk_size; block_idx < num_dst; block_idx += param.concurrency * blk_size) {
+            for (int64_t col_idx = block_idx; col_idx < std::min(blk_size + block_idx, num_dst); ++col_idx) {
+                const int64_t i03 = col_idx / (ne01 * ne11) / ne02;
+                const int64_t i02 = col_idx / (ne01 * ne11) % ne02;
+                const int64_t i11 = col_idx % (ne01 * ne11) / ne01;
+                const int64_t i01 = col_idx % (ne01 * ne11) % ne01;
 
-            const void *src1_col = final_operand_1.get<const void>({0, i11, i02, i03});
-            const void *src0_row = operand_0.get<const void>({0, i01, i02, i03});
-            float *dst_element   = result.get<float>({i01, i11, i02, i03});
-                    *dst_element = dot_func(src0_row, src1_col, ne00);
+                const void *src1_col = final_operand_1.get<const void>({0, i11, i02, i03});
+                const void *src0_row = operand_0.get<const void>({0, i01, i02, i03});
+                float *dst_element   = result.get<float>({i01, i11, i02, i03});
+                        *dst_element = dot_func(src0_row, src1_col, ne00);
+            }
         }
 
         return { 0_op_end };

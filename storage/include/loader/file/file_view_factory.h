@@ -8,6 +8,7 @@
 #include <map>
 #include <fstream>
 
+#include "util/log/logger.h"
 #include "file_view.h"
 
 namespace spy {
@@ -91,7 +92,7 @@ namespace spy {
 
             /// It is necessary to release all views because the factory hold the ownership (mapping_handle) of them.
             if (!mapping_view_array_.empty()) {
-                printf("Warning: Trying to reassign file descriptor when mapping view is not empty\n");
+                spy_warn("trying to reassign file descriptor when mapping view is not empty");
                 mapping_view_array_.clear();
             }
             if (mapping_handle_ != INVALID_HANDLE_VALUE) {
@@ -99,7 +100,10 @@ namespace spy {
             }
             mapping_handle_ = CreateFileMappingA(new_fd, NULL, PAGE_READONLY, 0, 0, NULL);
             DWORD error = GetLastError();
-            if (mapping_handle_ == NULL) { throw std::runtime_error(std::string("CreateFileMappingA failed: ") + llama_format_win_err(error)); }
+            if (mapping_handle_ == NULL) {
+				spy_error("failed mmap file: {}", system_error());
+				throw SpyOSFileException("failed CreateFileMappingA");
+			}
         }
 #endif
 
@@ -125,10 +129,8 @@ namespace spy {
         std::unique_ptr<FileMappingView> &get_view(size_t offset) { 
             auto iter = mapping_view_array_.lower_bound(offset);
             if (iter == mapping_view_array_.end() || iter->first != offset) { 
-                if (iter == mapping_view_array_.begin()) {
-                    throw std::runtime_error("Cannot find view");
-                }
-                --iter; 
+                spy_assert(iter != mapping_view_array_.begin(), "cannot find view");
+                --iter;
             }
 
             return iter->second;

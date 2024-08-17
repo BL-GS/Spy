@@ -12,6 +12,7 @@
 
 out
 build
+build_debug
 build_release
 cmake-build-debug
 cmake-build-release
