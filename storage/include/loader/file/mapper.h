@@ -295,7 +295,7 @@ namespace spy {
         ~FileViewBuilder() noexcept = default;
 
     public:
-        bool open_if_exist(const std::string &filename, bool write = false, [[maybe_unused]] bool use_overlapped = false) {
+        bool open_if_exist(const std::string_view filename, bool write = false, [[maybe_unused]] bool use_overlapped = false) {
             init_handle(filename, write, true, false);
             return file_.valid();
         }

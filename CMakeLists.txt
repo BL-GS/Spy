@@ -17,22 +17,33 @@ option(SPY_TEST			"Enable compiling test suites" 			OFF)
 
 option(SPY_BENCHMARK 	"Enable compiling benchmark suites"		OFF)
 
+option(SPY_ENABLE_LTO	"Enable LTO optimization"				OFF)
+
 
 # Flags -----------------------------------------------------------------
 
+set(EXTRA_COMPILE_FLAGS "-Wall")
+
 macro(add_cxx_flag NEW_FLAGS)
-	set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} ${NEW_FLAGS})	
+	list(APPEND EXTRA_COMPILE_FLAGS ${NEW_FLAGS})
 endmacro(add_cxx_flag)
 
 if(CMAKE_BUILD_TYPE STREQUAL DEBUG)
-	add_cxx_flag("-fsanitize=address")
+	add_cxx_flag(-fsanitize=address)
 else()
 	add_definitions(-DNDEBUG)
 endif()
 
-add_cxx_flag("-Wall")
+if(${SPY_ENABLE_LTO})
+	if(NOT MSVC)
+		add_cxx_flag(-flto)
+	else()
+		add_cxx_flag(/LTCG)
+	endif()
+endif()
 
-set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:${EXTRA_COMPILE_FLAGS}>")
+add_compile_options("$<$<COMPILE_LANGUAGE:C>:${EXTRA_COMPILE_FLAGS}>")
 
 # Libraries --------------------------------------------------------------
 find_package(fmt	 	CONFIG REQUIRED)
