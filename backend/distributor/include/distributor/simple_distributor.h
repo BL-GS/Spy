@@ -52,17 +52,16 @@ namespace spy {
          const size_t num_data_node = graph_storage.num_data_node();
          const size_t num_op_node   = graph_storage.num_op_node();
 
+	      // Denote whether the data is available
          std::vector<RelaxedAtomWrapper<int>> data_input_array(num_data_node, 0);
+		 graph_storage.get_data_input_count(data_input_array.begin(), data_input_array.end());
+	      // Denote whether the data is out of use
          std::vector<RelaxedAtomWrapper<int>> data_output_array(num_data_node, 0);
+		 graph_storage.get_data_output_count(data_output_array.begin(), data_output_array.end());
+	      // Denote whether the operator is available
          std::vector<RelaxedAtomWrapper<int>> op_input_array(num_op_node, 0);
+		 graph_storage.get_op_input_count(op_input_array.begin(), op_input_array.end());
 
-         // Denote whether the data is available
-         graph_storage.get_data_input_count(data_input_array.begin(), data_input_array.end());
-         // Denote whether the data is out of use
-         graph_storage.get_data_output_count(data_output_array.begin(), data_output_array.end());
-         // Denote whether the operator is available
-         graph_storage.get_op_input_count(op_input_array.begin(), op_input_array.end());
-         
          /* Distribute the graph to the backend and execute */
 
          // Simple distributor does not divide graph. 

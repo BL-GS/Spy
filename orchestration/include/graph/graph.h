@@ -111,7 +111,7 @@ namespace spy {
 			size_t count = 0;
 			for (auto iter = start_iter; iter != end_iter; ++iter) {
 				spy_assert(count < num_data_node(), 
-					"the range of ouput({}) is smaller than #num: {}", 
+					"the range of output({}) is smaller than #num: {}",
 					count + 1, num_data_node()
 				);
 

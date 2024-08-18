@@ -52,7 +52,7 @@ namespace spy {
     /*!
      * @brief Wrapper for atomic unit in container.
      * In std container, underlying type should have copy constructor.
-     * And std::atomic do not speicify the implementation.
+     * And std::atomic do not specify the implementation.
      * This class aims to simply wrap std::atomic for convenience.
      */
     template <typename T>

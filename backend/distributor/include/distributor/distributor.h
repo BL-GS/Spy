@@ -24,7 +24,7 @@ namespace spy {
          * @param[in] backend_ptr The pointer to the backend.
          * @return true on success; otherwise failed.
          */
-        virtual bool add_backend(Backend *backend_ptr, const std::string_view sche_policy) = 0;
+        virtual bool add_backend(Backend *backend_ptr, std::string_view sche_policy) = 0;
 
         /*!
          * @brief Prepare graph for every backend
